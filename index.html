@@ -171,12 +171,13 @@
 <div id="helpModal" class="modal">
     <h3>使用说明</h3>
     <div style="text-align:left; color:#555; line-height:1.6; font-size:14px; max-height:400px; overflow-y:auto; padding:0 5px;">
-        <p style="margin-bottom:10px;"><b>1. 消耗录入：</b><br>点击色号选中（可多选） -> 点击底部“录入粒数” -> 输入消耗粒数 -> 自动扣除对应重量。</p>
-        <p style="margin-bottom:10px;"><b>2. 补货/修改库存：</b><br>直接点击列表中的“库存重量”数字 -> 输入最新重量 -> 确认。<br>
+        <p style="margin-bottom:10px;"><b>1. 批量初始录入：</b><br>点击“批量初始录入”，可一次性粘贴多行数据（格式：色号 数量），快速初始化库存。</p>
+        <p style="margin-bottom:10px;"><b>2. 消耗录入：</b><br>点击色号选中（可多选） -> 点击底部“录入粒数” -> 输入消耗粒数 -> 自动扣除对应重量。</p>
+        <p style="margin-bottom:10px;"><b>3. 补货/修改库存：</b><br>直接点击列表中的“库存重量”数字 -> 输入最新重量 -> 确认。<br>
         <span style="color:#888; font-size:12px;">(系统会自动根据重量变化记录为“补货”或“消耗”)</span></p>
-        <p style="margin-bottom:10px;"><b>3. 历史记录：</b><br>点击列表中的“累计消耗” -> 查看详细记录。<br>支持删除某条记录，删除后库存会自动回滚。</p>
-        <p style="margin-bottom:10px;"><b>4. 数据备份：</b><br>点击“数据管理” -> 复制备份代码保存。换设备时使用“恢复导入”。</p>
-        <p style="margin-bottom:10px;"><b>5. 阈值与补货单：</b><br>设置“阈值”（例如 5g），库存低于此值的色号会变红预警。<br>点击“复制补货单”可一键复制所有低库存色号及缺货量，方便采购。</p>
+        <p style="margin-bottom:10px;"><b>4. 历史记录：</b><br>点击列表中的“累计消耗” -> 查看详细记录。<br>支持删除某条记录，删除后库存会自动回滚。</p>
+        <p style="margin-bottom:10px;"><b>5. 数据备份：</b><br>点击“数据管理” -> 复制备份代码保存。换设备时使用“恢复导入”。</p>
+        <p style="margin-bottom:10px;"><b>6. 阈值与补货单：</b><br>设置“阈值”（例如 5g），库存低于此值的色号会变红预警。<br>点击“复制补货单”可一键复制所有低库存色号及缺货量，方便采购。</p>
     </div>
     <div class="modal-btn-group">
         <button class="m-btn m-btn-primary" onclick="closeAllModals()">知道了</button>
