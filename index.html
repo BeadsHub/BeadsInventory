@@ -672,15 +672,15 @@
     (function initWatermark() {
         const text = "开发者: 小红书用户āōē，ID 11535779483，使用AI工具开发";
         const canvas = document.createElement('canvas');
-        canvas.width = 400;
-        canvas.height = 200;
+        canvas.width = 550;
+        canvas.height = 350;
         const ctx = canvas.getContext('2d');
         
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate(-20 * Math.PI / 180);
         
         ctx.font = '10px -apple-system, sans-serif';
-        ctx.fillStyle = 'rgba(150, 150, 150, 0.11)'; // 稍微调高透明度
+        ctx.fillStyle = 'rgba(150, 150, 150, 0.12)'; // 稍微调高透明度
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(text, 0, 0);
@@ -689,6 +689,7 @@
         const grid = document.getElementById('grid');
         grid.style.backgroundImage = `url(${canvas.toDataURL('image/png')})`;
         grid.style.backgroundRepeat = 'repeat';
+        grid.style.backgroundPosition = '80px 40px';
         grid.style.backgroundAttachment = 'local'; // 随内容滚动
     })();
 
