@@ -1,585 +1,264 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#ffffff">
-    <title>MARD 豆库 Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #4f46e5; /* Indigo 600 */
-            --primary-hover: #4338ca;
-            --bg: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-main: #1f2937;
-            --text-sub: #6b7280;
-            --border: #e5e7eb;
-            --accent: #06b6d4; /* Cyan 500 */
-            --warn: #ef4444;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --radius: 12px;
-            --safe-top: env(safe-area-inset-top);
-            --safe-bottom: env(safe-area-inset-bottom);
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MARD 豆库 - 统计排序版</title>
+    <style>
+        :root { --primary: #4a90e2; --warn: #ff4d4f; --bg: #f0f2f5; --success: #52c41a; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; font-size: 14px; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 90px; }
+        
+        /* 头部控制区 */
+        .header-sticky { position: sticky; top: 0; background: white; z-index: 100; border-bottom: 2px solid #eee; padding: 12px 15px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .stats { display: flex; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; flex: 1; margin-right: 10px; }
+        .stat-item b { display: block; font-size: 16px; color: var(--primary); }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #111827;
-                --card-bg: #1f2937;
-                --text-main: #f9fafb;
-                --text-sub: #9ca3af;
-                --border: #374151;
-                --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-            }
-        }
+        /* 配置与排序区 */
+        .config-zone { font-size: 12px; background: #fffbe6; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .config-zone input { width: 40px; padding: 2px 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+        .btn-sort { background: #fff; border: 1px solid var(--primary); color: var(--primary); padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .btn-sort.active { background: var(--primary); color: white; }
 
-        body {
-            font-family: 'Inter', 'Noto Sans SC', sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
+        .btn-text { font-size: 12px; color: var(--primary); cursor: pointer; background:none; border:none; padding:0; text-decoration: underline; }
 
-        /* 布局容器 */
-        .app-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: calc(var(--safe-top) + 80px) 20px calc(var(--safe-bottom) + 100px);
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
+        /* 搜索框 */
+        #search { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; margin-bottom: 5px; }
+        
+        /* 列表渲染 */
+        .bead-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; }
+        .bead-row.selected { background: #e6f7ff; }
+        .col-select { width: 25px; }
+        .col-color { width: 40px; }
+        .swatch { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ddd; }
+        .col-id { width: 60px; font-weight: bold; font-family: monospace; font-size: 15px; }
+        .col-weight { flex: 1; }
+        .weight-badge { padding: 4px 8px; border-radius: 6px; background: #eee; font-weight: bold; font-family: monospace; cursor: pointer; }
+        .weight-badge.low { background: var(--warn); color: white; }
+        .col-action { width: 60px; text-align: right; }
+        .btn-plus { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; padding: 5px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; }
 
-        /* Header */
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 50;
-            border-bottom: 1px solid var(--border);
-            padding-top: var(--safe-top);
-        }
-        @media (prefers-color-scheme: dark) {
-            header { background: rgba(31, 41, 55, 0.9); }
-        }
+        .info-tag { font-size: 10px; color: #999; display: block; margin-top: 3px; }
+        .total-use { color: #8c8c8c; font-weight: bold; }
 
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 12px 20px;
-        }
+        /* 底部操作栏 */
+        .footer-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: #333; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 200; border-radius: 12px 12px 0 0; }
+        .btn-go { background: var(--success); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .title-area {
-            display: flex;
-            gap: 16px;
-            align-items: center;
-        }
-
-        .stat-badge {
-            display: flex;
-            flex-direction: column;
-        }
-        .stat-badge b { font-size: 18px; line-height: 1.2; }
-        .stat-badge span { font-size: 10px; color: var(--text-sub); text-transform: uppercase; }
-
-        .action-area {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn:hover { background: var(--bg); transform: translateY(-1px); }
-        .btn:active { transform: translateY(0); }
-        .btn-primary { background: var(--primary); color: white; border: none; }
-        .btn-primary:hover { background: var(--primary-hover); }
-
-        .search-bar {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .search-input {
-            flex: 1;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            padding: 10px 16px;
-            border-radius: 10px;
-            color: var(--text-main);
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .search-input:focus { border-color: var(--primary); }
-
-        .setting-item {
-            display: flex;
-            align-items: center;
-            font-size: 12px;
-            color: var(--text-sub);
-            background: var(--bg);
-            padding: 4px 10px;
-            border-radius: 6px;
-        }
-        .setting-input {
-            width: 30px;
-            border: none;
-            background: transparent;
-            font-weight: 700;
-            color: var(--primary);
-            text-align: center;
-            outline: none;
-        }
-
-        /* Grid */
-        #grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 16px;
-        }
-        
-        @media (max-width: 600px) {
-            #grid { grid-template-columns: 1fr; gap: 12px; }
-            .bead-card { flex-direction: row !important; align-items: center; padding: 12px !important; }
-            .swatch { width: 40px !important; height: 40px !important; margin-right: 12px; margin-bottom: 0 !important; }
-            .card-info { text-align: left !important; }
-            .card-actions { margin-top: 0 !important; margin-left: auto; }
-        }
-
-        .bead-card {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-shadow: var(--shadow);
-            border: 2px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-        .bead-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .bead-card.selected { border-color: var(--primary); background: rgba(79, 70, 229, 0.05); }
-
-        .swatch {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 2px solid rgba(0,0,0,0.05);
-            margin-bottom: 12px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .card-info { text-align: center; flex: 1; }
-        .bead-id { font-size: 18px; font-weight: 800; margin-bottom: 4px; font-family: monospace; }
-        
-        .weight-pill {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 6px;
-            background: var(--bg);
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        .weight-pill.low { background: var(--warn); color: white; }
-        
-        .sub-text { font-size: 11px; color: var(--text-sub); margin-top: 4px; display: block; }
-
-        .card-actions { margin-top: 12px; }
-        .btn-mini {
-            padding: 4px 10px;
-            font-size: 12px;
-            border-radius: 100px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-        }
-
-        /* Floating Footer */
-        .footer {
-            position: fixed;
-            bottom: calc(var(--safe-bottom) + 20px);
-            left: 50%;
-            transform: translateX(-50%) translateY(150%);
-            width: 90%;
-            max-width: 400px;
-            background: var(--text-main);
-            color: var(--bg);
-            padding: 16px 24px;
-            border-radius: 100px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 100;
-        }
-        .footer.show { transform: translateX(-50%) translateY(0); }
-        .footer-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 100px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        /* Modals */
-        .overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
-        }
-        .overlay.active { opacity: 1; pointer-events: auto; }
-
-        .modal {
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0.95);
-            width: 90%; max-width: 450px;
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 24px;
-            z-index: 1010;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.2s;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-        .modal.active { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
-        
-        .modal h3 { margin: 0 0 16px; font-size: 20px; text-align: center; }
-        
-        textarea {
-            width: 100%;
-            height: 150px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px;
-            color: var(--text-main);
-            font-family: monospace;
-            resize: none;
-            box-sizing: border-box;
-            margin-bottom: 16px;
-        }
-        
-        .modal-btns { display: flex; flex-direction: column; gap: 10px; }
-        .modal-btns .btn { width: 100%; padding: 12px; font-size: 15px; }
-
-        .consume-list { max-height: 300px; overflow-y: auto; margin-bottom: 16px; }
-        .consume-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-        }
-        .consume-item input {
-            width: 80px;
-            padding: 8px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            text-align: center;
-            background: var(--bg);
-            color: var(--text-main);
-        }
-
-    </style>
+        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; }
+        .modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:15px; width: 85%; max-width: 400px; max-height: 70vh; overflow-y: auto; z-index:1010; }
+        .modal-row { display: flex; align-items: center; margin-bottom: 12px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
+        .modal-input { width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-left: auto; text-align: center; }
+    </style>
 </head>
 <body>
 
-<header>
-    <div class="header-content">
-        <div class="top-bar">
-            <div class="title-area">
-                <div class="stat-badge">
-                    <span style="color:var(--text-sub)">总色号</span>
-                    <b>221</b>
-                </div>
-                <div class="stat-badge">
-                    <span style="color:var(--warn)">待补货</span>
-                    <b id="count-low" style="color:var(--warn)">0</b>
-                </div>
-            </div>
-            <div class="action-area">
-                <button class="btn" onclick="openImport()">导入</button>
-                <button class="btn" onclick="openBackup()">备份</button>
-            </div>
-        </div>
-        
-        <div class="search-bar">
-            <input type="text" id="search" class="search-input" placeholder="搜索色号..." oninput="render()">
-            <div class="setting-item">
-                预警 <input type="number" id="threshold" class="setting-input" value="5" onchange="updateThreshold()">g
-            </div>
-            <button class="btn" onclick="toggleSort()" id="sortBtn">排序</button>
-        </div>
-    </div>
-</header>
+<div class="container">
+    <div class="header-sticky">
+        <div class="top-bar">
+            <div class="stats">
+                <div class="stat-item">色号<b>221</b></div>
+                <div class="stat-item">补货<b id="count-low" style="color:var(--warn)">0</b></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:5px; align-items: flex-end;">
+                <button class="btn-text" onclick="exportData()">💾 备份数据</button>
+                <button class="btn-text" onclick="importData()">🔄 恢复数据</button>
+            </div>
+        </div>
 
-<div class="app-container">
-    <div id="grid"></div>
+        <div class="config-zone">
+            阈值: <input type="number" id="threshold" value="5" onchange="updateThreshold()">g
+            <button id="sortBtn" class="btn-sort" onclick="toggleSort()">📊 按消耗量排序</button>
+            <button class="btn-text" onclick="copyLowList()" style="margin-left:auto">复制补货单</button>
+        </div>
+
+        <input type="text" id="search" placeholder="输入色号搜索..." oninput="render()">
+    </div>
+
+    <div id="grid"></div>
 </div>
 
-<div class="footer" id="footer">
-    <span>已选 <b id="selNum" style="color:var(--accent)">0</b> 个</span>
-    <button class="footer-btn" onclick="openConsume()">消耗录入</button>
+<div class="footer-bar" id="footer" style="display:none;">
+    <div>已选 <span id="selNum" style="color:#ffec3d; font-weight:bold;">0</span> 色</div>
+    <button class="btn-go" onclick="openConsumeModal()">录入粒数并扣除</button>
 </div>
 
-<!-- Modals -->
-<div class="overlay" id="mask" onclick="closeAllModals()"></div>
-
-<!-- Import Modal -->
-<div id="importModal" class="modal">
-    <h3>初始数据导入</h3>
-    <p style="font-size:13px; color:var(--text-sub); margin-bottom:12px;">粘贴表格数据 (例如: A1:36.1 | B2:12.5)</p>
-    <textarea id="importInput" placeholder="在此粘贴..."></textarea>
-    <div class="modal-btns">
-        <button class="btn btn-primary" onclick="handleImport()">识别并导入</button>
-        <button class="btn" onclick="closeAllModals()">取消</button>
-    </div>
-</div>
-
-<!-- Backup Modal -->
-<div id="backupModal" class="modal">
-    <h3>数据备份</h3>
-    <textarea id="backupText" readonly></textarea>
-    <div class="modal-btns">
-        <button class="btn btn-primary" onclick="copyBackup()">复制备份代码</button>
-        <button class="btn" style="color:var(--warn)" onclick="enableRestore()">我要恢复数据</button>
-        <button class="btn" onclick="closeAllModals()">关闭</button>
-    </div>
-</div>
-
-<!-- Consume Modal -->
-<div id="consumeModal" class="modal">
-    <h3>消耗录入 (粒数)</h3>
-    <div class="consume-list" id="modalList"></div>
-    <div class="modal-btns">
-        <button class="btn btn-primary" onclick="submitConsume()">确认扣除</button>
-        <button class="btn" onclick="closeAllModals()">取消</button>
-    </div>
+<div class="overlay" id="mask" onclick="closeModal()"></div>
+<div id="modal" class="modal">
+    <h3 style="margin-top:0">消耗录入</h3>
+    <div id="modalList"></div>
+    <button onclick="submitConsume()" style="width:100%; padding:12px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; margin-top:10px;">确认扣除</button>
 </div>
 
 <script>
-    // Database
-    const MARD_DB = [{id:'A1',hex:'#faf5cd'},{id:'A2',hex:'#fcfed6'},{id:'A3',hex:'#fcff92'},{id:'A4',hex:'#f7ec5c'},{id:'A5',hex:'#f0d83a'},{id:'A6',hex:'#fda951'},{id:'A7',hex:'#fa8c4f'},{id:'A8',hex:'#fbda4d'},{id:'A9',hex:'#f79d5f'},{id:'A10',hex:'#f47e38'},{id:'A11',hex:'#fedb99'},{id:'A12',hex:'#fda276'},{id:'A13',hex:'#fec667'},{id:'A14',hex:'#f75842'},{id:'A15',hex:'#fbf65e'},{id:'A16',hex:'#feff97'},{id:'A17',hex:'#fde173'},{id:'A18',hex:'#fcbf80'},{id:'A19',hex:'#fd7e77'},{id:'A20',hex:'#f9d66e'},{id:'A21',hex:'#fae393'},{id:'A22',hex:'#edf878'},{id:'A23',hex:'#e4c8ba'},{id:'A24',hex:'#f3f6a9'},{id:'A25',hex:'#ffd785'},{id:'A26',hex:'#ffc734'},{id:'B1',hex:'#dff13b'},{id:'B2',hex:'#64f343'},{id:'B3',hex:'#a1f586'},{id:'B4',hex:'#5fdf34'},{id:'B5',hex:'#39e158'},{id:'B6',hex:'#64e0a4'},{id:'B7',hex:'#3eae7c'},{id:'B8',hex:'#1d9b54'},{id:'B9',hex:'#2a5037'},{id:'B10',hex:'#9ad1ba'},{id:'B11',hex:'#627032'},{id:'B12',hex:'#1a6e3d'},{id:'B13',hex:'#c8e87d'},{id:'B14',hex:'#abe84f'},{id:'B15',hex:'#305335'},{id:'B16',hex:'#c0ed9c'},{id:'B17',hex:'#9eb33e'},{id:'B18',hex:'#e6ed4f'},{id:'B19',hex:'#26b78e'},{id:'B20',hex:'#cbeccf'},{id:'B21',hex:'#18616a'},{id:'B22',hex:'#0a4241'},{id:'B23',hex:'#343b1a'},{id:'B24',hex:'#e8faa6'},{id:'B25',hex:'#4e846d'},{id:'B26',hex:'#907c35'},{id:'B27',hex:'#d0e0af'},{id:'B28',hex:'#9ee5bb'},{id:'B29',hex:'#c6df5f'},{id:'B30',hex:'#e3fbb1'},{id:'B31',hex:'#b4e691'},{id:'B32',hex:'#92ad60'},{id:'C1',hex:'#f0fee4'},{id:'C2',hex:'#abf8fe'},{id:'C3',hex:'#a2e0f7'},{id:'C4',hex:'#44cdfb'},{id:'C5',hex:'#06aadf'},{id:'C6',hex:'#54a7e9'},{id:'C7',hex:'#3977ca'},{id:'C8',hex:'#0f52bd'},{id:'C9',hex:'#3349c3'},{id:'C10',hex:'#3cbce3'},{id:'C11',hex:'#2aded3'},{id:'C12',hex:'#1e334e'},{id:'C13',hex:'#cde7fe'},{id:'C14',hex:'#d5fcf7'},{id:'C15',hex:'#21c5c4'},{id:'C16',hex:'#1858a2'},{id:'C17',hex:'#02d1f3'},{id:'C18',hex:'#213244'},{id:'C19',hex:'#18869d'},{id:'C20',hex:'#1a70a9'},{id:'C21',hex:'#bcddfc'},{id:'C22',hex:'#6bb1bb'},{id:'C23',hex:'#7695ca'},{id:'C24',hex:'#a9dffc'},{id:'C25',hex:'#3d6cb3'},{id:'C26',hex:'#02789e'},{id:'C27',hex:'#006981'},{id:'C28',hex:'#b4e8f7'},{id:'C29',hex:'#25446c'},{id:'C30',hex:'#0081a2'},{id:'C31',hex:'#97b8dc'},{id:'C32',hex:'#033a59'},{id:'D1',hex:'#fee3d4'},{id:'D2',hex:'#f9c6c4'},{id:'D3',hex:'#fca7a4'},{id:'D4',hex:'#f08587'},{id:'D5',hex:'#ee5253'},{id:'D6',hex:'#e82936'},{id:'D7',hex:'#d20822'},{id:'D8',hex:'#ad0824'},{id:'D9',hex:'#7d051e'},{id:'D10',hex:'#ef949b'},{id:'D11',hex:'#f36b76'},{id:'D12',hex:'#a11d29'},{id:'D13',hex:'#fabec6'},{id:'D14',hex:'#ea5363'},{id:'D15',hex:'#9d2036'},{id:'D16',hex:'#fbcce0'},{id:'D17',hex:'#f592bc'},{id:'D18',hex:'#ee5b99'},{id:'D19',hex:'#e21c7a'},{id:'D20',hex:'#c3095d'},{id:'D21',hex:'#880f48'},{id:'D22',hex:'#f2a9be'},{id:'D23',hex:'#d74880'},{id:'D24',hex:'#681438'},{id:'D25',hex:'#f7d7e3'},{id:'D26',hex:'#f0b1d0'},{id:'D27',hex:'#e076ac'},{id:'D28',hex:'#c4468f'},{id:'D29',hex:'#992e76'},{id:'D30',hex:'#671e54'},{id:'D31',hex:'#ebc0d8'},{id:'D32',hex:'#b25a97'},{id:'D33',hex:'#3f0f35'},{id:'D34',hex:'#e9d1e1'},{id:'D35',hex:'#cfa6c6'},{id:'D36',hex:'#a774a3'},{id:'D37',hex:'#814d84'},{id:'D38',hex:'#5c3065'},{id:'D39',hex:'#3e1c44'},{id:'D40',hex:'#bfa0c0'},{id:'D41',hex:'#784a7e'},{id:'D42',hex:'#f0f2f4'},{id:'E1',hex:'#e5d8ed'},{id:'E2',hex:'#c6b0d6'},{id:'E3',hex:'#a285bf'},{id:'E4',hex:'#7f5fa6'},{id:'E5',hex:'#5d3f8c'},{id:'E6',hex:'#3f2670'},{id:'E7',hex:'#dacbe6'},{id:'E8',hex:'#9472b5'},{id:'E9',hex:'#462875'},{id:'E10',hex:'#cbbfe1'},{id:'E11',hex:'#8974b2'},{id:'E12',hex:'#463175'},{id:'E13',hex:'#c2c3e5'},{id:'E14',hex:'#9ea0d2'},{id:'E15',hex:'#777bc0'},{id:'E16',hex:'#5458ab'},{id:'E17',hex:'#373c96'},{id:'E18',hex:'#20227e'},{id:'E19',hex:'#aab5dd'},{id:'E20',hex:'#637ac1'},{id:'E21',hex:'#263583'},{id:'F1',hex:'#ffffff'},{id:'F2',hex:'#dcdcdc'},{id:'F3',hex:'#b8b8b8'},{id:'F4',hex:'#959595'},{id:'F5',hex:'#757575'},{id:'F6',hex:'#555555'},{id:'F7',hex:'#393939'},{id:'F8',hex:'#1c1c1c'},{id:'F9',hex:'#000000'},{id:'F10',hex:'#b3b3b3'},{id:'F11',hex:'#686868'},{id:'F12',hex:'#cdcdcd'},{id:'F13',hex:'#838383'},{id:'F14',hex:'#424242'},{id:'G1',hex:'#fef1cd'},{id:'G2',hex:'#fbd69c'},{id:'G3',hex:'#e8b06e'},{id:'G4',hex:'#cd8b46'},{id:'G5',hex:'#b06927'},{id:'G6',hex:'#8f4b13'},{id:'G7',hex:'#e3c7a7'},{id:'G8',hex:'#bb956b'},{id:'G9',hex:'#906941'},{id:'G10',hex:'#644120'},{id:'G11',hex:'#bba48b'},{id:'G12',hex:'#8c765d'},{id:'G13',hex:'#604d39'},{id:'G14',hex:'#e9e0d3'},{id:'G15',hex:'#c2b5a5'},{id:'G16',hex:'#998b7a'},{id:'G17',hex:'#716455'},{id:'G18',hex:'#4b4136'},{id:'G19',hex:'#b7a796'},{id:'G20',hex:'#877868'},{id:'G21',hex:'#584d41'},{id:'G22',hex:'#a9a099'},{id:'G23',hex:'#787069'},{id:'G24',hex:'#4b443e'},{id:'H1',hex:'#fff2e3'},{id:'H2',hex:'#ffe1c0'},{id:'H3',hex:'#fccba1'},{id:'H4',hex:'#f6b284'},{id:'H5',hex:'#ef9669'},{id:'H6',hex:'#e6784f'},{id:'H7',hex:'#da5738'},{id:'H8',hex:'#cc2e25'},{id:'H9',hex:'#991e20'},{id:'H10',hex:'#f4ad87'},{id:'H11',hex:'#e17b55'},{id:'H12',hex:'#aa2e24'},{id:'H13',hex:'#fbd0b9'},{id:'H14',hex:'#f49c7a'},{id:'H15',hex:'#e96542'},{id:'H16',hex:'#d62828'},{id:'H17',hex:'#f6e3d7'},{id:'H18',hex:'#eabda8'},{id:'H19',hex:'#da967d'},{id:'H20',hex:'#c67056'},{id:'H21',hex:'#b14b35'},{id:'H22',hex:'#99261a'},{id:'H23',hex:'#d99e89'},{id:'H24',hex:'#ad5b46'},{id:'H25',hex:'#801e15'},{id:'I1',hex:'#d3e2bc'},{id:'I2',hex:'#b5d191'},{id:'I3',hex:'#9bc068'},{id:'I4',hex:'#7fad42'},{id:'I5',hex:'#639922'},{id:'I6',hex:'#468407'},{id:'I7',hex:'#c5d8a0'},{id:'I8',hex:'#9bb968'},{id:'I9',hex:'#709935'},{id:'I10',hex:'#8baf80'},{id:'I11',hex:'#5f8952'},{id:'I12',hex:'#356129'},{id:'I13',hex:'#dfe9dc'},{id:'I14',hex:'#bed0b8'},{id:'I15',hex:'#9db695'},{id:'I16',hex:'#7e9b74'},{id:'I17',hex:'#608155'},{id:'I18',hex:'#436639'},{id:'I19',hex:'#a7be9e'},{id:'I20',hex:'#718e66'},{id:'I21',hex:'#3f5f35'},{id:'J1',hex:'#fdf5e0'},{id:'J2',hex:'#faeab8'},{id:'J3',hex:'#f6df8f'},{id:'J4',hex:'#f1d368'},{id:'J5',hex:'#ecc742'},{id:'J6',hex:'#e6ba18'},{id:'J7',hex:'#f6df94'},{id:'J8',hex:'#ecc850'},{id:'J9',hex:'#e1b107'},{id:'J10',hex:'#e7d48f'},{id:'J11',hex:'#d2b963'},{id:'J12',hex:'#bb9e38'},{id:'J13',hex:'#f4ebd2'},{id:'J14',hex:'#e7d7a5'},{id:'J15',hex:'#d9c37b'},{id:'J16',hex:'#caaf53'},{id:'J17',hex:'#ba9b2f'},{id:'J18',hex:'#aa8805'},{id:'J19',hex:'#dec88a'},{id:'J20',hex:'#c0a459'},{id:'J21',hex:'#a18029'},{id:'K1',hex:'#d9f1f0'},{id:'K2',hex:'#b1e1df'},{id:'K3',hex:'#89d1ce'},{id:'K4',hex:'#5ec0be'},{id:'K5',hex:'#28afae'},{id:'K6',hex:'#009e9e'},{id:'K7',hex:'#9cd4d3'},{id:'K8',hex:'#5ebaba'},{id:'K9',hex:'#009f9f'},{id:'K10',hex:'#abcbc9'},{id:'K11',hex:'#74a9a6'},{id:'K12',hex:'#3c8784'},{id:'K13',hex:'#d7e9ea'},{id:'K14',hex:'#aed2d4'},{id:'K15',hex:'#86bbbf'},{id:'K16',hex:'#5da4aa'},{id:'K17',hex:'#2d8d95'},{id:'K18',hex:'#007680'},{id:'K19',hex:'#97c1c5'},{id:'K20',hex:'#569ca2'},{id:'K21',hex:'#00777f'},{id:'L1',hex:'#fbe7f0'},{id:'L2',hex:'#f7cee1'},{id:'L3',hex:'#f3b4d2'},{id:'L4',hex:'#ee9ac3'},{id:'L5',hex:'#e97fb4'},{id:'L6',hex:'#e362a5'},{id:'L7',hex:'#f4bcd6'},{id:'L8',hex:'#ea8db7'},{id:'L9',hex:'#df5b97'},{id:'L10',hex:'#dcb5c9'},{id:'L11',hex:'#c385a4'},{id:'L12',hex:'#a8537f'},{id:'L13',hex:'#ece3eb'},{id:'L14',hex:'#dac5d7'},{id:'L15',hex:'#c7a8c3'},{id:'L16',hex:'#b48baf'},{id:'L17',hex:'#a16f9c'},{id:'L18',hex:'#8e5388'},{id:'L19',hex:'#cbb0c7'},{id:'L20',hex:'#a57da0'},{id:'L21',hex:'#7e4b7a'},{id:'M1',hex:'#faeadd'},{id:'M2',hex:'#f5d5bb'},{id:'M3',hex:'#efc09a'},{id:'M4',hex:'#e9ab79'},{id:'M5',hex:'#e39659'},{id:'M6',hex:'#dd8139'},{id:'M7',hex:'#f0cbb0'},{id:'M8',hex:'#e49e71'},{id:'M9',hex:'#d67035'},{id:'M10',hex:'#dbc0aa'},{id:'M11',hex:'#ba9676'},{id:'M12',hex:'#996d44'},{id:'M13',hex:'#eee8e3'},{id:'M14',hex:'#ddd1c7'},{id:'M15',hex:'#ccbbac'},{id:'M16',hex:'#baa491'},{id:'M17',hex:'#a98e77'},{id:'M18',hex:'#97795d'},{id:'M19',hex:'#cbb6a6'},{id:'M20',hex:'#a48871'},{id:'M21',hex:'#7d5b3f'}];
+    const MARD_DB = [
+        {id:'A1',hex:'#faf5cd'},{id:'A2',hex:'#fcfed6'},{id:'A3',hex:'#fcff92'},{id:'A4',hex:'#f7ec5c'},{id:'A5',hex:'#f0d83a'},{id:'A6',hex:'#fda951'},{id:'A7',hex:'#fa8c4f'},{id:'A8',hex:'#fbda4d'},{id:'A9',hex:'#f79d5f'},{id:'A10',hex:'#f47e38'},{id:'A11',hex:'#fedb99'},{id:'A12',hex:'#fda276'},{id:'A13',hex:'#fec667'},{id:'A14',hex:'#f75842'},{id:'A15',hex:'#fbf65e'},{id:'A16',hex:'#feff97'},{id:'A17',hex:'#fde173'},{id:'A18',hex:'#fcbf80'},{id:'A19',hex:'#fd7e77'},{id:'A20',hex:'#f9d66e'},{id:'A21',hex:'#fae393'},{id:'A22',hex:'#edf878'},{id:'A23',hex:'#e4c8ba'},{id:'A24',hex:'#f3f6a9'},{id:'A25',hex:'#ffd785'},{id:'A26',hex:'#ffc734'},
+        {id:'B1',hex:'#dff13b'},{id:'B2',hex:'#64f343'},{id:'B3',hex:'#a1f586'},{id:'B4',hex:'#5fdf34'},{id:'B5',hex:'#39e158'},{id:'B6',hex:'#64e0a4'},{id:'B7',hex:'#3eae7c'},{id:'B8',hex:'#1d9b54'},{id:'B9',hex:'#2a5037'},{id:'B10',hex:'#9ad1ba'},{id:'B11',hex:'#627032'},{id:'B12',hex:'#1a6e3d'},{id:'B13',hex:'#c8e87d'},{id:'B14',hex:'#abe84f'},{id:'B15',hex:'#305335'},{id:'B16',hex:'#c0ed9c'},{id:'B17',hex:'#9eb33e'},{id:'B18',hex:'#e6ed4f'},{id:'B19',hex:'#26b78e'},{id:'B20',hex:'#cbeccf'},{id:'B21',hex:'#18616a'},{id:'B22',hex:'#0a4241'},{id:'B23',hex:'#343b1a'},{id:'B24',hex:'#e8faa6'},{id:'B25',hex:'#4e846d'},{id:'B26',hex:'#907c35'},{id:'B27',hex:'#d0e0af'},{id:'B28',hex:'#9ee5bb'},{id:'B29',hex:'#c6df5f'},{id:'B30',hex:'#e3fbb1'},{id:'B31',hex:'#b4e691'},{id:'B32',hex:'#92ad60'},
+        {id:'C1',hex:'#f0fee4'},{id:'C2',hex:'#abf8fe'},{id:'C3',hex:'#a2e0f7'},{id:'C4',hex:'#44cdfb'},{id:'C5',hex:'#06aadf'},{id:'C6',hex:'#54a7e9'},{id:'C7',hex:'#3977ca'},{id:'C8',hex:'#0f52bd'},{id:'C9',hex:'#3349c3'},{id:'C10',hex:'#3cbce3'},{id:'C11',hex:'#2aded3'},{id:'C12',hex:'#1e334e'},{id:'C13',hex:'#cde7fe'},{id:'C14',hex:'#d5fcf7'},{id:'C15',hex:'#21c5c4'},{id:'C16',hex:'#1858a2'},{id:'C17',hex:'#02d1f3'},{id:'C18',hex:'#213244'},{id:'C19',hex:'#18869d'},{id:'C20',hex:'#1a70a9'},{id:'C21',hex:'#bcddfc'},{id:'C22',hex:'#6bb1bb'},{id:'C23',hex:'#c8e2fd'},{id:'C24',hex:'#7ec5f9'},{id:'C25',hex:'#a9e8e0'},{id:'C26',hex:'#42adcf'},{id:'C27',hex:'#d0def9'},{id:'C28',hex:'#bdcee8'},{id:'C29',hex:'#364a89'},
+        {id:'D1',hex:'#acb7ef'},{id:'D2',hex:'#868dd3'},{id:'D3',hex:'#3554af'},{id:'D4',hex:'#162d7b'},{id:'D5',hex:'#b34ec6'},{id:'D6',hex:'#b37bdc'},{id:'D7',hex:'#8758a9'},{id:'D8',hex:'#e3d2fe'},{id:'D9',hex:'#d5b9f4'},{id:'D10',hex:'#301a49'},{id:'D11',hex:'#beb9e2'},{id:'D12',hex:'#dc99ce'},{id:'D13',hex:'#b5038d'},{id:'D14',hex:'#862993'},{id:'D15',hex:'#2f1f8c'},{id:'D16',hex:'#e2e4f0'},{id:'D17',hex:'#c7d3f9'},{id:'D18',hex:'#9a64b8'},{id:'D19',hex:'#d8c2d9'},{id:'D20',hex:'#9a35ad'},{id:'D21',hex:'#940595'},{id:'D22',sweet:'#38389a'},{id:'D23',hex:'#eadbf8'},{id:'D24',hex:'#768ae1'},{id:'D25',hex:'#4950c2'},{id:'D26',hex:'#d6c6eb'},
+        {id:'E1',hex:'#f6d4cb'},{id:'E2',hex:'#fcc1dd'},{id:'E3',hex:'#f6bde8'},{id:'E4',hex:'#e8649e'},{id:'E5',hex:'#f0569f'},{id:'E6',hex:'#eb4172'},{id:'E7',hex:'#c53674'},{id:'E8',hex:'#fddbe9'},{id:'E9',hex:'#e376c7'},{id:'E10',hex:'#d13b95'},{id:'E11',hex:'#f7dad4'},{id:'E12',hex:'#f693bf'},{id:'E13',hex:'#b5026a'},{id:'E14',hex:'#fad4bf'},{id:'E15',hex:'#f5c9ca'},{id:'E16',hex:'#fbf4ec'},{id:'E17',hex:'#f7e3ec'},{id:'E18',hex:'#f9c8db'},{id:'E19',hex:'#f6bbd1'},{id:'E20',hex:'#d7c6ce'},{id:'E21',hex:'#c09da4'},{id:'E22',hex:'#b38c9f'},{id:'E23',hex:'#937d8a'},{id:'E24',hex:'#debee5'},
+        {id:'F1',hex:'#fe9381'},{id:'F2',hex:'#f63d4b'},{id:'F3',hex:'#ee4e3e'},{id:'F4',hex:'#fb2a40'},{id:'F5',hex:'#e10328'},{id:'F6',hex:'#913635'},{id:'F7',hex:'#911932'},{id:'F8',hex:'#bb0126'},{id:'F9',hex:'#e0677a'},{id:'F10',hex:'#874628'},{id:'F11',hex:'#592323'},{id:'F12',hex:'#f3536b'},{id:'F13',hex:'#f45c45'},{id:'F14',hex:'#fcadb2'},{id:'F15',hex:'#d50527'},{id:'F16',hex:'#f8c0a9'},{id:'F17',hex:'#e89b7d'},{id:'F18',hex:'#d07f4a'},{id:'F19',hex:'#be454a'},{id:'F20',hex:'#c69495'},{id:'F21',hex:'#f2b8c6'},{id:'F22',hex:'#f7c3d0'},{id:'F23',hex:'#ed806c'},{id:'F24',hex:'#e09daf'},{id:'F25',hex:'#e84854'},
+        {id:'G1',hex:'#ffe4d3'},{id:'G2',hex:'#fcc6ac'},{id:'G3',hex:'#f1c4a5'},{id:'G4',hex:'#dcb387'},{id:'G5',hex:'#e7b34e'},{id:'G6',hex:'#e3a014'},{id:'G7',hex:'#985c3a'},{id:'G8',hex:'#713d2f'},{id:'G9',hex:'#e4b685'},{id:'G10',hex:'#da8c42'},{id:'G11',hex:'#dac898'},{id:'G12',hex:'#fec993'},{id:'G13',hex:'#b2714b'},{id:'G14',hex:'#8b684c'},{id:'G15',hex:'#f6f8e3'},{id:'G16',hex:'#f2d8c1'},{id:'G17',hex:'#77544e'},{id:'G18',hex:'#ffe3d5'},{id:'G19',hex:'#dd7d41'},{id:'G20',hex:'#a5452f'},{id:'G21',hex:'#b38561'},
+        {id:'H1',hex:'#ffffff'},{id:'H2',hex:'#fbfbfb'},{id:'H3',hex:'#b4b4b4'},{id:'H4',hex:'#878787'},{id:'H5',hex:'#464646'},{id:'H6',hex:'#2c2c2c'},{id:'H7',hex:'#010101'},{id:'H8',hex:'#e7d6dc'},{id:'H9',hex:'#efedee'},{id:'H10',hex:'#ebebeb'},{id:'H11',hex:'#cdcdcd'},{id:'H12',hex:'#fdf6ee'},{id:'H13',hex:'#f4efd1'},{id:'H14',hex:'#ced7d4'},{id:'H15',hex:'#9aa6a6'},{id:'H16',hex:'#1b1213'},{id:'H17',hex:'#f0eeef'},{id:'H18',hex:'#fcfff6'},{id:'H19',hex:'#f2eee5'},{id:'H20',hex:'#96a09f'},{id:'H21',hex:'#f8fbe6'},{id:'H22',hex:'#cacad2'},{id:'H23',hex:'#9b9c94'},
+        {id:'M1',hex:'#bbc6b6'},{id:'M2',hex:'#909994'},{id:'M3',hex:'#697e81'},{id:'M4',hex:'#e0d4bc'},{id:'M5',hex:'#d1ccaf'},{id:'M6',hex:'#b0aa86'},{id:'M7',hex:'#b0a796'},{id:'M8',hex:'#ae8082'},{id:'M9',hex:'#a68862'},{id:'M10',hex:'#c4b3bb'},{id:'M11',hex:'#9d7693'},{id:'M12',hex:'#644b51'},{id:'M13',hex:'#c79266'},{id:'M14',hex:'#c27563'},{id:'M15',hex:'#747d7a'}
+    ];
 
-    // State
-    let data = JSON.parse(localStorage.getItem('mard_v2_data')) || MARD_DB.map(i => ({...i, w: 0, totalUsed: 0}));
-    let threshold = parseFloat(localStorage.getItem('mard_v2_ts')) || 5;
-    let sortByUse = false;
-    let sel = new Set();
+    let data = JSON.parse(localStorage.getItem('bead_v_sort')) || MARD_DB.map(i => ({...i, w: 0, totalUsed: 0, logs: []}));
+    let threshold = parseFloat(localStorage.getItem('bead_threshold')) || 5;
+    let sortByUsage = false; // 排序模式状态
+    let sel = new Set();
 
-    // DOM Elements
-    const grid = document.getElementById('grid');
-    const footer = document.getElementById('footer');
-    const mask = document.getElementById('mask');
+    function render() {
+        const q = document.getElementById('search').value.toUpperCase();
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        let lowCount = 0;
 
-    function render() {
-        document.getElementById('threshold').value = threshold;
-        const q = document.getElementById('search').value.toUpperCase();
-        grid.innerHTML = '';
-        let lowCount = 0;
+        // 排序逻辑
+        let displayData = [...data];
+        if (sortByUsage) {
+            displayData.sort((a, b) => (b.totalUsed || 0) - (a.totalUsed || 0));
+        } else {
+            // 默认按ID字母+数字排序
+            displayData.sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true, sensitivity: 'base'}));
+        }
 
-        let display = [...data];
-        if(sortByUse) display.sort((a,b) => b.totalUsed - a.totalUsed);
-        else display.sort((a,b) => a.id.localeCompare(b.id, undefined, {numeric:true}));
+        displayData.forEach(item => {
+            if (item.id.includes(q)) {
+                const isLow = item.w < threshold && item.w > 0;
+                if(isLow) lowCount++;
+                
+                const row = document.createElement('div');
+                row.className = `bead-row ${sel.has(item.id) ? 'selected' : ''}`;
+                row.onclick = () => toggleSelect(item.id);
+                
+                row.innerHTML = `
+                    <div class="col-select"><input type="checkbox" ${sel.has(item.id)?'checked':''}></div>
+                    <div class="col-color"><div class="swatch" style="background:${item.hex}"></div></div>
+                    <div class="col-id">${item.id}</div>
+                    <div class="col-weight">
+                        <span class="weight-badge ${isLow ? 'low' : ''}" onclick="event.stopPropagation(); manualEdit('${item.id}')">${item.w}g</span>
+                        <span class="info-tag">累计消耗: <span class="total-use">${(item.totalUsed||0).toFixed(2)}g</span></span>
+                    </div>
+                    <div class="col-action">
+                        <button class="btn-plus" onclick="event.stopPropagation(); quickAdd('${item.id}')">+10g</button>
+                    </div>
+                `;
+                grid.appendChild(row);
+            }
+        });
+        document.getElementById('count-low').innerText = lowCount;
+        save();
+    }
 
-        display.forEach(item => {
-            if(!item.id.includes(q)) return;
-            const isLow = item.w < threshold && item.w > 0;
-            if(isLow) lowCount++;
+    function toggleSort() {
+        sortByUsage = !sortByUsage;
+        const btn = document.getElementById('sortBtn');
+        btn.innerText = sortByUsage ? "📊 按名称排序" : "📊 按消耗量排序";
+        btn.classList.toggle('active', sortByUsage);
+        render();
+    }
 
-            const card = document.createElement('div');
-            card.className = `bead-card ${sel.has(item.id) ? 'selected' : ''}`;
-            card.onclick = () => toggleSel(item.id);
-            card.innerHTML = `
-                <div class="swatch" style="background:${item.hex}"></div>
-                <div class="card-info">
-                    <div class="bead-id">${item.id}</div>
-                    <div class="weight-pill ${isLow ? 'low' : ''}" 
-                         onclick="event.stopPropagation(); manualEdit('${item.id}')">
-                         ${item.w}g
-                    </div>
-                    <span class="sub-text">耗: ${item.totalUsed.toFixed(2)}g</span>
-                </div>
-                <div class="card-actions">
-                    <button class="btn-mini" onclick="event.stopPropagation(); quickAdd('${item.id}')">+10</button>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
+    function toggleSelect(id) {
+        sel.has(id) ? sel.delete(id) : sel.add(id);
+        document.getElementById('footer').style.display = sel.size > 0 ? 'flex' : 'none';
+        document.getElementById('selNum').innerText = sel.size;
+        render();
+    }
 
-        document.getElementById('count-low').innerText = lowCount;
-        save();
-    }
+    function updateThreshold() {
+        threshold = parseFloat(document.getElementById('threshold').value) || 0;
+        localStorage.setItem('bead_threshold', threshold);
+        render();
+    }
 
-    function toggleSel(id) {
-        sel.has(id) ? sel.delete(id) : sel.add(id);
-        footer.classList.toggle('show', sel.size > 0);
-        document.getElementById('selNum').innerText = sel.size;
-        render();
-    }
+    function quickAdd(id) {
+        const item = data.find(d => d.id === id);
+        item.w = parseFloat((item.w + 10).toFixed(2));
+        render();
+    }
 
-    function updateThreshold() {
-        threshold = parseFloat(document.getElementById('threshold').value) || 0;
-        localStorage.setItem('mard_v2_ts', threshold);
-        render();
-    }
+    function manualEdit(id) {
+        const item = data.find(d => d.id === id);
+        const val = prompt(`【${id}】累计消耗：${(item.totalUsed||0).toFixed(2)}g\n修改库存重量(g):`, item.w);
+        if (val !== null) { item.w = parseFloat(val) || 0; render(); }
+    }
 
-    function quickAdd(id) {
-        const item = data.find(d => d.id === id);
-        item.w = parseFloat((item.w + 10).toFixed(2));
-        render();
-    }
+    function openConsumeModal() {
+        const listDiv = document.getElementById('modalList');
+        listDiv.innerHTML = '';
+        sel.forEach(id => {
+            const item = data.find(d => d.id === id);
+            const row = document.createElement('div');
+            row.className = 'modal-row';
+            row.innerHTML = `
+                <div class="swatch" style="width:20px; height:20px; background:${item.hex}"></div>
+                <b style="margin-left:10px; width:45px;">${id}</b>
+                <input type="number" class="consume-input" data-id="${id}" placeholder="粒数">
+            `;
+            listDiv.appendChild(row);
+        });
+        document.getElementById('modal').style.display = 'block';
+        document.getElementById('mask').style.display = 'block';
+    }
 
-    function manualEdit(id) {
-        const item = data.find(d => d.id === id);
-        const v = prompt(`修改 [${id}] 库存重量(g):`, item.w);
-        if(v !== null) { item.w = parseFloat(v) || 0; render(); }
-    }
+    function submitConsume() {
+        const inputs = document.querySelectorAll('.consume-input');
+        const now = new Date();
+        const dateStr = (now.getMonth()+1) + '/' + now.getDate();
+        
+        inputs.forEach(input => {
+            const id = input.getAttribute('data-id');
+            const count = parseFloat(input.value) || 0;
+            if(count > 0) {
+                const item = data.find(d => d.id === id);
+                const g = count / 100;
+                item.w = Math.max(0, parseFloat((item.w - g).toFixed(2)));
+                item.totalUsed = parseFloat(((item.totalUsed || 0) + g).toFixed(2));
+                if(!item.logs) item.logs = [];
+                item.logs.push({ d: dateStr, c: count });
+                if(item.logs.length > 10) item.logs.shift();
+            }
+        });
+        closeModal();
+        sel.clear();
+        document.getElementById('footer').style.display = 'none';
+        render();
+    }
 
-    // Modal Logic
-    function showModal(id) {
-        mask.classList.add('active');
-        document.getElementById(id).classList.add('active');
-    }
-    function closeAllModals() {
-        mask.classList.remove('active');
-        document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
-    }
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+        document.getElementById('mask').style.display = 'none';
+    }
 
-    function openImport() { showModal('importModal'); }
-    function handleImport() {
-        const raw = document.getElementById('importInput').value;
-        const regex = /([A-M]\d+)[:：\s]+(\d+(\.\d+)?)/g;
-        let match, count = 0;
-        while ((match = regex.exec(raw)) !== null) {
-            const target = data.find(d => d.id === match[1]);
-            if(target) { target.w = parseFloat(match[2]); count++; }
-        }
-        alert(`成功同步 ${count} 个色号数据！`);
-        closeAllModals();
-        render();
-    }
+    function save() { localStorage.setItem('bead_v_sort', JSON.stringify(data)); }
 
-    function openBackup() {
-        document.getElementById('backupText').value = JSON.stringify(data);
-        document.getElementById('backupText').readOnly = true;
-        showModal('backupModal');
-    }
-    function copyBackup() {
-        const txt = document.getElementById('backupText');
-        txt.select();
-        document.execCommand('copy');
-        alert("已复制！请保存到备忘录。");
-    }
-    function enableRestore() {
-        const txt = document.getElementById('backupText');
-        txt.readOnly = false;
-        txt.value = '';
-        txt.placeholder = '请在此粘贴备份数据...';
-        txt.focus();
-        // Change button to restore action
-        const btn = document.querySelector('#backupModal .btn[onclick="enableRestore()"]');
-        btn.innerText = "确认恢复";
-        btn.onclick = restoreBackup;
-    }
-    function restoreBackup() {
-        try {
-            const json = JSON.parse(document.getElementById('backupText').value);
-            if(Array.isArray(json)) { 
-                data = json; 
-                save(); 
-                render(); 
-                alert("恢复成功！"); 
-                closeAllModals(); 
-                // Reset button
-                const btn = document.querySelector('#backupModal .btn[onclick="restoreBackup"]');
-                btn.innerText = "我要恢复数据";
-                btn.onclick = enableRestore;
-            }
-        } catch(e) { alert("数据格式无效！"); }
-    }
+    function exportData() {
+        const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+        navigator.clipboard.writeText(b64).then(() => alert("库存与统计已复制！"));
+    }
 
-    function openConsume() {
-        const list = document.getElementById('modalList');
-        list.innerHTML = '';
-        sel.forEach(id => {
-            const item = data.find(d => d.id === id);
-            list.innerHTML += `
-                <div class="consume-item">
-                    <div style="display:flex; align-items:center;">
-                        <div class="swatch" style="width:24px; height:24px; margin-right:10px; margin-bottom:0; background:${item.hex}"></div>
-                        <b>${id}</b>
-                    </div>
-                    <input type="number" class="c-input" data-id="${id}" placeholder="粒数">
-                </div>`;
-        });
-        showModal('consumeModal');
-    }
+    function importData() {
+        const code = prompt("粘贴备份代码：");
+        if (code) {
+            try {
+                data = JSON.parse(decodeURIComponent(escape(atob(code))));
+                render();
+                alert("恢复成功！");
+            } catch(e) { alert("恢复失败。"); }
+        }
+    }
 
-    function submitConsume() {
-        document.querySelectorAll('.c-input').forEach(input => {
-            const count = parseFloat(input.value) || 0;
-            if(count > 0) {
-                const item = data.find(d => d.id === input.dataset.id);
-                const g = count / 100; // 假设100粒=1g
-                item.w = Math.max(0, parseFloat((item.w - g).toFixed(2)));
-                item.totalUsed = parseFloat((item.totalUsed + g).toFixed(2));
-            }
-        });
-        sel.clear();
-        footer.classList.remove('show');
-        closeAllModals();
-        render();
-    }
+    function copyLowList() {
+        const list = data.filter(d => d.w < threshold && d.w > 0).map(d => `${d.id}(${d.w}g)`).join(', ');
+        navigator.clipboard.writeText(list || '充足').then(() => alert("已复制"));
+    }
 
-    function toggleSort() { 
-        sortByUse = !sortByUse; 
-        document.getElementById('sortBtn').innerText = sortByUse ? '按消耗' : '按ID';
-        render(); 
-    }
-    function save() { localStorage.setItem('mard_v2_data', JSON.stringify(data)); }
-
-    // Init
-    render();
-
+    render();
 </script>
 </body>
-</html>
+</html>基于这段代码，做以下4个优化。1修复bug: 阈值虽然修改了，但一刷新就会变成5g。
+2.备份功能没有用，id录入后会报错恢复失败，请看下有没有其他备份方法。
+3.操作弹窗颜色不好看，请修改样式是
+4.新增一个初始数据导入功能，可以上传初始数据
