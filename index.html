@@ -3,66 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MARD 豆库 - 专业发布版</title>
+    <title>MARD 豆库 - 统计排序版</title>
     <style>
         :root { --primary: #4a90e2; --warn: #ff4d4f; --bg: #f0f2f5; --success: #52c41a; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; font-size: 14px; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; font-size: 14px; color: #333; }
         .container { max-width: 600px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 90px; }
         
-        /* 头部统计 */
-        .header-sticky { position: sticky; top: 0; background: white; z-index: 100; border-bottom: 2px solid #eee; padding: 15px; }
-        .stats { display: flex; justify-content: space-around; margin-bottom: 12px; background: #f8f9fa; padding: 10px; border-radius: 8px; }
-        .stat-item { text-align: center; }
-        .stat-item b { display: block; font-size: 18px; color: var(--primary); }
+        /* 头部控制区 */
+        .header-sticky { position: sticky; top: 0; background: white; z-index: 100; border-bottom: 2px solid #eee; padding: 12px 15px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .stats { display: flex; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; flex: 1; margin-right: 10px; }
+        .stat-item b { display: block; font-size: 16px; color: var(--primary); }
 
-        /* 备份恢复按钮 */
-        .backup-zone { display: flex; gap: 10px; margin-bottom: 10px; }
-        .btn-text { font-size: 12px; color: #666; cursor: pointer; text-decoration: underline; background:none; border:none; padding:0; }
+        /* 配置与排序区 */
+        .config-zone { font-size: 12px; background: #fffbe6; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .config-zone input { width: 40px; padding: 2px 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+        .btn-sort { background: #fff; border: 1px solid var(--primary); color: var(--primary); padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .btn-sort.active { background: var(--primary); color: white; }
+
+        .btn-text { font-size: 12px; color: var(--primary); cursor: pointer; background:none; border:none; padding:0; text-decoration: underline; }
 
         /* 搜索框 */
-        .search-bar { display: flex; gap: 10px; }
-        #search { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+        #search { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; margin-bottom: 5px; }
         
         /* 列表渲染 */
         .bead-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; }
         .bead-row.selected { background: #e6f7ff; }
-        .col-select { width: 30px; display: flex; align-items: center; }
-        .col-color { width: 45px; }
-        .swatch { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #ddd; box-shadow: inset 0 0 4px rgba(0,0,0,0.1); }
-        .col-id { width: 70px; font-weight: bold; font-family: monospace; font-size: 16px; }
-        .col-weight { flex: 1; display: flex; align-items: center; }
-        .weight-badge { padding: 5px 10px; border-radius: 6px; background: #f0f0f0; font-weight: bold; font-family: monospace; cursor: pointer; }
+        .col-select { width: 25px; }
+        .col-color { width: 40px; }
+        .swatch { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ddd; }
+        .col-id { width: 60px; font-weight: bold; font-family: monospace; font-size: 15px; }
+        .col-weight { flex: 1; }
+        .weight-badge { padding: 4px 8px; border-radius: 6px; background: #eee; font-weight: bold; font-family: monospace; cursor: pointer; }
         .weight-badge.low { background: var(--warn); color: white; }
-        .col-action { width: 70px; text-align: right; }
-        .btn-plus { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .col-action { width: 60px; text-align: right; }
+        .btn-plus { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; padding: 5px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+
+        .info-tag { font-size: 10px; color: #999; display: block; margin-top: 3px; }
+        .total-use { color: #8c8c8c; font-weight: bold; }
 
         /* 底部操作栏 */
-        .footer-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: #333; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 200; border-radius: 12px 12px 0 0; }
-        .btn-go { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; }
+        .footer-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: #333; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 200; border-radius: 12px 12px 0 0; }
+        .btn-go { background: var(--success); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        /* 弹窗样式 */
         .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; }
-        #modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:15px; width: 85%; max-width: 400px; max-height: 70vh; overflow-y: auto; z-index:1001; }
+        .modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:15px; width: 85%; max-width: 400px; max-height: 70vh; overflow-y: auto; z-index:1010; }
         .modal-row { display: flex; align-items: center; margin-bottom: 12px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
-        .modal-input { width: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-left: auto; text-align: center; font-size: 16px; }
+        .modal-input { width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-left: auto; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-sticky">
-        <div class="backup-zone">
-            <button class="btn-text" onclick="exportData()">💾 备份库存(导出)</button>
-            <button class="btn-text" onclick="importData()">🔄 恢复库存(导入)</button>
+        <div class="top-bar">
+            <div class="stats">
+                <div class="stat-item">色号<b>221</b></div>
+                <div class="stat-item">补货<b id="count-low" style="color:var(--warn)">0</b></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:5px; align-items: flex-end;">
+                <button class="btn-text" onclick="exportData()">💾 备份数据</button>
+                <button class="btn-text" onclick="importData()">🔄 恢复数据</button>
+            </div>
         </div>
-        <div class="stats">
-            <div class="stat-item">总色号<b>221</b></div>
-            <div class="stat-item">低于5g提醒<b id="count-low" style="color:var(--warn)">0</b></div>
-            <button onclick="copyLowList()" style="border:none; background:none; color:var(--primary); text-decoration:underline;">复制缺货单</button>
+
+        <div class="config-zone">
+            阈值: <input type="number" id="threshold" value="5" onchange="updateThreshold()">g
+            <button id="sortBtn" class="btn-sort" onclick="toggleSort()">📊 按消耗量排序</button>
+            <button class="btn-text" onclick="copyLowList()" style="margin-left:auto">复制补货单</button>
         </div>
-        <div class="search-bar">
-            <input type="text" id="search" placeholder="搜索色号 (A1, B12)..." oninput="render()">
-        </div>
+
+        <input type="text" id="search" placeholder="输入色号搜索..." oninput="render()">
     </div>
 
     <div id="grid"></div>
@@ -70,15 +81,14 @@
 
 <div class="footer-bar" id="footer" style="display:none;">
     <div>已选 <span id="selNum" style="color:#ffec3d; font-weight:bold;">0</span> 色</div>
-    <button class="btn-go" onclick="openConsumeModal()">填写粒数并扣除</button>
+    <button class="btn-go" onclick="openConsumeModal()">录入粒数并扣除</button>
 </div>
 
 <div class="overlay" id="mask" onclick="closeModal()"></div>
-<div id="modal">
-    <h3 style="margin-top:0">本次使用数量 (粒)</h3>
-    <p style="color:#999; font-size:12px;">自动计算：100粒 = 1g</p>
+<div id="modal" class="modal">
+    <h3 style="margin-top:0">消耗录入</h3>
     <div id="modalList"></div>
-    <button onclick="submitConsume()" style="width:100%; padding:12px; background:var(--primary); color:white; border:none; border-radius:8px; font-size:16px; font-weight:bold; margin-top:10px;">确认扣除库存</button>
+    <button onclick="submitConsume()" style="width:100%; padding:12px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; margin-top:10px;">确认扣除</button>
 </div>
 
 <script>
@@ -86,7 +96,7 @@
         {id:'A1',hex:'#faf5cd'},{id:'A2',hex:'#fcfed6'},{id:'A3',hex:'#fcff92'},{id:'A4',hex:'#f7ec5c'},{id:'A5',hex:'#f0d83a'},{id:'A6',hex:'#fda951'},{id:'A7',hex:'#fa8c4f'},{id:'A8',hex:'#fbda4d'},{id:'A9',hex:'#f79d5f'},{id:'A10',hex:'#f47e38'},{id:'A11',hex:'#fedb99'},{id:'A12',hex:'#fda276'},{id:'A13',hex:'#fec667'},{id:'A14',hex:'#f75842'},{id:'A15',hex:'#fbf65e'},{id:'A16',hex:'#feff97'},{id:'A17',hex:'#fde173'},{id:'A18',hex:'#fcbf80'},{id:'A19',hex:'#fd7e77'},{id:'A20',hex:'#f9d66e'},{id:'A21',hex:'#fae393'},{id:'A22',hex:'#edf878'},{id:'A23',hex:'#e4c8ba'},{id:'A24',hex:'#f3f6a9'},{id:'A25',hex:'#ffd785'},{id:'A26',hex:'#ffc734'},
         {id:'B1',hex:'#dff13b'},{id:'B2',hex:'#64f343'},{id:'B3',hex:'#a1f586'},{id:'B4',hex:'#5fdf34'},{id:'B5',hex:'#39e158'},{id:'B6',hex:'#64e0a4'},{id:'B7',hex:'#3eae7c'},{id:'B8',hex:'#1d9b54'},{id:'B9',hex:'#2a5037'},{id:'B10',hex:'#9ad1ba'},{id:'B11',hex:'#627032'},{id:'B12',hex:'#1a6e3d'},{id:'B13',hex:'#c8e87d'},{id:'B14',hex:'#abe84f'},{id:'B15',hex:'#305335'},{id:'B16',hex:'#c0ed9c'},{id:'B17',hex:'#9eb33e'},{id:'B18',hex:'#e6ed4f'},{id:'B19',hex:'#26b78e'},{id:'B20',hex:'#cbeccf'},{id:'B21',hex:'#18616a'},{id:'B22',hex:'#0a4241'},{id:'B23',hex:'#343b1a'},{id:'B24',hex:'#e8faa6'},{id:'B25',hex:'#4e846d'},{id:'B26',hex:'#907c35'},{id:'B27',hex:'#d0e0af'},{id:'B28',hex:'#9ee5bb'},{id:'B29',hex:'#c6df5f'},{id:'B30',hex:'#e3fbb1'},{id:'B31',hex:'#b4e691'},{id:'B32',hex:'#92ad60'},
         {id:'C1',hex:'#f0fee4'},{id:'C2',hex:'#abf8fe'},{id:'C3',hex:'#a2e0f7'},{id:'C4',hex:'#44cdfb'},{id:'C5',hex:'#06aadf'},{id:'C6',hex:'#54a7e9'},{id:'C7',hex:'#3977ca'},{id:'C8',hex:'#0f52bd'},{id:'C9',hex:'#3349c3'},{id:'C10',hex:'#3cbce3'},{id:'C11',hex:'#2aded3'},{id:'C12',hex:'#1e334e'},{id:'C13',hex:'#cde7fe'},{id:'C14',hex:'#d5fcf7'},{id:'C15',hex:'#21c5c4'},{id:'C16',hex:'#1858a2'},{id:'C17',hex:'#02d1f3'},{id:'C18',hex:'#213244'},{id:'C19',hex:'#18869d'},{id:'C20',hex:'#1a70a9'},{id:'C21',hex:'#bcddfc'},{id:'C22',hex:'#6bb1bb'},{id:'C23',hex:'#c8e2fd'},{id:'C24',hex:'#7ec5f9'},{id:'C25',hex:'#a9e8e0'},{id:'C26',hex:'#42adcf'},{id:'C27',hex:'#d0def9'},{id:'C28',hex:'#bdcee8'},{id:'C29',hex:'#364a89'},
-        {id:'D1',hex:'#acb7ef'},{id:'D2',hex:'#868dd3'},{id:'D3',hex:'#3554af'},{id:'D4',hex:'#162d7b'},{id:'D5',hex:'#b34ec6'},{id:'D6',hex:'#b37bdc'},{id:'D7',hex:'#8758a9'},{id:'D8',hex:'#e3d2fe'},{id:'D9',hex:'#d5b9f4'},{id:'D10',hex:'#301a49'},{id:'D11',hex:'#beb9e2'},{id:'D12',hex:'#dc99ce'},{id:'D13',hex:'#b5038d'},{id:'D14',hex:'#862993'},{id:'D15',hex:'#2f1f8c'},{id:'D16',hex:'#e2e4f0'},{id:'D17',hex:'#c7d3f9'},{id:'D18',hex:'#9a64b8'},{id:'D19',hex:'#d8c2d9'},{id:'D20',hex:'#9a35ad'},{id:'D21',hex:'#940595'},{id:'D22',hex:'#38389a'},{id:'D23',hex:'#eadbf8'},{id:'D24',hex:'#768ae1'},{id:'D25',hex:'#4950c2'},{id:'D26',hex:'#d6c6eb'},
+        {id:'D1',hex:'#acb7ef'},{id:'D2',hex:'#868dd3'},{id:'D3',hex:'#3554af'},{id:'D4',hex:'#162d7b'},{id:'D5',hex:'#b34ec6'},{id:'D6',hex:'#b37bdc'},{id:'D7',hex:'#8758a9'},{id:'D8',hex:'#e3d2fe'},{id:'D9',hex:'#d5b9f4'},{id:'D10',hex:'#301a49'},{id:'D11',hex:'#beb9e2'},{id:'D12',hex:'#dc99ce'},{id:'D13',hex:'#b5038d'},{id:'D14',hex:'#862993'},{id:'D15',hex:'#2f1f8c'},{id:'D16',hex:'#e2e4f0'},{id:'D17',hex:'#c7d3f9'},{id:'D18',hex:'#9a64b8'},{id:'D19',hex:'#d8c2d9'},{id:'D20',hex:'#9a35ad'},{id:'D21',hex:'#940595'},{id:'D22',sweet:'#38389a'},{id:'D23',hex:'#eadbf8'},{id:'D24',hex:'#768ae1'},{id:'D25',hex:'#4950c2'},{id:'D26',hex:'#d6c6eb'},
         {id:'E1',hex:'#f6d4cb'},{id:'E2',hex:'#fcc1dd'},{id:'E3',hex:'#f6bde8'},{id:'E4',hex:'#e8649e'},{id:'E5',hex:'#f0569f'},{id:'E6',hex:'#eb4172'},{id:'E7',hex:'#c53674'},{id:'E8',hex:'#fddbe9'},{id:'E9',hex:'#e376c7'},{id:'E10',hex:'#d13b95'},{id:'E11',hex:'#f7dad4'},{id:'E12',hex:'#f693bf'},{id:'E13',hex:'#b5026a'},{id:'E14',hex:'#fad4bf'},{id:'E15',hex:'#f5c9ca'},{id:'E16',hex:'#fbf4ec'},{id:'E17',hex:'#f7e3ec'},{id:'E18',hex:'#f9c8db'},{id:'E19',hex:'#f6bbd1'},{id:'E20',hex:'#d7c6ce'},{id:'E21',hex:'#c09da4'},{id:'E22',hex:'#b38c9f'},{id:'E23',hex:'#937d8a'},{id:'E24',hex:'#debee5'},
         {id:'F1',hex:'#fe9381'},{id:'F2',hex:'#f63d4b'},{id:'F3',hex:'#ee4e3e'},{id:'F4',hex:'#fb2a40'},{id:'F5',hex:'#e10328'},{id:'F6',hex:'#913635'},{id:'F7',hex:'#911932'},{id:'F8',hex:'#bb0126'},{id:'F9',hex:'#e0677a'},{id:'F10',hex:'#874628'},{id:'F11',hex:'#592323'},{id:'F12',hex:'#f3536b'},{id:'F13',hex:'#f45c45'},{id:'F14',hex:'#fcadb2'},{id:'F15',hex:'#d50527'},{id:'F16',hex:'#f8c0a9'},{id:'F17',hex:'#e89b7d'},{id:'F18',hex:'#d07f4a'},{id:'F19',hex:'#be454a'},{id:'F20',hex:'#c69495'},{id:'F21',hex:'#f2b8c6'},{id:'F22',hex:'#f7c3d0'},{id:'F23',hex:'#ed806c'},{id:'F24',hex:'#e09daf'},{id:'F25',hex:'#e84854'},
         {id:'G1',hex:'#ffe4d3'},{id:'G2',hex:'#fcc6ac'},{id:'G3',hex:'#f1c4a5'},{id:'G4',hex:'#dcb387'},{id:'G5',hex:'#e7b34e'},{id:'G6',hex:'#e3a014'},{id:'G7',hex:'#985c3a'},{id:'G8',hex:'#713d2f'},{id:'G9',hex:'#e4b685'},{id:'G10',hex:'#da8c42'},{id:'G11',hex:'#dac898'},{id:'G12',hex:'#fec993'},{id:'G13',hex:'#b2714b'},{id:'G14',hex:'#8b684c'},{id:'G15',hex:'#f6f8e3'},{id:'G16',hex:'#f2d8c1'},{id:'G17',hex:'#77544e'},{id:'G18',hex:'#ffe3d5'},{id:'G19',hex:'#dd7d41'},{id:'G20',hex:'#a5452f'},{id:'G21',hex:'#b38561'},
@@ -94,7 +104,9 @@
         {id:'M1',hex:'#bbc6b6'},{id:'M2',hex:'#909994'},{id:'M3',hex:'#697e81'},{id:'M4',hex:'#e0d4bc'},{id:'M5',hex:'#d1ccaf'},{id:'M6',hex:'#b0aa86'},{id:'M7',hex:'#b0a796'},{id:'M8',hex:'#ae8082'},{id:'M9',hex:'#a68862'},{id:'M10',hex:'#c4b3bb'},{id:'M11',hex:'#9d7693'},{id:'M12',hex:'#644b51'},{id:'M13',hex:'#c79266'},{id:'M14',hex:'#c27563'},{id:'M15',hex:'#747d7a'}
     ];
 
-    let data = JSON.parse(localStorage.getItem('bead_stock_pro')) || MARD_DB.map(i => ({...i, w: 0, t: 5}));
+    let data = JSON.parse(localStorage.getItem('bead_v_sort')) || MARD_DB.map(i => ({...i, w: 0, totalUsed: 0, logs: []}));
+    let threshold = parseFloat(localStorage.getItem('bead_threshold')) || 5;
+    let sortByUsage = false; // 排序模式状态
     let sel = new Set();
 
     function render() {
@@ -103,19 +115,31 @@
         grid.innerHTML = '';
         let lowCount = 0;
 
-        data.forEach(item => {
+        // 排序逻辑
+        let displayData = [...data];
+        if (sortByUsage) {
+            displayData.sort((a, b) => (b.totalUsed || 0) - (a.totalUsed || 0));
+        } else {
+            // 默认按ID字母+数字排序
+            displayData.sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true, sensitivity: 'base'}));
+        }
+
+        displayData.forEach(item => {
             if (item.id.includes(q)) {
-                const isLow = item.w < item.t && item.w > 0;
+                const isLow = item.w < threshold && item.w > 0;
                 if(isLow) lowCount++;
+                
                 const row = document.createElement('div');
                 row.className = `bead-row ${sel.has(item.id) ? 'selected' : ''}`;
                 row.onclick = () => toggleSelect(item.id);
+                
                 row.innerHTML = `
                     <div class="col-select"><input type="checkbox" ${sel.has(item.id)?'checked':''}></div>
                     <div class="col-color"><div class="swatch" style="background:${item.hex}"></div></div>
                     <div class="col-id">${item.id}</div>
                     <div class="col-weight">
                         <span class="weight-badge ${isLow ? 'low' : ''}" onclick="event.stopPropagation(); manualEdit('${item.id}')">${item.w}g</span>
+                        <span class="info-tag">累计消耗: <span class="total-use">${(item.totalUsed||0).toFixed(2)}g</span></span>
                     </div>
                     <div class="col-action">
                         <button class="btn-plus" onclick="event.stopPropagation(); quickAdd('${item.id}')">+10g</button>
@@ -125,14 +149,27 @@
             }
         });
         document.getElementById('count-low').innerText = lowCount;
-        localStorage.setItem('bead_stock_pro', JSON.stringify(data));
+        save();
+    }
+
+    function toggleSort() {
+        sortByUsage = !sortByUsage;
+        const btn = document.getElementById('sortBtn');
+        btn.innerText = sortByUsage ? "📊 按名称排序" : "📊 按消耗量排序";
+        btn.classList.toggle('active', sortByUsage);
+        render();
     }
 
     function toggleSelect(id) {
         sel.has(id) ? sel.delete(id) : sel.add(id);
-        const footer = document.getElementById('footer');
-        footer.style.display = sel.size > 0 ? 'flex' : 'none';
+        document.getElementById('footer').style.display = sel.size > 0 ? 'flex' : 'none';
         document.getElementById('selNum').innerText = sel.size;
+        render();
+    }
+
+    function updateThreshold() {
+        threshold = parseFloat(document.getElementById('threshold').value) || 0;
+        localStorage.setItem('bead_threshold', threshold);
         render();
     }
 
@@ -144,7 +181,7 @@
 
     function manualEdit(id) {
         const item = data.find(d => d.id === id);
-        const val = prompt(`【${id}】直接设置重量(g):`, item.w);
+        const val = prompt(`【${id}】累计消耗：${(item.totalUsed||0).toFixed(2)}g\n修改库存重量(g):`, item.w);
         if (val !== null) { item.w = parseFloat(val) || 0; render(); }
     }
 
@@ -157,7 +194,7 @@
             row.className = 'modal-row';
             row.innerHTML = `
                 <div class="swatch" style="width:20px; height:20px; background:${item.hex}"></div>
-                <b style="margin-left:10px">${id}</b>
+                <b style="margin-left:10px; width:45px;">${id}</b>
                 <input type="number" class="consume-input" data-id="${id}" placeholder="粒数">
             `;
             listDiv.appendChild(row);
@@ -168,12 +205,20 @@
 
     function submitConsume() {
         const inputs = document.querySelectorAll('.consume-input');
+        const now = new Date();
+        const dateStr = (now.getMonth()+1) + '/' + now.getDate();
+        
         inputs.forEach(input => {
             const id = input.getAttribute('data-id');
             const count = parseFloat(input.value) || 0;
             if(count > 0) {
                 const item = data.find(d => d.id === id);
-                item.w = Math.max(0, (item.w - count/100).toFixed(2));
+                const g = count / 100;
+                item.w = Math.max(0, parseFloat((item.w - g).toFixed(2)));
+                item.totalUsed = parseFloat(((item.totalUsed || 0) + g).toFixed(2));
+                if(!item.logs) item.logs = [];
+                item.logs.push({ d: dateStr, c: count });
+                if(item.logs.length > 10) item.logs.shift();
             }
         });
         closeModal();
@@ -187,38 +232,27 @@
         document.getElementById('mask').style.display = 'none';
     }
 
-    function copyLowList() {
-        const list = data.filter(d => d.w < d.t && d.w > 0).map(d => `${d.id}(${d.w}g)`).join(', ');
-        if(!list) return alert("库存充足！");
-        navigator.clipboard.writeText(list).then(() => alert("补货清单已复制"));
-    }
+    function save() { localStorage.setItem('bead_v_sort', JSON.stringify(data)); }
 
-    // --- 数据备份与恢复 ---
     function exportData() {
         const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-        const dummy = document.createElement("textarea");
-        document.body.appendChild(dummy);
-        dummy.value = b64;
-        dummy.select();
-        document.execCommand("copy");
-        document.body.removeChild(dummy);
-        alert("【备份成功】\n库存代码已复制到剪贴板，请粘贴并保存到你的手机备忘录或微信中。下次如需找回，点击'恢复'即可。");
+        navigator.clipboard.writeText(b64).then(() => alert("库存与统计已复制！"));
     }
 
     function importData() {
-        const code = prompt("请粘贴之前备份的库存代码：");
+        const code = prompt("粘贴备份代码：");
         if (code) {
             try {
-                const decoded = JSON.parse(decodeURIComponent(escape(atob(code))));
-                if(Array.isArray(decoded)) {
-                    data = decoded;
-                    render();
-                    alert("【恢复成功】库存已更新！");
-                }
-            } catch(e) {
-                alert("无效的代码，恢复失败。");
-            }
+                data = JSON.parse(decodeURIComponent(escape(atob(code))));
+                render();
+                alert("恢复成功！");
+            } catch(e) { alert("恢复失败。"); }
         }
+    }
+
+    function copyLowList() {
+        const list = data.filter(d => d.w < threshold && d.w > 0).map(d => `${d.id}(${d.w}g)`).join(', ');
+        navigator.clipboard.writeText(list || '充足').then(() => alert("已复制"));
     }
 
     render();
