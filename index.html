@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MARD 豆库 Pro - 统计版</title>
+    <title>MARD 豆库 Pro - 极黑版</title>
     <style>
-        :root { --primary: #1c1c1e; --accent: #007aff; --warn: #ff3b30; --bg: #f2f2f7; --card: #ffffff; }
+        :root { --primary: #1c1c1e; --accent: #007aff; --warn: #ff3b30; --bg: #f2f2f7; --card: #ffffff; --gradient: linear-gradient(135deg, #2c3e50, #000000); }
         body { font-family: -apple-system, "SF Pro Text", sans-serif; background: var(--bg); margin: 0; padding: 0; color: #1c1c1e; }
         .container { max-width: 600px; margin: 0 auto; min-height: 100vh; padding-bottom: 100px; }
         
@@ -20,7 +20,6 @@
         .config-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
         .search-input { flex: 1; padding: 10px 12px; border: none; background: #e3e3e6; border-radius: 10px; font-size: 16px; outline: none; }
         .btn-tool { background: white; border: 0.5px solid #d1d1d6; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; }
-        .btn-tool.active { background: var(--primary); color: white; border-color: var(--primary); }
 
         /* 列表渲染 */
         .bead-row { display: flex; align-items: center; padding: 12px 15px; background: var(--card); border-bottom: 0.5px solid #f2f2f7; transition: 0.2s; }
@@ -36,18 +35,28 @@
         .footer { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: rgba(28,28,30,0.95); backdrop-filter: blur(10px); color: white; padding: 15px 20px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 200; }
         .btn-submit { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; }
 
-        /* 弹窗样式 - iOS 风格优化 */
-        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index:1000; }
-        .modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:25px; border-radius:24px; width: 85%; max-width: 400px; z-index:1010; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
-        .modal h3 { margin: 0 0 15px; font-size: 20px; text-align: center; }
-        textarea { width: 100%; height: 120px; border: 1px solid #ddd; border-radius: 12px; padding: 10px; font-size: 12px; font-family: monospace; background: #f9f9f9; box-sizing: border-box; margin-bottom: 15px;}
+        /* 弹窗样式 - 渐变色背景优化 */
+        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index:1000; }
+        .modal { 
+            display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); 
+            background: var(--gradient); /* 渐变色 */
+            padding:25px; border-radius:24px; width: 85%; max-width: 400px; z-index:1010; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal h3 { margin: 0 0 15px; font-size: 20px; text-align: center; color: #fff; }
+        textarea { 
+            width: 100%; height: 120px; border: none; border-radius: 12px; padding: 10px; 
+            font-size: 13px; font-family: monospace; background: rgba(255,255,255,0.1); 
+            box-sizing: border-box; margin-bottom: 15px; color: #fff; outline: none;
+        }
         .modal-btn-group { display: flex; flex-direction: column; gap: 8px; }
-        .m-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
-        .m-btn-primary { background: var(--primary); color: white; }
-        .m-btn-ghost { background: #f2f2f7; color: #333; }
+        .m-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .m-btn-primary { background: #007aff; color: white; }
+        .m-btn-primary:active { background: #0056b3; }
+        .m-btn-ghost { background: rgba(255,255,255,0.15); color: white; }
         
-        .modal-list-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #eee; }
-        .modal-list-item input { width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 8px; text-align: center; }
+        .modal-list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 0.5px solid rgba(255,255,255,0.1); }
+        .modal-list-item input { width: 80px; padding: 8px; border: none; background: rgba(255,255,255,0.2); border-radius: 8px; text-align: center; color: white; outline: none; font-weight: 700;}
     </style>
 </head>
 <body>
@@ -57,16 +66,16 @@
         <div class="top-row">
             <div class="stats-box">
                 <div class="stat-item"><span>总色号</span><b>221</b></div>
-                <div class="stat-item"><span>待补货</span><b id="count-low" style="color:var(--warn)">0</b></div>
+                <div class="stat-item"><span>待补货/缺货</span><b id="count-low" style="color:var(--warn)">0</b></div>
             </div>
             <div style="display:flex; gap:8px;">
-                <button class="btn-tool" onclick="openImport()">初始导入</button>
+                <button class="btn-tool" onclick="openImport()">导入数据</button>
                 <button class="btn-tool" onclick="openBackup()">同步备份</button>
             </div>
         </div>
 
         <div class="config-bar">
-            <input type="text" id="search" class="search-input" placeholder="搜索色号..." oninput="render()">
+            <input type="text" id="search" class="search-input" placeholder="输入 ID 搜索..." oninput="render()">
             <div style="font-size:12px; color:#8e8e93;">
                 预警:<input type="number" id="threshold" style="width:35px; border:none; background:none; font-weight:700; color:var(--accent);" onchange="updateThreshold()">g
             </div>
@@ -78,34 +87,33 @@
 </div>
 
 <div class="footer" id="footer" style="display:none;">
-    <span>已选择 <b id="selNum" style="color:var(--accent)">0</b> 个色号</span>
+    <span>已选 <b id="selNum" style="color:#4cd964">0</b> 色</span>
     <button class="btn-submit" onclick="openConsume()">消耗录入</button>
 </div>
 
 <div class="overlay" id="mask" onclick="closeAllModals()"></div>
 
 <div id="importModal" class="modal">
-    <h3>初始数据导入</h3>
-    <p style="font-size:12px; color:#666; margin-bottom:10px;">请粘贴数据（如 A1:36.1 | B2:12.5 或直接粘贴表格文字）</p>
-    <textarea id="importInput" placeholder="在此粘贴..."></textarea>
+    <h3>识别导入数据</h3>
+    <textarea id="importInput" placeholder="在此粘贴色号明细..."></textarea>
     <div class="modal-btn-group">
-        <button class="m-btn m-btn-primary" onclick="handleImport()">识别并存入</button>
+        <button class="m-btn m-btn-primary" onclick="handleImport()">更新现有库存</button>
         <button class="m-btn m-btn-ghost" onclick="closeAllModals()">取消</button>
     </div>
 </div>
 
 <div id="backupModal" class="modal">
-    <h3>数据备份与恢复</h3>
+    <h3>系统备份与恢复</h3>
     <textarea id="backupText"></textarea>
     <div class="modal-btn-group">
-        <button class="m-btn m-btn-primary" onclick="copyBackup()">复制当前数据(备份)</button>
-        <button class="m-btn m-btn-ghost" style="color:var(--warn)" onclick="restoreBackup()">覆盖并恢复(从上方粘贴)</button>
-        <button class="m-btn m-btn-ghost" onclick="closeAllModals()">关闭</button>
+        <button class="m-btn m-btn-primary" onclick="copyBackup()">复制备份代码</button>
+        <button class="m-btn m-btn-ghost" style="color:#ffcc00" onclick="restoreBackup()">从文本框恢复</button>
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()">返回</button>
     </div>
 </div>
 
 <div id="consumeModal" class="modal">
-    <h3>消耗录入(粒数)</h3>
+    <h3>录入粒数并扣除</h3>
     <div id="modalList" style="max-height:300px; overflow-y:auto; margin-bottom:15px;"></div>
     <div class="modal-btn-group">
         <button class="m-btn m-btn-primary" onclick="submitConsume()">确认扣除</button>
@@ -114,15 +122,18 @@
 </div>
 
 <script>
+    // 基础色号表
     const MARD_DB = [{id:'A1',hex:'#faf5cd'},{id:'A2',hex:'#fcfed6'},{id:'A3',hex:'#fcff92'},{id:'A4',hex:'#f7ec5c'},{id:'A5',hex:'#f0d83a'},{id:'A6',hex:'#fda951'},{id:'A7',hex:'#fa8c4f'},{id:'A8',hex:'#fbda4d'},{id:'A9',hex:'#f79d5f'},{id:'A10',hex:'#f47e38'},{id:'A11',hex:'#fedb99'},{id:'A12',hex:'#fda276'},{id:'A13',hex:'#fec667'},{id:'A14',hex:'#f75842'},{id:'A15',hex:'#fbf65e'},{id:'A16',hex:'#feff97'},{id:'A17',hex:'#fde173'},{id:'A18',hex:'#fcbf80'},{id:'A19',hex:'#fd7e77'},{id:'A20',hex:'#f9d66e'},{id:'A21',hex:'#fae393'},{id:'A22',hex:'#edf878'},{id:'A23',hex:'#e4c8ba'},{id:'A24',hex:'#f3f6a9'},{id:'A25',hex:'#ffd785'},{id:'A26',hex:'#ffc734'},{id:'B1',hex:'#dff13b'},{id:'B2',hex:'#64f343'},{id:'B3',hex:'#a1f586'},{id:'B4',hex:'#5fdf34'},{id:'B5',hex:'#39e158'},{id:'B6',hex:'#64e0a4'},{id:'B7',hex:'#3eae7c'},{id:'B8',hex:'#1d9b54'},{id:'B9',hex:'#2a5037'},{id:'B10',hex:'#9ad1ba'},{id:'B11',hex:'#627032'},{id:'B12',hex:'#1a6e3d'},{id:'B13',hex:'#c8e87d'},{id:'B14',hex:'#abe84f'},{id:'B15',hex:'#305335'},{id:'B16',hex:'#c0ed9c'},{id:'B17',hex:'#9eb33e'},{id:'B18',hex:'#e6ed4f'},{id:'B19',hex:'#26b78e'},{id:'B20',hex:'#cbeccf'},{id:'B21',hex:'#18616a'},{id:'B22',hex:'#0a4241'},{id:'B23',hex:'#343b1a'},{id:'B24',hex:'#e8faa6'},{id:'B25',hex:'#4e846d'},{id:'B26',hex:'#907c35'},{id:'B27',hex:'#d0e0af'},{id:'B28',hex:'#9ee5bb'},{id:'B29',hex:'#c6df5f'},{id:'B30',hex:'#e3fbb1'},{id:'B31',hex:'#b4e691'},{id:'B32',hex:'#92ad60'},{id:'C1',hex:'#f0fee4'},{id:'C2',hex:'#abf8fe'},{id:'C3',hex:'#a2e0f7'},{id:'C4',hex:'#44cdfb'},{id:'C5',hex:'#06aadf'},{id:'C6',hex:'#54a7e9'},{id:'C7',hex:'#3977ca'},{id:'C8',hex:'#0f52bd'},{id:'C9',hex:'#3349c3'},{id:'C10',hex:'#3cbce3'},{id:'C11',hex:'#2aded3'},{id:'C12',hex:'#1e334e'},{id:'C13',hex:'#cde7fe'},{id:'C14',hex:'#d5fcf7'},{id:'C15',hex:'#21c5c4'},{id:'C16',hex:'#1858a2'},{id:'C17',hex:'#02d1f3'},{id:'C18',hex:'#213244'},{id:'C19',hex:'#18869d'},{id:'C20',hex:'#1a70a9'},{id:'C21',hex:'#bcddfc'},{id:'C22',hex:'#6bb1bb'},{id:'C23',hex:'#c8e2fd'},{id:'C24',hex:'#7ec5f9'},{id:'C25',hex:'#a9e8e0'},{id:'C26',hex:'#42adcf'},{id:'C27',hex:'#d0def9'},{id:'C28',hex:'#bdcee8'},{id:'C29',hex:'#364a89'},{id:'D1',hex:'#acb7ef'},{id:'D2',hex:'#868dd3'},{id:'D3',hex:'#3554af'},{id:'D4',hex:'#162d7b'},{id:'D5',hex:'#b34ec6'},{id:'D6',hex:'#b37bdc'},{id:'D7',hex:'#8758a9'},{id:'D8',hex:'#e3d2fe'},{id:'D9',hex:'#d5b9f4'},{id:'D10',hex:'#301a49'},{id:'D11',hex:'#beb9e2'},{id:'D12',hex:'#dc99ce'},{id:'D13',hex:'#b5038d'},{id:'D14',hex:'#862993'},{id:'D15',hex:'#2f1f8c'},{id:'D16',hex:'#e2e4f0'},{id:'D17',hex:'#c7d3f9'},{id:'D18',hex:'#9a64b8'},{id:'D19',hex:'#d8c2d9'},{id:'D20',hex:'#9a35ad'},{id:'D21',hex:'#940595'},{id:'D22',hex:'#38389a'},{id:'D23',hex:'#eadbf8'},{id:'D24',hex:'#768ae1'},{id:'D25',hex:'#4950c2'},{id:'D26',hex:'#d6c6eb'},{id:'E1',hex:'#f6d4cb'},{id:'E2',hex:'#fcc1dd'},{id:'E3',hex:'#f6bde8'},{id:'E4',hex:'#e8649e'},{id:'E5',hex:'#f0569f'},{id:'E6',hex:'#eb4172'},{id:'E7',hex:'#c53674'},{id:'E8',hex:'#fddbe9'},{id:'E9',hex:'#e376c7'},{id:'E10',hex:'#d13b95'},{id:'E11',hex:'#f7dad4'},{id:'E12',hex:'#f693bf'},{id:'E13',hex:'#b5026a'},{id:'E14',hex:'#fad4bf'},{id:'E15',hex:'#f5c9ca'},{id:'E16',hex:'#fbf4ec'},{id:'E17',hex:'#f7e3ec'},{id:'E18',hex:'#f9c8db'},{id:'E19',hex:'#f6bbd1'},{id:'E20',hex:'#d7c6ce'},{id:'E21',hex:'#c09da4'},{id:'E22',hex:'#b38c9f'},{id:'E23',hex:'#937d8a'},{id:'E24',hex:'#debee5'},{id:'F1',hex:'#fe9381'},{id:'F2',hex:'#f63d4b'},{id:'F3',hex:'#ee4e3e'},{id:'F4',hex:'#fb2a40'},{id:'F5',hex:'#e10328'},{id:'F6',hex:'#913635'},{id:'F7',hex:'#911932'},{id:'F8',hex:'#bb0126'},{id:'F9',hex:'#e0677a'},{id:'F10',hex:'#874628'},{id:'F11',hex:'#592323'},{id:'F12',hex:'#f3536b'},{id:'F13',hex:'#f45c45'},{id:'F14',hex:'#fcadb2'},{id:'F15',hex:'#d50527'},{id:'F16',hex:'#f8c0a9'},{id:'F17',hex:'#e89b7d'},{id:'F18',hex:'#d07f4a'},{id:'F19',hex:'#be454a'},{id:'F20',hex:'#c69495'},{id:'F21',hex:'#f2b8c6'},{id:'F22',hex:'#f7c3d0'},{id:'F23',hex:'#ed806c'},{id:'F24',hex:'#e09daf'},{id:'F25',hex:'#e84854'},{id:'G1',hex:'#ffe4d3'},{id:'G2',hex:'#fcc6ac'},{id:'G3',hex:'#f1c4a5'},{id:'G4',hex:'#dcb387'},{id:'G5',hex:'#e7b34e'},{id:'G6',hex:'#e3a014'},{id:'G7',hex:'#985c3a'},{id:'G8',hex:'#713d2f'},{id:'G9',hex:'#e4b685'},{id:'G10',hex:'#da8c42'},{id:'G11',hex:'#dac898'},{id:'G12',hex:'#fec993'},{id:'G13',hex:'#b2714b'},{id:'G14',hex:'#8b684c'},{id:'G15',hex:'#f6f8e3'},{id:'G16',hex:'#f2d8c1'},{id:'G17',hex:'#77544e'},{id:'G18',hex:'#ffe3d5'},{id:'G19',hex:'#dd7d41'},{id:'G20',hex:'#a5452f'},{id:'G21',hex:'#b38561'},{id:'H1',hex:'#ffffff'},{id:'H2',hex:'#fbfbfb'},{id:'H3',hex:'#b4b4b4'},{id:'H4',hex:'#878787'},{id:'H5',hex:'#464646'},{id:'H6',hex:'#2c2c2c'},{id:'H7',hex:'#010101'},{id:'H8',hex:'#e7d6dc'},{id:'H9',hex:'#efedee'},{id:'H10',hex:'#ebebeb'},{id:'H11',hex:'#cdcdcd'},{id:'H12',hex:'#fdf6ee'},{id:'H13',hex:'#f4efd1'},{id:'H14',hex:'#ced7d4'},{id:'H15',hex:'#9aa6a6'},{id:'H16',hex:'#1b1213'},{id:'H17',hex:'#f0eeef'},{id:'H18',hex:'#fcfff6'},{id:'H19',hex:'#f2eee5'},{id:'H20',hex:'#96a09f'},{id:'H21',hex:'#f8fbe6'},{id:'H22',hex:'#cacad2'},{id:'H23',hex:'#9b9c94'},{id:'M1',hex:'#bbc6b6'},{id:'M2',hex:'#909994'},{id:'M3',hex:'#697e81'},{id:'M4',hex:'#e0d4bc'},{id:'M5',hex:'#d1ccaf'},{id:'M6',hex:'#b0aa86'},{id:'M7',hex:'#b0a796'},{id:'M8',hex:'#ae8082'},{id:'M9',hex:'#a68862'},{id:'M10',hex:'#c4b3bb'},{id:'M11',hex:'#9d7693'},{id:'M12',hex:'#644b51'},{id:'M13',hex:'#c79266'},{id:'M14',hex:'#c27563'},{id:'M15',hex:'#747d7a'}];
 
-    let data = JSON.parse(localStorage.getItem('mard_v2_data')) || MARD_DB.map(i => ({...i, w: 0, totalUsed: 0}));
-    let threshold = parseFloat(localStorage.getItem('mard_v2_ts')) || 5;
+    // 初始化重量为 0
+    let data = JSON.parse(localStorage.getItem('mard_v3_data')) || MARD_DB.map(i => ({...i, w: 0, totalUsed: 0}));
+    let threshold = parseFloat(localStorage.getItem('mard_v3_ts'));
+    if (isNaN(threshold)) threshold = 5; // 默认阈值
+
     let sortByUse = false;
     let sel = new Set();
 
     function render() {
-        // 修正阈值显示
         document.getElementById('threshold').value = threshold;
         const q = document.getElementById('search').value.toUpperCase();
         const grid = document.getElementById('grid');
@@ -135,7 +146,9 @@
 
         display.forEach(item => {
             if(!item.id.includes(q)) return;
-            const isLow = item.w < threshold && item.w > 0;
+            
+            // 补货逻辑：小于等于阈值（包括 0）
+            const isLow = item.w <= threshold;
             if(isLow) lowCount++;
 
             const row = document.createElement('div');
@@ -165,7 +178,7 @@
 
     function updateThreshold() {
         threshold = parseFloat(document.getElementById('threshold').value) || 0;
-        localStorage.setItem('mard_v2_ts', threshold);
+        localStorage.setItem('mard_v3_ts', threshold);
         render();
     }
 
@@ -181,7 +194,6 @@
         if(v !== null) { item.w = parseFloat(v) || 0; render(); }
     }
 
-    // --- 弹窗功能逻辑 ---
     function openImport() { showModal('importModal'); }
     function handleImport() {
         const raw = document.getElementById('importInput').value;
@@ -191,7 +203,7 @@
             const target = data.find(d => d.id === match[1]);
             if(target) { target.w = parseFloat(match[2]); count++; }
         }
-        alert(`识别成功，已同步 ${count} 个色号重量！`);
+        alert(`成功导入 ${count} 个色号数据！`);
         closeAllModals();
         render();
     }
@@ -204,14 +216,14 @@
         const txt = document.getElementById('backupText');
         txt.select();
         document.execCommand('copy');
-        alert("已复制到剪贴板，请粘贴到备忘录保存。");
+        alert("备份代码已复制。");
     }
     function restoreBackup() {
         const txt = document.getElementById('backupText').value;
         try {
             const json = JSON.parse(txt);
-            if(Array.isArray(json)) { data = json; save(); render(); alert("恢复成功！"); closeAllModals(); }
-        } catch(e) { alert("数据格式无效，请检查粘贴内容。"); }
+            if(Array.isArray(json)) { data = json; save(); render(); alert("数据已恢复！"); closeAllModals(); }
+        } catch(e) { alert("代码格式有误。"); }
     }
 
     function openConsume() {
@@ -250,7 +262,7 @@
     function toggleSort() { sortByUse = !sortByUse; render(); }
     function showModal(id) { document.getElementById('mask').style.display='block'; document.getElementById(id).style.display='block'; }
     function closeAllModals() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); document.getElementById('mask').style.display='none'; }
-    function save() { localStorage.setItem('mard_v2_data', JSON.stringify(data)); }
+    function save() { localStorage.setItem('mard_v3_data', JSON.stringify(data)); }
 
     render();
 </script>
