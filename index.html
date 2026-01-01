@@ -1,261 +1,1398 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MARD 豆库 - 统计排序版</title>
-    <style>
-        :root { --primary: #4a90e2; --warn: #ff4d4f; --bg: #f0f2f5; --success: #52c41a; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; font-size: 14px; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 90px; }
-        
-        /* 头部控制区 */
-        .header-sticky { position: sticky; top: 0; background: white; z-index: 100; border-bottom: 2px solid #eee; padding: 12px 15px; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .stats { display: flex; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 8px; flex: 1; margin-right: 10px; }
-        .stat-item b { display: block; font-size: 16px; color: var(--primary); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MARD 豆库 -拼豆库存管理工具</title>
+    <style>
+        :root { --primary: #4a90e2; --warn: #ff4d4f; --bg: #f0f2f5; --success: #52c41a; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; font-size: 14px; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 90px; }
+        
 
-        /* 配置与排序区 */
-        .config-zone { font-size: 12px; background: #fffbe6; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .config-zone input { width: 40px; padding: 2px 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
-        .btn-sort { background: #fff; border: 1px solid var(--primary); color: var(--primary); padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-        .btn-sort.active { background: var(--primary); color: white; }
 
-        .btn-text { font-size: 12px; color: var(--primary); cursor: pointer; background:none; border:none; padding:0; text-decoration: underline; }
+        /* 头部控制区 */
+        .header-sticky { position: sticky; top: 0; background: white; z-index: 100; border-bottom: 2px solid #eee; padding: 12px 15px; }
+        .top-bar { display: flex; flex-direction: column; margin-bottom: 10px; }
+        .stats { 
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; 
+            background: #f8f9fa; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box;
+            /* justify-items: center; text-align: center;  <-- Remove this to allow individual alignment */
+        }
+        .stats > div { display: flex; flex-direction: column; align-items: flex-start; width: 100%; }
+        /* 让第一个元素（色号）左对齐，去除了左间距 */
+        .stats > div:first-child { padding-left: 0; box-sizing: border-box; }
+        /* 让最后一个元素（设置）也左对齐，保留右间距 */
+        .stats > div:last-child { padding-right: 8px; box-sizing: border-box; }
+        .stat-item b { display: block; font-size: 16px; color: var(--primary); }
 
-        /* 搜索框 */
-        #search { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; outline: none; margin-bottom: 5px; }
-        
-        /* 列表渲染 */
-        .bead-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; }
-        .bead-row.selected { background: #e6f7ff; }
-        .col-select { width: 25px; }
-        .col-color { width: 40px; }
-        .swatch { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ddd; }
-        .col-id { width: 60px; font-weight: bold; font-family: monospace; font-size: 15px; }
-        .col-weight { flex: 1; }
-        .weight-badge { padding: 4px 8px; border-radius: 6px; background: #eee; font-weight: bold; font-family: monospace; cursor: pointer; }
-        .weight-badge.low { background: var(--warn); color: white; }
-        .col-action { width: 60px; text-align: right; }
-        .btn-plus { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; padding: 5px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+        /* 配置与排序区 */
+        .config-zone { font-size: 12px; background: #fffbe6; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .config-zone input { width: 40px; padding: 2px 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+        .btn-sort { background: #fff; border: 1px solid var(--primary); color: var(--primary); padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .btn-sort.active { background: var(--primary); color: white; }
 
-        .info-tag { font-size: 10px; color: #999; display: block; margin-top: 3px; }
-        .total-use { color: #8c8c8c; font-weight: bold; }
+        .btn-text { font-size: 12px; color: var(--primary); cursor: pointer; background:none; border:none; padding:0; text-decoration: underline; }
 
-        /* 底部操作栏 */
-        .footer-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; background: #333; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 200; border-radius: 12px 12px 0 0; }
-        .btn-go { background: var(--success); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        /* 搜索框 */
+        #search { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box; outline: none; margin-bottom: 5px; }
+        
+        /* 列表渲染 */
+        .bead-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; }
+        .bead-row.selected { background: #e6f7ff; }
+        .col-select { width: 25px; }
+        .col-color { width: 40px; }
+        .swatch { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ddd; }
+        .col-id { width: 60px; font-weight: bold; font-family: monospace; font-size: 15px; }
+        .col-weight { flex: 1; }
+        .weight-badge { padding: 4px 8px; border-radius: 6px; background: #eee; font-weight: bold; font-family: monospace; cursor: pointer; }
+        .weight-badge.low { background: var(--warn); color: white; }
+        .col-action { width: 60px; text-align: right; }
+        .btn-plus { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; padding: 5px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+        .btn-detail { background: #fff; border: 1px solid #d9d9d9; color: #666; padding: 5px 10px; border-radius: 12px; font-size: 11px; cursor: pointer; margin-left: 5px; transition: all 0.2s; }
+        .btn-detail:hover { color: var(--primary); border-color: var(--primary); }
 
-        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; }
-        .modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:15px; width: 85%; max-width: 400px; max-height: 70vh; overflow-y: auto; z-index:1010; }
-        .modal-row { display: flex; align-items: center; margin-bottom: 12px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
-        .modal-input { width: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; margin-left: auto; text-align: center; }
-    </style>
+        .info-tag { font-size: 10px; color: #999; display: block; margin-top: 3px; }
+        .total-use { color: #8c8c8c; font-weight: bold; }
+
+        /* 底部操作栏 - 悬浮卡片式设计 */
+        .footer-bar { 
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+            width: calc(100% - 32px); max-width: 568px; 
+            background: rgba(33, 37, 41, 0.95); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            color: white; padding: 16px; 
+            display: flex; flex-direction: column; gap: 12px; 
+            box-sizing: border-box; z-index: 200; 
+            border-radius: 24px; 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .footer-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .footer-info { font-size: 15px; display: flex; align-items: center; gap: 12px; font-weight: 500; }
+        
+        .footer-btn-cancel {
+            background: rgba(255, 255, 255, 0.15); border: none; color: rgba(255, 255, 255, 0.9);
+            padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: background 0.2s;
+        }
+        .footer-btn-cancel:hover { background: rgba(255, 255, 255, 0.25); }
+
+        .footer-actions { display: flex; gap: 10px; width: 100%; }
+
+        .footer-btn-tool {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 12px;
+            font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: all 0.2s; font-weight: 500;
+        }
+        .footer-btn-tool:active { transform: scale(0.98); background: rgba(255, 255, 255, 0.15); }
+
+        .btn-go { 
+            background: linear-gradient(135deg, #52c41a, #389e0d); color: white; border: none; 
+            padding: 8px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(82, 196, 26, 0.3); transition: transform 0.1s; font-size: 14px;
+        }
+        .btn-go:active { transform: scale(0.96); }
+
+        /* 弹窗样式升级 */
+        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index:1000; transition: opacity 0.3s; }
+        .modal { 
+            display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); 
+            background:white; padding:24px; border-radius:24px; 
+            width: 85%; max-width: 360px; max-height: 70vh; overflow-y: auto; 
+            z-index:1010; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes modalPop {
+            0% { transform: translate(-50%, -40%) scale(0.95); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        .modal h3 { margin: 0 0 8px 0; text-align: center; font-size: 18px; color: #1f2937; }
+        .modal-desc { text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 24px; }
+        
+        .input-group { position: relative; margin-bottom: 24px; display: flex; align-items: center; justify-content: center; }
+        .input-group input {
+            width: 100%; padding: 16px; 
+            border: 2px solid transparent; 
+            background: #f3f4f6;
+            border-radius: 16px; 
+            font-size: 28px; text-align: center; font-weight: 700; color: #111827; 
+            outline: none; transition: all 0.2s;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        .input-group input:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.1); }
+        .input-suffix { position: absolute; right: 20px; color: #9ca3af; font-weight: 600; font-size: 16px; pointer-events: none; }
+
+        .modal-btn-group { display: flex; flex-direction: column; gap: 12px; }
+        .m-btn { 
+            width: 100%; padding: 14px; border: none; border-radius: 14px; 
+            font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.1s;
+        }
+        .m-btn:active { transform: scale(0.98); }
+        .m-btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 6px -1px rgba(74, 144, 226, 0.3); }
+        .m-btn-ghost { background: #f3f4f6; color: #4b5563; }
+        
+        .modal-row { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #f3f4f6; }
+        .modal-row:last-child { border-bottom: none; }
+        .modal-input { width: 70px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px; text-align: center; background: #f9fafb; font-weight: 600; }
+        
+
+        /* 移动端适配优化 */
+        @media (max-width: 480px) {
+            .container { padding-bottom: 80px; }
+            .bead-row { padding: 8px 5px; }
+            
+            .col-select { width: 18px; }
+            .col-color { width: 26px; padding-left: 6px; box-sizing: content-box; }
+            .swatch { width: 20px; height: 20px; }
+            .col-id { width: 38px; font-size: 12px; }
+            .col-action { width: 42px; }
+            
+            .weight-badge { font-size: 12px; padding: 2px 6px; }
+            .btn-plus { padding: 4px 4px; font-size: 10px; }
+            /* 恢复左对齐缩放，并给一个固定的左边距，预留出大概1000g数字的空间 */
+            .btn-detail { padding: 0 4px; height: 18px; line-height: 16px; font-size: 12px; border-radius: 4px; margin-left: 2px; transform: scale(0.85); transform-origin: left center; white-space: nowrap; }
+            
+            /* 在小屏幕上减小间距 */
+            .weight-primary-row { gap: 6px !important; }
+            .weight-detail-row { gap: 4px !important; }
+            .grain-info { display: none !important; } /* 极小屏幕隐藏粒数估算，或缩小 */
+            
+            /* 头部移动端适配 */
+            .header-sticky { padding: 8px 10px; }
+            /* 调整列宽比例，给第一列（色号）更多空间 */
+            .stats { padding: 8px; gap: 5px !important; margin-right: 5px; grid-template-columns: 1.3fr 0.9fr 0.9fr 0.9fr !important; }
+            .top-bar { margin-bottom: 5px; flex-wrap: wrap; row-gap: 8px; }
+            .btn-text { font-size: 11px; }
+            /* 调整下拉框在移动端的大小 */
+            #seriesFilter { font-size: 13px !important; max-width: 100% !important; }
+            
+            /* 导航栏移动端适配 */
+            .nav-bar { display: flex !important; flex-wrap: nowrap !important; overflow-x: auto; padding: 6px 4px !important; justify-content: space-between !important; gap: 2px !important; }
+            .nav-btn { padding: 4px 4px !important; font-size: 11px !important; white-space: nowrap; flex-shrink: 0; }
+            /* 隐藏滚动条但保留功能 */
+            .nav-bar::-webkit-scrollbar { display: none; }
+        }
+        
+        /* 导航栏样式 */
+        .nav-bar { 
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; align-items: center; 
+            padding: 6px 10px; 
+            margin-top: 5px;
+            margin-bottom: 8px;
+            background: #f8f9fa; 
+            border-radius: 8px; 
+        }
+        /* 导航栏对齐 - 与Stats栏对齐 */
+        .nav-bar > button:first-child { justify-self: start; padding-left: 8px; }
+        .nav-bar > button:last-child { justify-self: end; padding-right: 8px; }
+        .nav-bar > button:nth-child(2), .nav-bar > button:nth-child(3) { justify-self: center; }
+
+        .nav-btn {
+            display: flex; align-items: center; gap: 4px;
+            background: transparent; border: 1px solid transparent; 
+            cursor: pointer; padding: 4px 8px; border-radius: 15px;
+            font-size: 12px; color: #666; transition: all 0.2s;
+            white-space: nowrap; /* 确保文字不换行 */
+        }
+        .nav-btn:hover { background: #f0f7ff; border-color: #d6e4ff; color: #4a90e2; }
+
+        /* 中等屏幕显示粒数 */
+        @media (min-width: 360px) and (max-width: 480px) {
+            .grain-info { display: inline !important; font-size: 9px !important; }
+        }
+
+    </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-sticky">
-        <div class="top-bar">
-            <div class="stats">
-                <div class="stat-item">色号<b>221</b></div>
-                <div class="stat-item">补货<b id="count-low" style="color:var(--warn)">0</b></div>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:5px; align-items: flex-end;">
-                <button class="btn-text" onclick="exportData()">💾 备份数据</button>
-                <button class="btn-text" onclick="importData()">🔄 恢复数据</button>
-            </div>
-        </div>
 
-        <div class="config-zone">
-            阈值: <input type="number" id="threshold" value="5" onchange="updateThreshold()">g
-            <button id="sortBtn" class="btn-sort" onclick="toggleSort()">📊 按消耗量排序</button>
-            <button class="btn-text" onclick="copyLowList()" style="margin-left:auto">复制补货单</button>
-        </div>
+    <div class="header-sticky">
+        <div class="nav-bar">
+            <button class="nav-btn" onclick="showModal('helpModal')"><span>📖</span><span>使用说明</span></button>
+            <button class="nav-btn" onclick="openBatchInput()"><span>📊</span><span>初始录入</span></button>
+            <button class="nav-btn" onclick="openDataModal('backup')"><span>⚙️</span><span>数据备份</span></button>
+            <button class="nav-btn" onclick="showDevInfo()"><span>👧</span><span>作者账号</span></button>
+        </div>
+        <div class="top-bar">
+            <div class="stats">
+                <div>
+                    <span style="font-size:12px; color:#999; margin-bottom:2px; padding-left:5px;">色号</span>
+                    <select id="seriesFilter" onchange="render()" style="font-size:14px; font-weight:bold; color:#333; border:none; background:transparent; outline:none; padding:0; cursor:pointer; font-family:inherit;">
+                        <option value="221">Mard 221</option>
+                        <option value="all">Mard 全系列</option>
+                    </select>
+                </div>
+                <div>
+                    <span style="font-size:12px; color:#999; margin-bottom:2px;">补货</span>
+                    <div style="display:flex; align-items:baseline; gap:5px;">
+                        <b id="count-low" style="font-size:14px; color:var(--warn); line-height:1.2;">0</b>
+                        <button class="btn-text" onclick="openLowStockModal()" style="font-size:12px; padding:0; text-decoration:underline; white-space:nowrap;">补货单</button>
+                    </div>
+                </div>
+                <div>
+                    <span style="font-size:12px; color:#999; margin-bottom:2px;">阈值</span>
+                    <div style="display:flex; align-items:baseline; gap:2px;">
+                        <input type="number" id="threshold" value="5" onchange="updateThreshold()" style="width:35px; border:none; border-bottom:1px solid #999; text-align:center; color:#333; font-size:14px; font-weight:bold; padding:0; background:transparent;">
+                        <span style="font-size:12px; color:#333;">g</span>
+                    </div>
+                </div>
+                <div>
+                    <span style="font-size:12px; color:#999; margin-bottom:2px;">设置</span>
+                    <button class="btn-text" onclick="openIgnoredModal()" style="font-size:12px; padding:0; text-decoration:underline; white-space:nowrap; margin-top:2px; color:#4a90e2;">忽略清单</button>
+                </div>
+            </div>
+        </div>
 
-        <input type="text" id="search" placeholder="输入色号搜索..." oninput="render()">
-    </div>
+        <input type="text" id="search" placeholder="输入色号搜索..." oninput="render()">
+        
+        <div style="display:flex; align-items:center; padding:0px 0px; font-size:12px; color:#999; margin-top:5px;">
+            <div style="width:5px;"></div>
+            <div style="flex:1; display:flex; align-items:center;">
+                 <span style="margin-right:5px;">排序：</span>
+                 <select id="sortSelect" onchange="changeSortMode()" style="font-size:12px; color:#333; border:1px solid #eee; background:transparent; outline:none; padding:2px; border-radius:4px; cursor:pointer;">
+                    <option value="id">按色号排序</option>
+                    <option value="stock_desc">库存由多到少</option>
+                    <option value="stock_asc">库存由少到多</option>
+                    <option value="usage_desc">消耗量由多到少</option>
+                    <option value="usage_asc">消耗量由少到多</option>
+                    <option value="restock_desc">补货量由多到少</option>
+                    <option value="restock_asc">补货量由少到多</option>
+                 </select>
+            </div>
+            <div style="width:60px;"></div>
+        </div>
+    </div>
 
-    <div id="grid"></div>
+    <div id="grid"></div>
+    <div style="text-align:center; padding:10px; color:#999; font-size:10px;">
+        开发者: 小红书用户āōē，ID 11535779483，使用AI工具开发
+    </div>
 </div>
 
-<div class="footer-bar" id="footer" style="display:none;">
-    <div>已选 <span id="selNum" style="color:#ffec3d; font-weight:bold;">0</span> 色</div>
-    <button class="btn-go" onclick="openConsumeModal()">录入粒数并扣除</button>
+    <div id="footer" class="footer-bar" style="display:none;">
+        <div class="footer-top">
+            <div class="footer-info">
+                <span>已选 <b id="selNum" style="color:#ffd700; font-size:18px;">0</b> 色</span>
+                <button onclick="cancelSelection()" class="footer-btn-cancel">取消</button>
+            </div>
+            <button class="btn-go" onclick="openConsumeModal()">录入粒数</button>
+        </div>
+        <div class="footer-actions">
+             <button onclick="batchSetMonitor(true)" class="footer-btn-tool">
+                <span>🔔</span> 开启阈值
+             </button>
+             <button onclick="batchSetMonitor(false)" class="footer-btn-tool">
+                <span>🔕</span> 关闭阈值
+             </button>
+        </div>
+    </div>
+
+    <!-- 弹窗部分 -->
+
+<div class="overlay" id="mask" onclick="closeAllModals()"></div>
+<div id="consumeModal" class="modal" style="width: 85%; max-width: 340px; padding: 20px;">
+    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #333;">消耗录入 (粒数)</h3>
+    <div id="modalList" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #f0f0f0; border-radius: 12px; padding: 5px;"></div>
+    <div class="modal-btn-group" style="gap: 10px;">
+        <button class="m-btn m-btn-primary" onclick="submitConsume()" style="padding: 10px; font-size: 14px; border-radius: 10px;">确认扣除</button>
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()" style="padding: 10px; font-size: 14px; border-radius: 10px;">取消</button>
+    </div>
 </div>
 
-<div class="overlay" id="mask" onclick="closeModal()"></div>
-<div id="modal" class="modal">
-    <h3 style="margin-top:0">消耗录入</h3>
-    <div id="modalList"></div>
-    <button onclick="submitConsume()" style="width:100%; padding:12px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; margin-top:10px;">确认扣除</button>
+<div id="editWeightModal" class="modal" style="width: 80%; max-width: 300px; padding: 25px; border-radius: 20px;">
+    <h3 id="editWeightModalTitle" style="font-size: 18px; color: #333; margin-bottom: 25px;">修改库存重量</h3>
+    
+    <div class="input-group" style="margin-bottom: 25px;">
+        <input type="number" id="editWeightInput" placeholder="0.00" step="0.01" 
+               style="font-size: 32px; padding: 15px; border-radius: 12px; background: #f7f8fa; border: 2px solid transparent; width: 100%; box-sizing: border-box; text-align: center; color: #333; font-weight: bold; transition: all 0.2s;">
+        <span class="input-suffix" style="right: 30px; font-size: 16px; color: #999;">g</span>
+    </div>
+    
+    <div class="modal-btn-group" style="gap: 12px;">
+        <button class="m-btn m-btn-primary" onclick="submitEditWeight()" style="padding: 12px; font-size: 16px; border-radius: 12px; background: linear-gradient(135deg, #4a90e2, #357abd); box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);">确认修改</button>
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()" style="padding: 12px; font-size: 15px; border-radius: 12px; color: #666;">取消</button>
+    </div>
+</div>
+
+<div id="restockModal" class="modal">
+    <h3>新增补货</h3>
+    <div class="modal-desc" id="restockTitle"></div>
+    <div class="input-group">
+        <input type="number" id="restockInput" placeholder="0" step="0.01">
+        <span class="input-suffix">g</span>
+    </div>
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" onclick="submitRestock()">确认补货</button>
+        <button class="m-btn m-btn-ghost" onclick="showModal('editWeightModal')">返回</button>
+    </div>
+</div>
+
+<div id="historyModal" class="modal" style="width:85%; max-width:340px;">
+    <h3 id="historyTitle" style="font-size:16px; font-weight:bold; margin-bottom:12px;">库存明细</h3>
+    
+    <div style="display:flex; justify-content:space-between; margin-bottom:15px; background:#f5f7fa; padding:10px; border-radius:10px;">
+        <div style="text-align:center; flex:1;">
+            <div style="font-size:11px; color:#999; margin-bottom:3px;">当前余量</div>
+            <div id="hist-stock" style="font-size:16px; font-weight:bold; color:#4a90e2;">0g</div>
+        </div>
+        <div style="text-align:center; border-left:1px solid #e0e0e0; border-right:1px solid #e0e0e0; flex:1;">
+            <div style="font-size:11px; color:#999; margin-bottom:3px;">总消耗</div>
+            <div id="hist-used" style="font-size:16px; font-weight:bold; color:#ff4d4f;">0g</div>
+        </div>
+        <div style="text-align:center; flex:1;">
+            <div style="font-size:11px; color:#999; margin-bottom:3px;">总补充</div>
+            <div id="hist-added" style="font-size:16px; font-weight:bold; color:#52c41a;">0g</div>
+        </div>
+    </div>
+
+    <div style="max-height:240px; overflow-y:auto; border:1px solid #eee; border-radius:10px;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead style="background:#fafafa; position:sticky; top:0;">
+                <tr>
+                    <th style="padding:8px; text-align:left; color:#999; font-weight:normal; border-bottom:1px solid #eee;">时间</th>
+                    <th style="padding:8px; text-align:center; color:#999; font-weight:normal; border-bottom:1px solid #eee;">操作</th>
+                    <th style="padding:8px; text-align:right; color:#999; font-weight:normal; border-bottom:1px solid #eee;">重量/粒数</th>
+                </tr>
+            </thead>
+            <tbody id="historyList"></tbody>
+        </table>
+    </div>
+    <div style="text-align:center; color:#ccc; font-size:10px; margin-top:5px;">
+        注：总计数据包含已归档的历史记录，可能大于下方列表显示的最近20条记录之和。
+    </div>
+
+    <div class="modal-btn-group" style="margin-top:15px;">
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()" style="padding:8px; font-size:13px;">关闭</button>
+    </div>
+</div>
+
+<div id="helpModal" class="modal" style="width:85%; max-width:340px;">
+    <h3 style="font-size:16px; font-weight:bold; margin-bottom:12px;">使用说明</h3>
+    <div style="text-align:left; color:#555; line-height:1.6; font-size:13px; max-height:400px; overflow-y:auto; padding:0 5px;">
+        <p style="margin-bottom:10px;"><b>1. 初始录入：</b><br>点击“初始录入”，可批量粘贴数据（支持 A1 50 或 JSON 格式），快速建立库存。</p>
+        <p style="margin-bottom:10px;"><b>2. 消耗与补货：</b><br>• <b>消耗</b>：选中色号 -> 点击底部“录入粒数” -> 输入粒数自动扣除，按1g=100粒计算。<br>• 可直接点击数字修改库存重量，系统会自动根据重量变化记录为“补货或消耗”。<br>• 也可点击+10g按钮快速补货。</p>
+        <p style="margin-bottom:10px;"><b>3. 阈值提醒：</b><br>在顶部设置阈值（如5g），低于该值的色号会显示红色背景。点击“补货单”可查看所有缺货色号。</p>
+        <p style="margin-bottom:10px;"><b>4. 忽略清单：</b><br>
+        • 设置方法：选中色号后，点击底部的 “🔔 开启阈值” 或 “🔕 关闭阈值” 即可批量设置。<br>
+        • 关闭阈值的色号，右侧会显示灰色 🔕 图标，不显示红色低库存警告，也不计入“补货”统计。<br>
+        • “补货”统计和“补货单”会自动过滤这些色号。</p>
+        <p style="margin-bottom:10px;"><b>5. 历史记录：</b><br>点击“查看明细”按钮可查看色号的库存明细，支持删除记录，删除后库存会自动回滚。</p>
+        <p style="margin-bottom:10px;"><b>6. 数据备份：</b><br>点击“数据备份”可导出包含所有记录和设置的完整备份。更换设备时，在恢复页面粘贴该备份即可无缝迁移。</p>
+    </div>
+    <div class="modal-btn-group" style="margin-top:15px;">
+        <button class="m-btn m-btn-primary" onclick="closeAllModals()" style="padding:10px; font-size:14px;">我知道了</button>
+    </div>
+</div>
+
+<div id="dataModal" class="modal" style="width:85%; max-width:340px;">
+    <h3 style="font-size:16px; font-weight:bold; margin-bottom:12px;">数据备份</h3>
+    <div style="display:flex; gap:10px; margin-bottom:15px; background:#f5f7fa; padding:4px; border-radius:10px;">
+        <button id="tabBackup" class="m-btn m-btn-ghost" style="flex:1; padding:8px; font-size:13px; border-radius:8px;" onclick="switchDataTab('backup')">备份导出</button>
+        <button id="tabRestore" class="m-btn m-btn-ghost" style="flex:1; padding:8px; font-size:13px; border-radius:8px;" onclick="switchDataTab('restore')">恢复导入</button>
+    </div>
+    
+    <div id="viewBackup">
+        <div class="modal-desc" style="margin-bottom:8px; text-align:left;">复制下方代码保存到备忘录:</div>
+        <textarea id="backupOutput" style="width:100%; height:120px; padding:10px; border:1px solid #eee; border-radius:10px; resize:none; font-family:monospace; font-size:12px; box-sizing:border-box; background:#fafafa; color:#555; outline:none;" readonly onclick="this.select()"></textarea>
+        <div class="modal-btn-group" style="margin-top:15px;">
+            <button class="m-btn m-btn-primary" style="padding:10px; font-size:14px;" onclick="copyBackup()">复制到剪贴板</button>
+        </div>
+    </div>
+
+    <div id="viewRestore" style="display:none;">
+        <div class="modal-desc" style="margin-bottom:8px; text-align:left;">将备份代码粘贴到下方:</div>
+        <textarea id="restoreInput" style="width:100%; height:120px; padding:10px; border:1px solid #eee; border-radius:10px; resize:none; font-family:monospace; font-size:12px; box-sizing:border-box; outline:none;" placeholder="粘贴备份代码..."></textarea>
+        <div class="modal-btn-group" style="margin-top:15px;">
+            <button class="m-btn m-btn-primary" style="padding:10px; font-size:14px; background:var(--warn);" onclick="execRestore()">确认覆盖恢复</button>
+        </div>
+    </div>
+    
+    <div class="modal-btn-group" style="margin-top:10px;">
+        <button class="m-btn m-btn-ghost" style="padding:8px; font-size:13px;" onclick="closeAllModals()">关闭</button>
+    </div>
+</div>
+
+<div id="batchInputModal" class="modal" style="width:85%; max-width:340px;">
+    <h3 style="font-size:16px; font-weight:bold; margin-bottom:12px;">初始数据批量录入</h3>
+    <div class="modal-desc" style="margin-bottom:8px; text-align:left;">格式：色号+重量 (如 A1 50)</div>
+    <textarea id="batchInputText" style="width:100%; height:150px; padding:10px; border:1px solid #eee; border-radius:10px; resize:none; font-family:monospace; font-size:13px; box-sizing:border-box; background:#fafafa; outline:none; color:#333;" placeholder="支持多种格式，例如：&#10;A1 50&#10;B2: 20.5&#10;C3=100"></textarea>
+    <div class="modal-btn-group" style="margin-top:15px;">
+        <button class="m-btn m-btn-primary" style="padding:10px; font-size:14px;" onclick="submitBatchInput()">开始识别并导入</button>
+        <button class="m-btn m-btn-ghost" style="padding:8px; font-size:13px;" onclick="closeAllModals()">取消</button>
+    </div>
+</div>
+
+<div id="lowStockModal" class="modal" style="width:85%; max-width:340px; padding:20px; border-radius:24px;">
+    <h3 style="font-size:18px; font-weight:bold; margin-bottom:20px; text-align:center; color:#333;">补货清单</h3>
+    <div id="lowStockHeader" style="margin-bottom:15px; background:#fffbe6; padding:10px; border-radius:8px; border:1px solid #ffe58f; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:16px;">⚠️</span>
+        <div class="modal-desc" style="font-size:12px; color:#d48806; margin:0; text-align:left;">
+            <div>以下色号库存低于设定阈值，建议及时补货。</div>
+            <div style="margin-top:4px; opacity:0.8; font-size:11px; color:inherit;">(已根据首页“色号”下拉框筛选显示范围)</div>
+        </div>
+    </div>
+    
+    <div id="lowStockList" style="max-height:260px; overflow-y:auto; border:1px solid #f0f0f0; border-radius:12px; margin-bottom:20px; padding:5px;"></div>
+    
+    <!-- 隐藏的文本域用于复制功能 -->
+    <textarea id="lowStockText" style="position:absolute; left:-9999px;"></textarea>
+
+    <div class="modal-btn-group" style="gap:10px;">
+        <button class="m-btn m-btn-primary" style="padding:12px; font-size:15px; border-radius:12px;" onclick="copyLowStockText()">一键复制清单</button>
+        <button class="m-btn m-btn-ghost" style="padding:12px; font-size:15px; border-radius:12px;" onclick="closeAllModals()">关闭</button>
+    </div>
+</div>
+
+<div id="welcomeModal" class="modal">
+    <h3>📢 欢迎使用 MARD 豆库</h3>
+    <div style="text-align:left; color:#555; line-height:1.6; font-size:14px; padding:0 10px;">
+        <p style="margin-bottom:12px;"><b>1. 数据安全提醒：</b><br>
+        本工具数据<span style="color:#ff4d4f; font-weight:bold;">仅存储在当前浏览器的本地缓存中</span>。清理浏览器缓存将导致数据永久丢失！<br>
+        请务必定期备份数据（操作路径：页面上方“数据备份” -> “备份导出”并保存 -> 粘贴并 “恢复导入”），作者不承担数据丢失的任何后果。</p>
+        
+        <p style="margin-bottom:12px;"><b>2. 设备同步：</b><br>
+        本工具为离线网页应用，<span style="color:#ff4d4f; font-weight:bold;">不支持多设备实时同步</span>。如需在其他设备使用，请使用备份/恢复功能手动迁移数据。</p>
+        
+        <p style="margin-bottom:12px;"><b>3. 功能说明：</b><br>
+        详细操作指南请点击页面上方的“📖 使用说明”查看。</p>
+    </div>
+    <div class="modal-btn-group" style="margin-top:20px;">
+        <button class="m-btn m-btn-primary" onclick="closeWelcomeModal()">我已知晓</button>
+    </div>
+</div>
+
+<div id="ignoredModal" class="modal" style="width:85%; max-width:340px;">
+    <h3>已忽略提醒的色号</h3>
+    <div class="modal-desc">以下色号不参与低库存预警</div>
+    <div id="ignoredList" style="max-height:300px; overflow-y:auto; border:1px solid #eee; border-radius:10px; margin-bottom:15px; padding:5px;"></div>
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" onclick="closeAllModals()">关闭</button>
+    </div>
+</div>
+
+<div id="devInfoModal" class="modal" style="width:70%; max-width:260px; padding:15px;">
+    <h3 style="font-size:16px;">开发者信息</h3>
+    <div style="text-align:center; padding:10px; color:#555; font-size:13px; line-height:1.6;">
+        <p><b>开发者:</b> 小红书用户āōē</p>
+        <p><b>ID:</b> 11535779483</p>
+        <p>使用 AI 工具开发</p>
+    </div>
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" style="padding:10px; font-size:14px;" onclick="closeAllModals()">关闭</button>
+    </div>
 </div>
 
 <script>
-    const MARD_DB = [
-        {id:'A1',hex:'#faf5cd'},{id:'A2',hex:'#fcfed6'},{id:'A3',hex:'#fcff92'},{id:'A4',hex:'#f7ec5c'},{id:'A5',hex:'#f0d83a'},{id:'A6',hex:'#fda951'},{id:'A7',hex:'#fa8c4f'},{id:'A8',hex:'#fbda4d'},{id:'A9',hex:'#f79d5f'},{id:'A10',hex:'#f47e38'},{id:'A11',hex:'#fedb99'},{id:'A12',hex:'#fda276'},{id:'A13',hex:'#fec667'},{id:'A14',hex:'#f75842'},{id:'A15',hex:'#fbf65e'},{id:'A16',hex:'#feff97'},{id:'A17',hex:'#fde173'},{id:'A18',hex:'#fcbf80'},{id:'A19',hex:'#fd7e77'},{id:'A20',hex:'#f9d66e'},{id:'A21',hex:'#fae393'},{id:'A22',hex:'#edf878'},{id:'A23',hex:'#e4c8ba'},{id:'A24',hex:'#f3f6a9'},{id:'A25',hex:'#ffd785'},{id:'A26',hex:'#ffc734'},
-        {id:'B1',hex:'#dff13b'},{id:'B2',hex:'#64f343'},{id:'B3',hex:'#a1f586'},{id:'B4',hex:'#5fdf34'},{id:'B5',hex:'#39e158'},{id:'B6',hex:'#64e0a4'},{id:'B7',hex:'#3eae7c'},{id:'B8',hex:'#1d9b54'},{id:'B9',hex:'#2a5037'},{id:'B10',hex:'#9ad1ba'},{id:'B11',hex:'#627032'},{id:'B12',hex:'#1a6e3d'},{id:'B13',hex:'#c8e87d'},{id:'B14',hex:'#abe84f'},{id:'B15',hex:'#305335'},{id:'B16',hex:'#c0ed9c'},{id:'B17',hex:'#9eb33e'},{id:'B18',hex:'#e6ed4f'},{id:'B19',hex:'#26b78e'},{id:'B20',hex:'#cbeccf'},{id:'B21',hex:'#18616a'},{id:'B22',hex:'#0a4241'},{id:'B23',hex:'#343b1a'},{id:'B24',hex:'#e8faa6'},{id:'B25',hex:'#4e846d'},{id:'B26',hex:'#907c35'},{id:'B27',hex:'#d0e0af'},{id:'B28',hex:'#9ee5bb'},{id:'B29',hex:'#c6df5f'},{id:'B30',hex:'#e3fbb1'},{id:'B31',hex:'#b4e691'},{id:'B32',hex:'#92ad60'},
-        {id:'C1',hex:'#f0fee4'},{id:'C2',hex:'#abf8fe'},{id:'C3',hex:'#a2e0f7'},{id:'C4',hex:'#44cdfb'},{id:'C5',hex:'#06aadf'},{id:'C6',hex:'#54a7e9'},{id:'C7',hex:'#3977ca'},{id:'C8',hex:'#0f52bd'},{id:'C9',hex:'#3349c3'},{id:'C10',hex:'#3cbce3'},{id:'C11',hex:'#2aded3'},{id:'C12',hex:'#1e334e'},{id:'C13',hex:'#cde7fe'},{id:'C14',hex:'#d5fcf7'},{id:'C15',hex:'#21c5c4'},{id:'C16',hex:'#1858a2'},{id:'C17',hex:'#02d1f3'},{id:'C18',hex:'#213244'},{id:'C19',hex:'#18869d'},{id:'C20',hex:'#1a70a9'},{id:'C21',hex:'#bcddfc'},{id:'C22',hex:'#6bb1bb'},{id:'C23',hex:'#c8e2fd'},{id:'C24',hex:'#7ec5f9'},{id:'C25',hex:'#a9e8e0'},{id:'C26',hex:'#42adcf'},{id:'C27',hex:'#d0def9'},{id:'C28',hex:'#bdcee8'},{id:'C29',hex:'#364a89'},
-        {id:'D1',hex:'#acb7ef'},{id:'D2',hex:'#868dd3'},{id:'D3',hex:'#3554af'},{id:'D4',hex:'#162d7b'},{id:'D5',hex:'#b34ec6'},{id:'D6',hex:'#b37bdc'},{id:'D7',hex:'#8758a9'},{id:'D8',hex:'#e3d2fe'},{id:'D9',hex:'#d5b9f4'},{id:'D10',hex:'#301a49'},{id:'D11',hex:'#beb9e2'},{id:'D12',hex:'#dc99ce'},{id:'D13',hex:'#b5038d'},{id:'D14',hex:'#862993'},{id:'D15',hex:'#2f1f8c'},{id:'D16',hex:'#e2e4f0'},{id:'D17',hex:'#c7d3f9'},{id:'D18',hex:'#9a64b8'},{id:'D19',hex:'#d8c2d9'},{id:'D20',hex:'#9a35ad'},{id:'D21',hex:'#940595'},{id:'D22',sweet:'#38389a'},{id:'D23',hex:'#eadbf8'},{id:'D24',hex:'#768ae1'},{id:'D25',hex:'#4950c2'},{id:'D26',hex:'#d6c6eb'},
-        {id:'E1',hex:'#f6d4cb'},{id:'E2',hex:'#fcc1dd'},{id:'E3',hex:'#f6bde8'},{id:'E4',hex:'#e8649e'},{id:'E5',hex:'#f0569f'},{id:'E6',hex:'#eb4172'},{id:'E7',hex:'#c53674'},{id:'E8',hex:'#fddbe9'},{id:'E9',hex:'#e376c7'},{id:'E10',hex:'#d13b95'},{id:'E11',hex:'#f7dad4'},{id:'E12',hex:'#f693bf'},{id:'E13',hex:'#b5026a'},{id:'E14',hex:'#fad4bf'},{id:'E15',hex:'#f5c9ca'},{id:'E16',hex:'#fbf4ec'},{id:'E17',hex:'#f7e3ec'},{id:'E18',hex:'#f9c8db'},{id:'E19',hex:'#f6bbd1'},{id:'E20',hex:'#d7c6ce'},{id:'E21',hex:'#c09da4'},{id:'E22',hex:'#b38c9f'},{id:'E23',hex:'#937d8a'},{id:'E24',hex:'#debee5'},
-        {id:'F1',hex:'#fe9381'},{id:'F2',hex:'#f63d4b'},{id:'F3',hex:'#ee4e3e'},{id:'F4',hex:'#fb2a40'},{id:'F5',hex:'#e10328'},{id:'F6',hex:'#913635'},{id:'F7',hex:'#911932'},{id:'F8',hex:'#bb0126'},{id:'F9',hex:'#e0677a'},{id:'F10',hex:'#874628'},{id:'F11',hex:'#592323'},{id:'F12',hex:'#f3536b'},{id:'F13',hex:'#f45c45'},{id:'F14',hex:'#fcadb2'},{id:'F15',hex:'#d50527'},{id:'F16',hex:'#f8c0a9'},{id:'F17',hex:'#e89b7d'},{id:'F18',hex:'#d07f4a'},{id:'F19',hex:'#be454a'},{id:'F20',hex:'#c69495'},{id:'F21',hex:'#f2b8c6'},{id:'F22',hex:'#f7c3d0'},{id:'F23',hex:'#ed806c'},{id:'F24',hex:'#e09daf'},{id:'F25',hex:'#e84854'},
-        {id:'G1',hex:'#ffe4d3'},{id:'G2',hex:'#fcc6ac'},{id:'G3',hex:'#f1c4a5'},{id:'G4',hex:'#dcb387'},{id:'G5',hex:'#e7b34e'},{id:'G6',hex:'#e3a014'},{id:'G7',hex:'#985c3a'},{id:'G8',hex:'#713d2f'},{id:'G9',hex:'#e4b685'},{id:'G10',hex:'#da8c42'},{id:'G11',hex:'#dac898'},{id:'G12',hex:'#fec993'},{id:'G13',hex:'#b2714b'},{id:'G14',hex:'#8b684c'},{id:'G15',hex:'#f6f8e3'},{id:'G16',hex:'#f2d8c1'},{id:'G17',hex:'#77544e'},{id:'G18',hex:'#ffe3d5'},{id:'G19',hex:'#dd7d41'},{id:'G20',hex:'#a5452f'},{id:'G21',hex:'#b38561'},
-        {id:'H1',hex:'#ffffff'},{id:'H2',hex:'#fbfbfb'},{id:'H3',hex:'#b4b4b4'},{id:'H4',hex:'#878787'},{id:'H5',hex:'#464646'},{id:'H6',hex:'#2c2c2c'},{id:'H7',hex:'#010101'},{id:'H8',hex:'#e7d6dc'},{id:'H9',hex:'#efedee'},{id:'H10',hex:'#ebebeb'},{id:'H11',hex:'#cdcdcd'},{id:'H12',hex:'#fdf6ee'},{id:'H13',hex:'#f4efd1'},{id:'H14',hex:'#ced7d4'},{id:'H15',hex:'#9aa6a6'},{id:'H16',hex:'#1b1213'},{id:'H17',hex:'#f0eeef'},{id:'H18',hex:'#fcfff6'},{id:'H19',hex:'#f2eee5'},{id:'H20',hex:'#96a09f'},{id:'H21',hex:'#f8fbe6'},{id:'H22',hex:'#cacad2'},{id:'H23',hex:'#9b9c94'},
-        {id:'M1',hex:'#bbc6b6'},{id:'M2',hex:'#909994'},{id:'M3',hex:'#697e81'},{id:'M4',hex:'#e0d4bc'},{id:'M5',hex:'#d1ccaf'},{id:'M6',hex:'#b0aa86'},{id:'M7',hex:'#b0a796'},{id:'M8',hex:'#ae8082'},{id:'M9',hex:'#a68862'},{id:'M10',hex:'#c4b3bb'},{id:'M11',hex:'#9d7693'},{id:'M12',hex:'#644b51'},{id:'M13',hex:'#c79266'},{id:'M14',hex:'#c27563'},{id:'M15',hex:'#747d7a'}
-    ];
+    const MARD_DB = [
+        {id:'A1',hex:'#faf5cd'},{id:'A2',hex:'#fcfed6'},{id:'A3',hex:'#fcff92'},{id:'A4',hex:'#f7ec5c'},{id:'A5',hex:'#f0d83a'},{id:'A6',hex:'#fda951'},{id:'A7',hex:'#fa8c4f'},{id:'A8',hex:'#fbda4d'},{id:'A9',hex:'#f79d5f'},{id:'A10',hex:'#f47e38'},{id:'A11',hex:'#fedb99'},{id:'A12',hex:'#fda276'},{id:'A13',hex:'#fec667'},{id:'A14',hex:'#f75842'},{id:'A15',hex:'#fbf65e'},{id:'A16',hex:'#feff97'},{id:'A17',hex:'#fde173'},{id:'A18',hex:'#fcbf80'},{id:'A19',hex:'#fd7e77'},{id:'A20',hex:'#f9d66e'},{id:'A21',hex:'#fae393'},{id:'A22',hex:'#edf878'},{id:'A23',hex:'#e4c8ba'},{id:'A24',hex:'#f3f6a9'},{id:'A25',hex:'#ffd785'},{id:'A26',hex:'#ffc734'},
+        {id:'B1',hex:'#dff13b'},{id:'B2',hex:'#64f343'},{id:'B3',hex:'#a1f586'},{id:'B4',hex:'#5fdf34'},{id:'B5',hex:'#39e158'},{id:'B6',hex:'#64e0a4'},{id:'B7',hex:'#3eae7c'},{id:'B8',hex:'#1d9b54'},{id:'B9',hex:'#2a5037'},{id:'B10',hex:'#9ad1ba'},{id:'B11',hex:'#627032'},{id:'B12',hex:'#1a6e3d'},{id:'B13',hex:'#c8e87d'},{id:'B14',hex:'#abe84f'},{id:'B15',hex:'#305335'},{id:'B16',hex:'#c0ed9c'},{id:'B17',hex:'#9eb33e'},{id:'B18',hex:'#e6ed4f'},{id:'B19',hex:'#26b78e'},{id:'B20',hex:'#cbeccf'},{id:'B21',hex:'#18616a'},{id:'B22',hex:'#0a4241'},{id:'B23',hex:'#343b1a'},{id:'B24',hex:'#e8faa6'},{id:'B25',hex:'#4e846d'},{id:'B26',hex:'#907c35'},{id:'B27',hex:'#d0e0af'},{id:'B28',hex:'#9ee5bb'},{id:'B29',hex:'#c6df5f'},{id:'B30',hex:'#e3fbb1'},{id:'B31',hex:'#b4e691'},{id:'B32',hex:'#92ad60'},
+        {id:'C1',hex:'#f0fee4'},{id:'C2',hex:'#abf8fe'},{id:'C3',hex:'#a2e0f7'},{id:'C4',hex:'#44cdfb'},{id:'C5',hex:'#06aadf'},{id:'C6',hex:'#54a7e9'},{id:'C7',hex:'#3977ca'},{id:'C8',hex:'#0f52bd'},{id:'C9',hex:'#3349c3'},{id:'C10',hex:'#3cbce3'},{id:'C11',hex:'#2aded3'},{id:'C12',hex:'#1e334e'},{id:'C13',hex:'#cde7fe'},{id:'C14',hex:'#d5fcf7'},{id:'C15',hex:'#21c5c4'},{id:'C16',hex:'#1858a2'},{id:'C17',hex:'#02d1f3'},{id:'C18',hex:'#213244'},{id:'C19',hex:'#18869d'},{id:'C20',hex:'#1a70a9'},{id:'C21',hex:'#bcddfc'},{id:'C22',hex:'#6bb1bb'},{id:'C23',hex:'#c8e2fd'},{id:'C24',hex:'#7ec5f9'},{id:'C25',hex:'#a9e8e0'},{id:'C26',hex:'#42adcf'},{id:'C27',hex:'#d0def9'},{id:'C28',hex:'#bdcee8'},{id:'C29',hex:'#364a89'},
+        {id:'D1',hex:'#acb7ef'},{id:'D2',hex:'#868dd3'},{id:'D3',hex:'#3554af'},{id:'D4',hex:'#162d7b'},{id:'D5',hex:'#b34ec6'},{id:'D6',hex:'#b37bdc'},{id:'D7',hex:'#8758a9'},{id:'D8',hex:'#e3d2fe'},{id:'D9',hex:'#d5b9f4'},{id:'D10',hex:'#301a49'},{id:'D11',hex:'#beb9e2'},{id:'D12',hex:'#dc99ce'},{id:'D13',hex:'#b5038d'},{id:'D14',hex:'#862993'},{id:'D15',hex:'#2f1f8c'},{id:'D16',hex:'#e2e4f0'},{id:'D17',hex:'#c7d3f9'},{id:'D18',hex:'#9a64b8'},{id:'D19',hex:'#d8c2d9'},{id:'D20',hex:'#9a35ad'},{id:'D21',hex:'#940595'},{id:'D22',sweet:'#38389a'},{id:'D23',hex:'#eadbf8'},{id:'D24',hex:'#768ae1'},{id:'D25',hex:'#4950c2'},{id:'D26',hex:'#d6c6eb'},
+        {id:'E1',hex:'#f6d4cb'},{id:'E2',hex:'#fcc1dd'},{id:'E3',hex:'#f6bde8'},{id:'E4',hex:'#e8649e'},{id:'E5',hex:'#f0569f'},{id:'E6',hex:'#eb4172'},{id:'E7',hex:'#c53674'},{id:'E8',hex:'#fddbe9'},{id:'E9',hex:'#e376c7'},{id:'E10',hex:'#d13b95'},{id:'E11',hex:'#f7dad4'},{id:'E12',hex:'#f693bf'},{id:'E13',hex:'#b5026a'},{id:'E14',hex:'#fad4bf'},{id:'E15',hex:'#f5c9ca'},{id:'E16',hex:'#fbf4ec'},{id:'E17',hex:'#f7e3ec'},{id:'E18',hex:'#f9c8db'},{id:'E19',hex:'#f6bbd1'},{id:'E20',hex:'#d7c6ce'},{id:'E21',hex:'#c09da4'},{id:'E22',hex:'#b38c9f'},{id:'E23',hex:'#937d8a'},{id:'E24',hex:'#debee5'},
+        {id:'F1',hex:'#fe9381'},{id:'F2',hex:'#f63d4b'},{id:'F3',hex:'#ee4e3e'},{id:'F4',hex:'#fb2a40'},{id:'F5',hex:'#e10328'},{id:'F6',hex:'#913635'},{id:'F7',hex:'#911932'},{id:'F8',hex:'#bb0126'},{id:'F9',hex:'#e0677a'},{id:'F10',hex:'#874628'},{id:'F11',hex:'#592323'},{id:'F12',hex:'#f3536b'},{id:'F13',hex:'#f45c45'},{id:'F14',hex:'#fcadb2'},{id:'F15',hex:'#d50527'},{id:'F16',hex:'#f8c0a9'},{id:'F17',hex:'#e89b7d'},{id:'F18',hex:'#d07f4a'},{id:'F19',hex:'#be454a'},{id:'F20',hex:'#c69495'},{id:'F21',hex:'#f2b8c6'},{id:'F22',hex:'#f7c3d0'},{id:'F23',hex:'#ed806c'},{id:'F24',hex:'#e09daf'},{id:'F25',hex:'#e84854'},
+        {id:'G1',hex:'#ffe4d3'},{id:'G2',hex:'#fcc6ac'},{id:'G3',hex:'#f1c4a5'},{id:'G4',hex:'#dcb387'},{id:'G5',hex:'#e7b34e'},{id:'G6',hex:'#e3a014'},{id:'G7',hex:'#985c3a'},{id:'G8',hex:'#713d2f'},{id:'G9',hex:'#e4b685'},{id:'G10',hex:'#da8c42'},{id:'G11',hex:'#dac898'},{id:'G12',hex:'#fec993'},{id:'G13',hex:'#b2714b'},{id:'G14',hex:'#8b684c'},{id:'G15',hex:'#f6f8e3'},{id:'G16',hex:'#f2d8c1'},{id:'G17',hex:'#77544e'},{id:'G18',hex:'#ffe3d5'},{id:'G19',hex:'#dd7d41'},{id:'G20',hex:'#a5452f'},{id:'G21',hex:'#b38561'},
+        {id:'H1',hex:'#ffffff'},{id:'H2',hex:'#fbfbfb'},{id:'H3',hex:'#b4b4b4'},{id:'H4',hex:'#878787'},{id:'H5',hex:'#464646'},{id:'H6',hex:'#2c2c2c'},{id:'H7',hex:'#010101'},{id:'H8',hex:'#e7d6dc'},{id:'H9',hex:'#efedee'},{id:'H10',hex:'#ebebeb'},{id:'H11',hex:'#cdcdcd'},{id:'H12',hex:'#fdf6ee'},{id:'H13',hex:'#f4efd1'},{id:'H14',hex:'#ced7d4'},{id:'H15',hex:'#9aa6a6'},{id:'H16',hex:'#1b1213'},{id:'H17',hex:'#f0eeef'},{id:'H18',hex:'#fcfff6'},{id:'H19',hex:'#f2eee5'},{id:'H20',hex:'#96a09f'},{id:'H21',hex:'#f8fbe6'},{id:'H22',hex:'#cacad2'},{id:'H23',hex:'#9b9c94'},
+        {id:'M1',hex:'#bbc6b6'},{id:'M2',hex:'#909994'},{id:'M3',hex:'#697e81'},{id:'M4',hex:'#e0d4bc'},{id:'M5',hex:'#d1ccaf'},{id:'M6',hex:'#b0aa86'},{id:'M7',hex:'#b0a796'},{id:'M8',hex:'#ae8082'},{id:'M9',hex:'#a68862'},{id:'M10',hex:'#c4b3bb'},{id:'M11',hex:'#9d7693'},{id:'M12',hex:'#644b51'},{id:'M13',hex:'#c79266'},{id:'M14',hex:'#c27563'},{id:'M15',hex:'#747d7a'},
+        // P系列 (珠光)
+        {id:'P1',hex:'#F9F9F9'},{id:'P2',hex:'#ABABAB'},{id:'P3',hex:'#B6DBAF'},{id:'P4',hex:'#FEA2A3'},{id:'P5',hex:'#EB903F'},{id:'P6',hex:'#63CEA2'},{id:'P7',hex:'#E79273'},{id:'P8',hex:'#ECDB59'},{id:'P9',hex:'#DBD9DA'},{id:'P10',hex:'#DBC7EA'},{id:'P11',hex:'#F1E9D4'},{id:'P12',hex:'#E9EDEE'},{id:'P13',hex:'#ADCBF1'},{id:'P14',hex:'#337BAD'},{id:'P15',hex:'#668575'},{id:'P16',hex:'#FDC24E'},{id:'P17',hex:'#FDA42E'},{id:'P18',hex:'#FEBDA7'},{id:'P19',hex:'#FFDEE9'},{id:'P20',hex:'#FCBFD1'},{id:'P21',hex:'#E8BEC2'},{id:'P22',hex:'#DFAAA4'},{id:'P23',hex:'#A3656A'},
+        // Q系列 (温变)
+        {id:'Q1',hex:'#F2A5E8'},{id:'Q2',hex:'#E9EC91'},{id:'Q3',hex:'#FFFF00'},{id:'Q4',hex:'#FFEBFA'},{id:'Q5',hex:'#76CEDE'},
+        // R系列 (透明果冻水晶)
+        {id:'R1',hex:'#D40E1F'},{id:'R2',hex:'#F13484'},{id:'R3',hex:'#FB852B'},{id:'R4',hex:'#F8ED33'},{id:'R5',hex:'#32C958'},{id:'R6',hex:'#1EBA93'},{id:'R7',hex:'#1D779C'},{id:'R8',hex:'#1960C8'},{id:'R9',hex:'#945AB1'},{id:'R10',hex:'#F8DA54'},{id:'R11',hex:'#FCECF7'},{id:'R12',hex:'#D8D4D3'},{id:'R13',hex:'#56534E'},{id:'R14',hex:'#A3E7DC'},{id:'R15',hex:'#78CEE7'},{id:'R16',hex:'#3FCDCE'},{id:'R17',hex:'#4E8379'},{id:'R18',hex:'#7DCA9C'},{id:'R19',hex:'#C8E664'},{id:'R20',hex:'#E3CCBA'},{id:'R21',hex:'#A17140'},{id:'R22',hex:'#6B372C'},{id:'R23',hex:'#F6BB6F'},{id:'R24',hex:'#F3C6C0'},{id:'R25',hex:'#C76A62'},{id:'R26',hex:'#D093BC'},{id:'R27',hex:'#E58EAE'},{id:'R28',hex:'#9F85CF'},
+        // T系列 (透明)
+        {id:'T1',hex:'#FCFDFF'},
+        // Y系列 (夜光)
+        {id:'Y1',hex:'#FF6FB7'},{id:'Y2',hex:'#FDB583'},{id:'Y3',hex:'#D8FCA4'},{id:'Y4',hex:'#91DAFB'},{id:'Y5',hex:'#E987EA'},{id:'Y6',hex:'#F7D4B8'},{id:'Y7',hex:'#F1FA7D'},{id:'Y8',hex:'#5EE88C'},{id:'Y9',hex:'#F8F5FE'},
+        // ZG系列 (光变)
+        {id:'ZG1',hex:'#DAABB3'},{id:'ZG2',hex:'#D6AA87'},{id:'ZG3',hex:'#C1BD8D'},{id:'ZG4',hex:'#96B69F'},{id:'ZG5',hex:'#849DC6'},{id:'ZG6',hex:'#94BFE2'},{id:'ZG7',hex:'#E2A9D2'},{id:'ZG8',hex:'#AB91C0'}
+    ];
 
-    let data = JSON.parse(localStorage.getItem('bead_v_sort')) || MARD_DB.map(i => ({...i, w: 0, totalUsed: 0, logs: []}));
-    let threshold = parseFloat(localStorage.getItem('bead_threshold')) || 5;
-    let sortByUsage = false; // 排序模式状态
-    let sel = new Set();
+    let data = JSON.parse(localStorage.getItem('bead_v_sort')) || MARD_DB.map(i => ({...i, w: 0, totalUsed: 0, logs: [], monitor: true}));
+    
+    // 同步新色号：检查 MARD_DB 中是否有新色号未在 data 中
+    MARD_DB.forEach(dbItem => {
+        let existing = data.find(d => d.id === dbItem.id);
+        if (!existing) {
+            data.push({...dbItem, w: 0, totalUsed: 0, logs: [], monitor: true});
+        } else {
+            // 确保旧数据也有 monitor 字段
+            if(existing.monitor === undefined) existing.monitor = true;
+        }
+    });
 
-    function render() {
-        const q = document.getElementById('search').value.toUpperCase();
-        const grid = document.getElementById('grid');
-        grid.innerHTML = '';
-        let lowCount = 0;
+    let threshold = parseFloat(localStorage.getItem('bead_threshold')) || 5;
+    document.getElementById('threshold').value = threshold; // 修复阈值回显
+    let currentSortMode = 'id'; // 排序模式状态
+    let sel = new Set();
+    let currentEditId = null;
 
-        // 排序逻辑
-        let displayData = [...data];
-        if (sortByUsage) {
-            displayData.sort((a, b) => (b.totalUsed || 0) - (a.totalUsed || 0));
-        } else {
-            // 默认按ID字母+数字排序
-            displayData.sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true, sensitivity: 'base'}));
-        }
+    function formatTime(now) {
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const h = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        return `${y}/${m}/${d} ${h}:${min}:${s}`;
+    }
 
-        displayData.forEach(item => {
-            if (item.id.includes(q)) {
-                const isLow = item.w < threshold && item.w > 0;
-                if(isLow) lowCount++;
-                
-                const row = document.createElement('div');
-                row.className = `bead-row ${sel.has(item.id) ? 'selected' : ''}`;
-                row.onclick = () => toggleSelect(item.id);
-                
-                row.innerHTML = `
-                    <div class="col-select"><input type="checkbox" ${sel.has(item.id)?'checked':''}></div>
-                    <div class="col-color"><div class="swatch" style="background:${item.hex}"></div></div>
-                    <div class="col-id">${item.id}</div>
-                    <div class="col-weight">
-                        <span class="weight-badge ${isLow ? 'low' : ''}" onclick="event.stopPropagation(); manualEdit('${item.id}')">${item.w}g</span>
-                        <span class="info-tag">累计消耗: <span class="total-use">${(item.totalUsed||0).toFixed(2)}g</span></span>
-                    </div>
-                    <div class="col-action">
-                        <button class="btn-plus" onclick="event.stopPropagation(); quickAdd('${item.id}')">+10g</button>
-                    </div>
-                `;
-                grid.appendChild(row);
-            }
-        });
-        document.getElementById('count-low').innerText = lowCount;
-        save();
-    }
+    let collapsedSeries = new Set();
 
-    function toggleSort() {
-        sortByUsage = !sortByUsage;
-        const btn = document.getElementById('sortBtn');
-        btn.innerText = sortByUsage ? "📊 按名称排序" : "📊 按消耗量排序";
-        btn.classList.toggle('active', sortByUsage);
-        render();
-    }
+    function toggleSeries(key) {
+        if(collapsedSeries.has(key)) collapsedSeries.delete(key);
+        else collapsedSeries.add(key);
+        render();
+    }
 
-    function toggleSelect(id) {
-        sel.has(id) ? sel.delete(id) : sel.add(id);
-        document.getElementById('footer').style.display = sel.size > 0 ? 'flex' : 'none';
-        document.getElementById('selNum').innerText = sel.size;
-        render();
-    }
+    function createRow(item) {
+        const isMonitored = item.monitor !== false;
+        const isLow = isMonitored && (item.w < threshold);
+        const grainCount = Math.round(item.w * 100);
+        
+        // 计算总补货
+        let totalAdded = 0;
+        if (item.totalAdded !== undefined) {
+             totalAdded = item.totalAdded;
+        } else {
+            // 兼容逻辑：从 logs 计算并初始化
+            if(item.logs) {
+                 item.logs.forEach(log => {
+                     if(log.type === 'add') totalAdded += (log.val || 0);
+                 });
+            }
+            totalAdded = parseFloat(totalAdded.toFixed(2));
+            // 初始化字段以便后续累加
+            item.totalAdded = totalAdded; 
+        }
+        
+        // 计算总消耗
+        let totalUsed = 0;
+        if (item.totalUsed !== undefined) {
+             totalUsed = item.totalUsed;
+        } else {
+             // 兼容逻辑：从 logs 计算并初始化
+             if(item.logs) {
+                 item.logs.forEach(log => {
+                     if(log.type !== 'add') {
+                         const count = log.c || log.val || 0;
+                         const g = parseFloat((count / 100).toFixed(2));
+                         totalUsed += g;
+                     }
+                 });
+             }
+             totalUsed = parseFloat(totalUsed.toFixed(2));
+             item.totalUsed = totalUsed; 
+        }
+        const monitorIcon = !isMonitored ? '<span style="font-size:12px; margin-left:2px; opacity:0.5;">🔕</span>' : '';
 
-    function updateThreshold() {
-        threshold = parseFloat(document.getElementById('threshold').value) || 0;
-        localStorage.setItem('bead_threshold', threshold);
-        render();
-    }
+        const row = document.createElement('div');
+        row.className = `bead-row ${sel.has(item.id) ? 'selected' : ''}`;
+        row.onclick = () => toggleSelect(item.id);
+        
+        row.innerHTML = `
+            <div class="col-select"><input type="checkbox" ${sel.has(item.id)?'checked':''}></div>
+            <div class="col-color"><div class="swatch" style="background:${item.hex}"></div></div>
+            <div class="col-id" style="display:flex; align-items:center;">${item.id}${monitorIcon}</div>
+            <div class="col-weight" style="display:flex; flex-direction:column; justify-content:center; gap:2px;">
+                <div class="weight-primary-row" style="display:flex; align-items:center; gap:15px;">
+                    <div style="cursor:pointer; display:flex; align-items:baseline;" onclick="event.stopPropagation(); manualEdit('${item.id}')">
+                        <span class="weight-badge ${isLow ? 'low' : ''}">${item.w}g</span>
+                        <span class="grain-info" style="font-size:10px; color:#999; margin-left:4px;">≈${grainCount}粒</span>
+                    </div>
+                </div>
+                <div class="weight-detail-row" style="font-size:10px; color:#999; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                     <span style="white-space:nowrap;">总耗: <b style="color:#ff4d4f; font-weight:normal;">${totalUsed}g</b></span>
+                     <span style="white-space:nowrap;">总补: <b style="color:#52c41a; font-weight:normal;">${totalAdded}g</b></span>
+                     <button class="btn-detail" onclick="event.stopPropagation(); openHistory('${item.id}')">查看明细</button>
+                </div>
+            </div>
+            <div class="col-action">
+                <button class="btn-plus" onclick="event.stopPropagation(); quickAdd('${item.id}')">+10g</button>
+            </div>
+        `;
+        return row;
+    }
 
-    function quickAdd(id) {
-        const item = data.find(d => d.id === id);
-        item.w = parseFloat((item.w + 10).toFixed(2));
-        render();
-    }
+    function render() {
+        const q = document.getElementById('search').value.toUpperCase();
+        
+        // 获取当前系列筛选状态
+        let seriesMode = document.getElementById('seriesFilter').value;
+        // 保存到 localStorage
+        localStorage.setItem('bead_series_filter', seriesMode);
 
-    function manualEdit(id) {
-        const item = data.find(d => d.id === id);
-        const val = prompt(`【${id}】累计消耗：${(item.totalUsed||0).toFixed(2)}g\n修改库存重量(g):`, item.w);
-        if (val !== null) { item.w = parseFloat(val) || 0; render(); }
-    }
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        
+        // 系列筛选逻辑
+        let displayData = data.filter(item => {
+            if (seriesMode === 'all') return true;
+            // Mard 221 模式下排除 P, Q, R, T, Y, ZG 系列
+            const match = item.id.match(/^[A-Z]+/);
+            const series = match ? match[0] : '';
+            const extraSeries = ['P', 'Q', 'R', 'T', 'Y', 'ZG'];
+            return !extraSeries.includes(series);
+        });
+        
+        // 排序逻辑
+        if (currentSortMode === 'usage_desc') {
+            displayData.sort((a, b) => (b.totalUsed || 0) - (a.totalUsed || 0));
+        } else if (currentSortMode === 'usage_asc') {
+            displayData.sort((a, b) => (a.totalUsed || 0) - (b.totalUsed || 0));
+        } else if (currentSortMode === 'stock_desc') {
+            displayData.sort((a, b) => b.w - a.w); // 降序
+        } else if (currentSortMode === 'stock_asc') {
+            displayData.sort((a, b) => a.w - b.w); // 升序
+        } else if (currentSortMode.startsWith('restock')) {
+             displayData.sort((a, b) => {
+                 const getRestock = (item) => {
+                     if(!item.logs) return 0;
+                     return item.logs.reduce((sum, log) => sum + (log.type === 'add' ? (log.val||0) : 0), 0);
+                 };
+                 const valA = getRestock(a);
+                 const valB = getRestock(b);
+                 return currentSortMode === 'restock_desc' ? valB - valA : valA - valB;
+             });
+        } else {
+            // 默认按ID字母+数字排序
+            displayData.sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true, sensitivity: 'base'}));
+        }
 
-    function openConsumeModal() {
-        const listDiv = document.getElementById('modalList');
-        listDiv.innerHTML = '';
-        sel.forEach(id => {
-            const item = data.find(d => d.id === id);
-            const row = document.createElement('div');
-            row.className = 'modal-row';
-            row.innerHTML = `
-                <div class="swatch" style="width:20px; height:20px; background:${item.hex}"></div>
-                <b style="margin-left:10px; width:45px;">${id}</b>
-                <input type="number" class="consume-input" data-id="${id}" placeholder="粒数">
-            `;
-            listDiv.appendChild(row);
-        });
-        document.getElementById('modal').style.display = 'block';
-        document.getElementById('mask').style.display = 'block';
-    }
+        // 计算低库存数量（基于当前搜索过滤）
+        let lowCount = 0;
+        displayData.forEach(item => {
+            if (item.id.includes(q)) {
+                if(item.monitor !== false && item.w < threshold) lowCount++;
+            }
+        });
+        document.getElementById('count-low').innerText = lowCount;
 
-    function submitConsume() {
-        const inputs = document.querySelectorAll('.consume-input');
-        const now = new Date();
-        const dateStr = (now.getMonth()+1) + '/' + now.getDate();
-        
-        inputs.forEach(input => {
-            const id = input.getAttribute('data-id');
-            const count = parseFloat(input.value) || 0;
-            if(count > 0) {
-                const item = data.find(d => d.id === id);
-                const g = count / 100;
-                item.w = Math.max(0, parseFloat((item.w - g).toFixed(2)));
-                item.totalUsed = parseFloat(((item.totalUsed || 0) + g).toFixed(2));
-                if(!item.logs) item.logs = [];
-                item.logs.push({ d: dateStr, c: count });
-                if(item.logs.length > 10) item.logs.shift();
-            }
-        });
-        closeModal();
-        sel.clear();
-        document.getElementById('footer').style.display = 'none';
-        render();
-    }
+        // 分组显示逻辑（仅在默认排序且无搜索时启用）
+        if (currentSortMode === 'id' && q === '') {
+             const groups = {};
+             displayData.forEach(item => {
+                 // 提取系列前缀 (支持 ZG 这种双字母系列)
+                 const match = item.id.match(/^[A-Z]+/);
+                 let key = match ? match[0] : '#';
+                 if(!groups[key]) groups[key] = [];
+                 groups[key].push(item);
+             });
+             
+             const seriesNames = {
+                'P': '珠光',
+                'Q': '温变',
+                'R': '透明果冻水晶',
+                'T': '透明',
+                'Y': '夜光',
+                'ZG': '光变'
+             };
 
-    function closeModal() {
-        document.getElementById('modal').style.display = 'none';
-        document.getElementById('mask').style.display = 'none';
-    }
+             Object.keys(groups).sort().forEach(series => {
+                 const items = groups[series];
+                 const isCollapsed = collapsedSeries.has(series);
+                 const seriesDesc = seriesNames[series] ? ` (${seriesNames[series]})` : '';
+                 
+                 const header = document.createElement('div');
+                 header.onclick = () => toggleSeries(series);
+                 header.style.cssText = 'background:#f8f9fa; padding:10px 15px; font-weight:bold; color:#555; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between; align-items:center;';
+                 header.innerHTML = `
+                    <span>${series}系列${seriesDesc} (${items.length})</span>
+                    <span style="transform:${isCollapsed?'rotate(-90deg)':'rotate(0deg)'}; transition:transform 0.2s; display:flex; align-items:center;">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="#999" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </span>
+                 `;
+                 grid.appendChild(header);
+                 
+                 if(!isCollapsed) {
+                     items.forEach(item => {
+                         grid.appendChild(createRow(item));
+                     });
+                 }
+             });
+        } else {
+             // 扁平列表模式
+             displayData.forEach(item => {
+                 if (item.id.includes(q)) {
+                     grid.appendChild(createRow(item));
+                 }
+             });
+        }
+        
+        save();
+    }
 
-    function save() { localStorage.setItem('bead_v_sort', JSON.stringify(data)); }
+    function changeSortMode() {
+        currentSortMode = document.getElementById('sortSelect').value;
+        render();
+    }
 
-    function exportData() {
-        const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-        navigator.clipboard.writeText(b64).then(() => alert("库存与统计已复制！"));
-    }
+    function toggleSelect(id) {
+        sel.has(id) ? sel.delete(id) : sel.add(id);
+        updateFooter();
+        render();
+    }
+    
+    function cancelSelection() {
+        sel.clear();
+        updateFooter();
+        render();
+    }
 
-    function importData() {
-        const code = prompt("粘贴备份代码：");
-        if (code) {
-            try {
-                data = JSON.parse(decodeURIComponent(escape(atob(code))));
-                render();
-                alert("恢复成功！");
-            } catch(e) { alert("恢复失败。"); }
-        }
-    }
+    function batchSetMonitor(enable) {
+        if (sel.size === 0) return;
+        sel.forEach(id => {
+            const item = data.find(d => d.id === id);
+            if(item) item.monitor = enable;
+        });
+        save();
+        cancelSelection();
+        alert(enable ? "已开启选中色号的阈值提醒" : "已关闭选中色号的阈值提醒");
+    }
+    
+    function updateFooter() {
+        document.getElementById('footer').style.display = sel.size > 0 ? 'flex' : 'none';
+        document.getElementById('selNum').innerText = sel.size;
+    }
 
-    function copyLowList() {
-        const list = data.filter(d => d.w < threshold && d.w > 0).map(d => `${d.id}(${d.w}g)`).join(', ');
-        navigator.clipboard.writeText(list || '充足').then(() => alert("已复制"));
-    }
+    function updateThreshold() {
+        threshold = parseFloat(document.getElementById('threshold').value) || 0;
+        localStorage.setItem('bead_threshold', threshold);
+        render();
+    }
 
-    render();
+    function quickAdd(id) {
+        const item = data.find(d => d.id === id);
+        const addVal = 10;
+        item.w = parseFloat((item.w + addVal).toFixed(2));
+        // 维护总补货量
+        item.totalAdded = parseFloat(((item.totalAdded || 0) + addVal).toFixed(2));
+        
+        // 记录补货日志
+        const now = new Date();
+        const dateStr = formatTime(now);
+        if(!item.logs) item.logs = [];
+        item.logs.push({ d: dateStr, type: 'add', val: addVal });
+        if(item.logs.length > 20) item.logs.shift(); // 增加日志保留条数
+        
+        save(); // 增加保存
+        render();
+    }
+
+    function manualEdit(id) {
+        currentEditId = id;
+        const item = data.find(d => d.id === id);
+        document.getElementById('editWeightModalTitle').innerText = `修改库存重量 ${id}`;
+        const input = document.getElementById('editWeightInput');
+        input.value = item.w;
+        showModal('editWeightModal');
+        setTimeout(() => input.select(), 50);
+        
+        // 绑定回车事件
+        input.onkeydown = function(e) {
+            if(e.key === 'Enter') submitEditWeight();
+        }
+    }
+
+    function openRestockModal() {
+        if(!currentEditId) return;
+        document.getElementById('restockTitle').innerText = `正在为色号 [${currentEditId}] 补货`;
+        document.getElementById('restockInput').value = '';
+        showModal('restockModal');
+        setTimeout(() => document.getElementById('restockInput').focus(), 50);
+        
+        document.getElementById('restockInput').onkeydown = function(e) {
+            if(e.key === 'Enter') submitRestock();
+        }
+    }
+
+    function submitRestock() {
+        const val = parseFloat(document.getElementById('restockInput').value);
+        if(!currentEditId || isNaN(val) || val <= 0) {
+            alert("请输入有效的补货重量");
+            return;
+        }
+        
+        const item = data.find(d => d.id === currentEditId);
+        item.w = parseFloat((item.w + val).toFixed(2));
+        // 维护总补货量
+        item.totalAdded = parseFloat(((item.totalAdded || 0) + val).toFixed(2));
+        
+        // 记录日志
+        const now = new Date();
+        const dateStr = formatTime(now);
+        if(!item.logs) item.logs = [];
+        item.logs.push({ d: dateStr, type: 'add', val: val });
+        if(item.logs.length > 20) item.logs.shift();
+        
+        save();
+        render();
+        closeAllModals();
+        alert(`已成功补货 ${val}g`);
+    }
+
+    function openHistory(id) {
+        const item = data.find(d => d.id === id);
+        if(!item) return; // 容错处理
+
+        // 1. 设置标题和概览数据
+        document.getElementById('historyTitle').innerHTML = `色号 ${id} 明细`;
+        document.getElementById('hist-stock').innerText = (item.w || 0) + 'g';
+        document.getElementById('hist-used').innerText = (item.totalUsed || 0) + 'g';
+        
+        // 计算总补充：优先使用持久化字段
+        let totalAdded = 0;
+        if (item.totalAdded !== undefined) {
+            totalAdded = item.totalAdded;
+        } else {
+            if(item.logs) {
+                item.logs.forEach(log => {
+                    if(log.type === 'add') {
+                        totalAdded += (log.val || 0);
+                    }
+                });
+            }
+        }
+        document.getElementById('hist-added').innerText = parseFloat(totalAdded.toFixed(2)) + 'g';
+
+        // 计算总消耗
+        let totalUsed = 0;
+        if (item.totalUsed !== undefined) {
+             totalUsed = item.totalUsed;
+        } else {
+             if(item.logs) {
+                 item.logs.forEach(log => {
+                     if(log.type !== 'add') {
+                         const count = log.c || log.val || 0;
+                         const g = parseFloat((count / 100).toFixed(2));
+                         totalUsed += g;
+                     }
+                 });
+             }
+        }
+        document.getElementById('hist-used').innerText = parseFloat(totalUsed.toFixed(2)) + 'g';
+
+        // 2. 渲染记录表格
+        const tbody = document.getElementById('historyList');
+        tbody.innerHTML = '';
+        
+        if (item.logs && item.logs.length > 0) {
+            // 给日志加上原始索引，方便删除
+            const logsWithIdx = item.logs.map((log, idx) => ({...log, idx}));
+            
+            // 倒序显示
+            logsWithIdx.reverse().forEach(log => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #f0f0f0';
+                
+                // --- 时间列 ---
+                const tdTime = document.createElement('td');
+                tdTime.style.padding = '10px';
+                tdTime.style.color = '#666';
+                tdTime.innerText = log.d;
+                tr.appendChild(tdTime);
+                
+                // --- 操作类型列 ---
+                const tdType = document.createElement('td');
+                tdType.style.padding = '10px';
+                tdType.style.textAlign = 'center';
+                
+                let typeText = '';
+                let typeColor = '#333';
+                
+                if (log.type === 'add') {
+                    typeText = '补货';
+                    typeColor = '#52c41a'; // 绿色
+                } else {
+                    typeText = '消耗';
+                    typeColor = '#ff4d4f'; // 红色
+                }
+                
+                tdType.innerHTML = `<span style="background:${typeColor}15; color:${typeColor}; padding:2px 6px; border-radius:4px; font-size:11px;">${typeText}</span>`;
+                tr.appendChild(tdType);
+                
+                // --- 重量/粒数及删除列 ---
+                const tdVal = document.createElement('td');
+                tdVal.style.padding = '10px';
+                tdVal.style.textAlign = 'right';
+                
+                let valHtml = '';
+                if (log.type === 'add') {
+                    valHtml = `<span style="color:#333;">+${log.val}g</span>`;
+                } else {
+                    const count = log.c || log.val || 0;
+                    const weight = (count / 100).toFixed(2);
+                    // 如果是手动调整且没有具体粒数记录（旧数据兼容），优先显示重量
+                    if (log.isManual) {
+                         valHtml = `<span style="color:#333;">-${weight}g</span>`;
+                    } else {
+                         valHtml = `<span style="color:#333;">${count}粒</span><br><span style="font-size:10px; color:#999;">≈ ${weight}g</span>`;
+                    }
+                }
+                
+                // 删除按钮
+                const delBtn = `<button onclick="deleteLog('${id}', ${log.idx})" style="margin-left:8px; border:none; background:none; color:#999; cursor:pointer; font-size:16px; padding:0;">×</button>`;
+                
+                tdVal.innerHTML = `<div style="display:flex; align-items:center; justify-content:flex-end;"><div>${valHtml}</div>${delBtn}</div>`;
+                tr.appendChild(tdVal);
+                
+                tbody.appendChild(tr);
+            });
+        } else {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td colspan="3" style="padding:20px; text-align:center; color:#999;">暂无记录</td>';
+            tbody.appendChild(tr);
+        }
+        
+        showModal('historyModal');
+    }
+
+    function deleteLog(id, logIdx) {
+        if(!confirm("确认删除这条记录吗？\n删除后将自动回滚库存变化。")) return;
+        
+        const item = data.find(d => d.id === id);
+        if(!item || !item.logs || !item.logs[logIdx]) return;
+        
+        const log = item.logs[logIdx];
+        
+        if (log.type === 'add') {
+            // 回滚补货：减少库存
+            item.w = Math.max(0, parseFloat((item.w - log.val).toFixed(2)));
+            // 回滚总补货
+            item.totalAdded = Math.max(0, parseFloat(((item.totalAdded || 0) - log.val).toFixed(2)));
+        } else {
+            // 回滚消耗：增加库存，减少累计消耗
+            const count = log.c || log.val || 0;
+            const g = parseFloat((count / 100).toFixed(2));
+            item.w = parseFloat((item.w + g).toFixed(2));
+            item.totalUsed = Math.max(0, parseFloat((item.totalUsed - g).toFixed(2)));
+        }
+        
+        // 删除记录
+        item.logs.splice(logIdx, 1);
+        
+        save();
+        render();
+        // 重新渲染当前打开的历史弹窗
+        openHistory(id);
+    }
+
+    function submitEditWeight() {
+        if(!currentEditId) return;
+        const input = document.getElementById('editWeightInput');
+        const val = parseFloat(input.value);
+        
+        // 保持原有逻辑：输入无效数字则视为0
+        const finalVal = (!isNaN(val) && val >= 0) ? val : 0;
+        
+        const item = data.find(d => d.id === currentEditId);
+        if(item) {
+            const oldVal = item.w;
+            const diff = finalVal - oldVal;
+            
+            // 更新库存
+            item.w = parseFloat(finalVal.toFixed(2));
+            
+            // 自动记录日志 (忽略极小差异)
+            if (Math.abs(diff) > 0.001) {
+                const now = new Date();
+                const dateStr = formatTime(now);
+                if(!item.logs) item.logs = [];
+                
+                if (diff > 0) {
+                    const addedVal = parseFloat(diff.toFixed(2));
+                    // 增加库存 -> 视为补货
+                    item.logs.push({ d: dateStr, type: 'add', val: addedVal, isManual: true });
+                    // 维护总补货量
+                    item.totalAdded = parseFloat(((item.totalAdded || 0) + addedVal).toFixed(2));
+                } else {
+                    // 减少库存 -> 视为消耗
+                    const loss = -diff;
+                    // 更新累计消耗
+                    item.totalUsed = parseFloat(((item.totalUsed || 0) + loss).toFixed(2));
+                    // 记录为消耗 (折算为粒数，假设 1g = 100 粒)
+                    item.logs.push({ d: dateStr, c: Math.round(loss * 100), isManual: true });
+                }
+                
+                if(item.logs.length > 20) item.logs.shift();
+            }
+            
+            render();
+        }
+        
+        closeAllModals();
+        currentEditId = null;
+        input.onkeydown = null;
+    }
+
+    function openConsumeModal() {
+        const listDiv = document.getElementById('modalList');
+        listDiv.innerHTML = '';
+        
+        if (sel.size === 0) {
+            listDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#999; font-size:12px;">未选择任何色号</div>';
+            showModal('consumeModal');
+            return;
+        }
+
+        sel.forEach(id => {
+            const item = data.find(d => d.id === id);
+            const currentStockGrains = Math.round(item.w * 100); // 当前库存粒数
+            
+            const row = document.createElement('div');
+            row.className = 'modal-row';
+            // 使用自定义样式覆盖默认 modal-row
+            row.style.cssText = 'display:flex; flex-direction:column; padding: 12px; border-bottom: 1px solid #f0f0f0; background:white; align-items: stretch;';
+            
+            row.innerHTML = `
+                <div style="display:flex; align-items:center; justify-content: space-between;">
+                    <div style="display:flex; align-items:center; gap: 12px;">
+                        <div class="swatch" style="width:28px; height:28px; background:${item.hex}; border-radius:50%; border:1px solid #eee; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>
+                        <div style="display:flex; flex-direction:column;">
+                            <b style="font-size:16px; color:#333;">${id}</b>
+                            <span style="font-size:11px; color:#999;">库存: ${currentStockGrains}粒</span>
+                        </div>
+                    </div>
+                    <div style="position:relative;">
+                        <input type="number" class="consume-input" data-id="${id}" data-stock="${currentStockGrains}" placeholder="0" oninput="checkConsumeLimit(this)" 
+                               style="width: 70px; padding: 8px 5px; border: 1px solid #e0e0e0; border-radius: 8px; text-align: center; font-size: 16px; font-weight:bold; color:#333; outline:none; background:#f9fafb; transition: all 0.2s;">
+                    </div>
+                </div>
+                <div class="limit-warn" id="warn-${id}" style="width:100%; color:#ff4d4f; font-size:11px; margin-top:8px; display:none; text-align:right; background:#fff1f0; padding:4px 8px; border-radius:4px;">
+                     ⚠️ 消耗量超过库存 (${currentStockGrains})
+                </div>
+            `;
+            listDiv.appendChild(row);
+        });
+        
+        // 去除最后一行边框
+        if(listDiv.lastChild) listDiv.lastChild.style.borderBottom = 'none';
+        
+        showModal('consumeModal');
+        
+        // 自动聚焦第一个输入框
+        setTimeout(() => {
+            const firstInput = listDiv.querySelector('input');
+            if(firstInput) firstInput.focus();
+        }, 100);
+    }
+
+    function checkConsumeLimit(input) {
+        const val = parseFloat(input.value) || 0;
+        const stock = parseFloat(input.getAttribute('data-stock'));
+        const id = input.getAttribute('data-id');
+        const warnEl = document.getElementById(`warn-${id}`);
+        
+        if (val > stock) {
+            warnEl.style.display = 'block';
+        } else {
+            warnEl.style.display = 'none';
+        }
+    }
+
+    function submitConsume() {
+        const inputs = document.querySelectorAll('.consume-input');
+        const now = new Date();
+        const dateStr = formatTime(now);
+        
+        inputs.forEach(input => {
+            const id = input.getAttribute('data-id');
+            const count = parseFloat(input.value) || 0;
+            if(count > 0) {
+                const item = data.find(d => d.id === id);
+                const g = count / 100;
+                item.w = Math.max(0, parseFloat((item.w - g).toFixed(2)));
+                item.totalUsed = parseFloat(((item.totalUsed || 0) + g).toFixed(2));
+                if(!item.logs) item.logs = [];
+                item.logs.push({ d: dateStr, c: count });
+                if(item.logs.length > 10) item.logs.shift();
+            }
+        });
+        closeAllModals();
+        sel.clear();
+        document.getElementById('footer').style.display = 'none';
+        render();
+    }
+
+    function showModal(id) {
+        document.getElementById('mask').style.display = 'block';
+        document.getElementById(id).style.display = 'block';
+    }
+
+    function closeAllModals() {
+        document.querySelectorAll('.modal').forEach(el => el.style.display = 'none');
+        document.getElementById('mask').style.display = 'none';
+    }
+
+    // 兼容旧函数调用，防止遗漏
+    function closeModal() { closeAllModals(); }
+
+    function save() { localStorage.setItem('bead_v_sort', JSON.stringify(data)); }
+
+    // --- 数据管理功能 ---
+    function openDataModal(tab) {
+        showModal('dataModal');
+        switchDataTab(tab);
+        if(tab === 'backup') {
+            // 导出完整数据（JSON格式），包含配置和所有记录
+            const fullBackup = {
+                version: 1,
+                timestamp: new Date().toISOString(),
+                config: {
+                    threshold: threshold
+                },
+                data: data
+            };
+            const jsonStr = JSON.stringify(fullBackup, null, 2);
+            document.getElementById('backupOutput').value = jsonStr;
+        } else {
+            document.getElementById('restoreInput').value = '';
+            document.getElementById('restoreInput').placeholder = '在此粘贴备份的JSON数据，或 "色号 重量" 格式的简易数据';
+        }
+    }
+
+    function switchDataTab(tab) {
+        document.getElementById('tabBackup').className = tab==='backup' ? 'm-btn m-btn-primary' : 'm-btn m-btn-ghost';
+        document.getElementById('tabRestore').className = tab==='restore' ? 'm-btn m-btn-primary' : 'm-btn m-btn-ghost';
+        document.getElementById('viewBackup').style.display = tab==='backup' ? 'block' : 'none';
+        document.getElementById('viewRestore').style.display = tab==='restore' ? 'block' : 'none';
+    }
+
+    function copyBackup() {
+        const el = document.getElementById('backupOutput');
+        el.select();
+        navigator.clipboard.writeText(el.value).then(() => alert("已复制到剪贴板"));
+    }
+
+    function execRestore() {
+        const code = document.getElementById('restoreInput').value.trim();
+        if(!code) return;
+        
+        if(!confirm("警告：恢复操作将重置当前所有库存数据，然后导入新数据。\n确认继续吗？")) return;
+
+        // 尝试解析 JSON (完整备份恢复)
+        try {
+            if (code.startsWith('{')) {
+                const parsed = JSON.parse(code);
+                if (parsed && Array.isArray(parsed.data)) {
+                    // 1. 恢复库存数据
+                    data = parsed.data;
+                    
+                    // 2. 恢复配置
+                    if (parsed.config && parsed.config.threshold !== undefined) {
+                        threshold = parsed.config.threshold;
+                        localStorage.setItem('bead_threshold', threshold);
+                        document.getElementById('threshold').value = threshold;
+                    }
+
+                    save();
+                    render();
+                    closeAllModals();
+                    alert("完整备份已成功恢复！(包含库存、日志及设置)");
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn("JSON解析失败，尝试简易格式恢复", e);
+        }
+
+        // 解析文本格式
+        const regex = /([A-Z][0-9]+)[^0-9\.]*(\d+(\.\d+)?)/gi;
+        let match;
+        const newStock = {};
+        let count = 0;
+
+        while ((match = regex.exec(code)) !== null) {
+            const id = match[1].toUpperCase();
+            const w = parseFloat(match[2]);
+            newStock[id] = w;
+            count++;
+        }
+
+        if (count === 0) {
+            alert("未识别到有效数据，请检查格式 (如: A1 50)");
+            return;
+        }
+
+        // 应用数据：重置所有库存，填入新库存
+        data.forEach(item => {
+            if (newStock[item.id] !== undefined) {
+                item.w = newStock[item.id];
+            } else {
+                item.w = 0; // 备份中不存在的色号，库存归零
+            }
+        });
+
+        save();
+        render();
+        closeAllModals();
+        alert(`已成功恢复 ${count} 条库存记录`);
+    }
+
+    // --- 批量初始录入功能 ---
+    function openBatchInput() {
+        document.getElementById('batchInputText').value = '';
+        showModal('batchInputModal');
+    }
+
+    function submitBatchInput() {
+        const text = document.getElementById('batchInputText').value;
+        const regex = /([A-Z][0-9]+)[^0-9\.]*(\d+(\.\d+)?)/gi;
+        let match;
+        let count = 0;
+        while ((match = regex.exec(text)) !== null) {
+            const id = match[1].toUpperCase();
+            const w = parseFloat(match[2]);
+            const item = data.find(d => d.id === id);
+            if(item) {
+                item.w = w;
+                count++;
+            }
+        }
+        save();
+        render();
+        closeAllModals();
+        alert(`已批量更新 ${count} 个色号的库存`);
+    }
+
+    function copyLowStockText() {
+        const el = document.getElementById('lowStockText');
+        el.select();
+        navigator.clipboard.writeText(el.value).then(() => alert("已复制到剪贴板"));
+    }
+
+    function openIgnoredModal() {
+        const list = data.filter(d => d.monitor === false);
+        const container = document.getElementById('ignoredList');
+        container.innerHTML = '';
+        
+        if(list.length === 0) {
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:#999; font-size:12px;">当前没有忽略任何色号</div>';
+        } else {
+            list.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'modal-row';
+                row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #f0f0f0; gap: 10px;';
+                row.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px; flex: 1; overflow: hidden;">
+                        <div class="swatch" style="width:24px; height:24px; background:${item.hex}; border-radius:50%; border:1px solid #eee; flex-shrink: 0;"></div>
+                        <span style="font-weight:bold; font-family:monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.id}</span>
+                    </div>
+                    <button onclick="restoreMonitor('${item.id}')" style="background:#fff; border:1px solid #ccc; color:#333; padding:6px 12px; border-radius:4px; font-size:13px; cursor:pointer; flex-shrink:0;">恢复提醒</button>
+                `;
+                container.appendChild(row);
+            });
+        }
+        showModal('ignoredModal');
+    }
+
+    function restoreMonitor(id) {
+        const item = data.find(d => d.id === id);
+        if(item) {
+            item.monitor = true;
+            save();
+            render();
+            openIgnoredModal(); // 刷新列表
+        }
+    }
+
+    function openLowStockModal() {
+        // 获取当前筛选模式
+        const seriesMode = document.getElementById('seriesFilter').value;
+        
+        // 筛选逻辑与 render 保持一致
+        const lowList = data.filter(d => {
+            // 1. 监控开启且低于阈值
+            if (d.monitor === false || d.w >= threshold) return false;
+            
+            // 2. 系列筛选
+            if (seriesMode === 'all') return true;
+            // Mard 221 模式下排除 P, Q, R, T, Y, ZG 系列
+            const match = d.id.match(/^[A-Z]+/);
+            const series = match ? match[0] : '';
+            const extraSeries = ['P', 'Q', 'R', 'T', 'Y', 'ZG'];
+            return !extraSeries.includes(series);
+        });
+
+        const listDiv = document.getElementById('lowStockList');
+        const headerDiv = document.getElementById('lowStockHeader');
+        listDiv.innerHTML = '';
+
+        if (lowList.length === 0) {
+            headerDiv.style.display = 'none';
+            listDiv.innerHTML = `
+                <div style="padding:30px 10px; text-align:center; color:#999;">
+                    <div style="font-size:24px; margin-bottom:10px;">🎉</div>
+                    <div style="font-size:13px;">当前库存充足</div>
+                    <div style="font-size:11px; margin-top:5px;">暂无低于阈值 (${threshold}g) 的色号</div>
+                </div>
+            `;
+            // 清空复制内容
+            document.getElementById('lowStockText').value = '';
+        } else {
+            headerDiv.style.display = 'flex';
+            lowList.forEach(item => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; align-items:center; padding:12px; border-bottom:1px solid #f0f0f0; background:white;';
+                
+                row.innerHTML = `
+                    <div class="swatch" style="width:28px; height:28px; background:${item.hex}; border-radius:50%; border:1px solid #eee; margin-right:12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"></div>
+                    <div style="flex:1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b style="font-size:16px; color:#333;">${item.id}</b>
+                            <span style="font-size:14px; font-weight:bold; color:#ff4d4f;">${item.w}g</span>
+                        </div>
+                        <div style="font-size:11px; color:#999; margin-top:2px;">库存不足 (阈值 ${threshold}g)</div>
+                    </div>
+                `;
+                listDiv.appendChild(row);
+            });
+            
+            // 去除最后一行边框
+            if(listDiv.lastChild) listDiv.lastChild.style.borderBottom = 'none';
+
+            // 准备复制的文本内容
+            const copyText = lowList.map(d => `${d.id}: ${d.w}g`).join('\n');
+            document.getElementById('lowStockText').value = copyText;
+        }
+
+        showModal('lowStockModal');
+    }
+
+    // --- 水印功能 --- 新用户欢迎弹窗 ---
+    function checkWelcome() {
+        const hasVisited = localStorage.getItem('mard_visited');
+        if (!hasVisited) {
+            showModal('welcomeModal');
+        }
+    }
+
+    function closeWelcomeModal() {
+        localStorage.setItem('mard_visited', 'true');
+        closeAllModals();
+    }
+
+    function showDevInfo() {
+        showModal('devInfoModal');
+    }
+
+    // 恢复上次选择的系列
+    const savedSeries = localStorage.getItem('bead_series_filter');
+    if (savedSeries) {
+        document.getElementById('seriesFilter').value = savedSeries;
+    }
+
+    // 启动时检查
+    checkWelcome();
+
+    render();
 </script>
 </body>
 </html>
