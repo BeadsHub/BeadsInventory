@@ -466,7 +466,7 @@
             <div style="margin-bottom: 20px; color: #666; font-size: 13px; line-height: 1.5;">
                 选择之前导出的 CSV 备份文件<br>以恢复库存数据。
             </div>
-            <input type="file" id="restoreFile" style="display:none" onchange="loadBackupFile(this)" accept=".json,.csv,.txt">
+            <input type="file" id="restoreFile" style="display:none" onchange="loadBackupFile(this)">
             <button class="m-btn m-btn-primary" style="width: 100%; padding: 12px; font-size: 15px; background: #1890ff; border-color: #1890ff; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="document.getElementById('restoreFile').click()">
                 <span>📂</span> 选择备份文件
             </button>
