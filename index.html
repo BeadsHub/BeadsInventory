@@ -624,6 +624,7 @@
         <div style="overflow:auto; flex:1; display:flex; justify-content:center; align-items:center; background:#f9f9f9; border-radius:8px; border:1px solid #eee; padding:10px;">
             <canvas id="zoomCanvas"></canvas>
         </div>
+        <button onclick="downloadSolution(currentZoomIdx)" style="margin-top:10px; padding:8px 20px; background:#52c41a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;">保存图片</button>
         <div id="zoomStats" style="margin-top:10px; width:100%; max-height:150px; overflow-y:auto; border:1px solid #eee; padding:5px; border-radius:4px; box-sizing: border-box; background: #fafafa;"></div>
         <div style="margin-top:15px; display:flex; justify-content:center;">
              <button onclick="closeZoom()" style="padding:8px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">关闭</button>
@@ -1986,6 +1987,7 @@
     }
 
     function openZoom(idx) {
+        currentZoomIdx = idx;
         const sol = currentRenderedSolutions[idx];
         if (!sol) return;
         
@@ -2078,7 +2080,7 @@
         modal.style.display = 'none';
     }
 
-    function downloadSolution(idx) {
+    async function downloadSolution(idx) {
         const sol = currentRenderedSolutions[idx];
         if (!sol) return;
         
@@ -2122,7 +2124,21 @@
         }
 
         // 2. Setup Canvas Dimensions
-        const PIXELS_PER_CM = 10; 
+        let PIXELS_PER_CM = 10; 
+        
+        // Adaptive scaling for mobile to prevent memory issues
+        const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window);
+        
+        // If mobile and fabric is large, reduce scale
+        if (isMobile) {
+            const maxDimension = Math.max(W, H);
+            // More aggressive downscaling for WebView compatibility
+            // Limit max pixel dimension to 1000px (approx 1MP)
+            if (maxDimension * PIXELS_PER_CM > 1000) {
+                PIXELS_PER_CM = 1000 / maxDimension; 
+            }
+        }
+        
         const scale = PIXELS_PER_CM;
         
         // Style constants
@@ -2253,56 +2269,110 @@
             currentY += LINE_HEIGHT;
         });
         
-        // Trigger Download or Show Modal (Mobile)
-        const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window);
-
+        // Trigger Download
         if (isMobile) {
-            // Use Base64 JPEG with higher compression to ensure small size and max compatibility
             const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-            const modal = document.getElementById('downloadModal');
-            const img = document.getElementById('downloadImg');
-            const btn = document.getElementById('downloadBtnMobile');
             
-            if (modal && img) {
-                img.src = dataUrl;
-                if (btn) {
-                    // Remove old event listeners
-                    const newBtn = btn.cloneNode(true);
-                    btn.parentNode.replaceChild(newBtn, btn);
+            // Detect if running in WebView (APK) vs Standard Browser
+            // Android WebView usually contains 'Version/X.X' or 'wv'
+            const isWebView = /wv|Android.*Version\/|BW\/|360browser/.test(navigator.userAgent);
+            
+            if (isWebView) {
+                // === APK/WebView Strategy: Prioritize System Share (Album) ===
+                
+                // 1. Try Web Share API (Best for "Save to Album" in WebView)
+                try {
+                    const res = await fetch(dataUrl);
+                    const blob = await res.blob();
+                    const fileName = `layout_solution_${idx+1}.jpg`;
+                    const file = new File([blob], fileName, {type: 'image/jpeg'});
                     
-                    newBtn.onclick = async function() {
-                        // 1. Try Web Share API
-                        try {
-                            const res = await fetch(dataUrl);
-                            const blob = await res.blob();
-                            const fileName = `layout_solution_${idx+1}.jpg`;
-                            const file = new File([blob], fileName, {type: 'image/jpeg'});
-                            
-                            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                                await navigator.share({
-                                    files: [file],
-                                    title: '保存方案',
-                                    text: '方案布局图'
-                                });
-                                return;
-                            }
-                        } catch (error) {
-                            console.log('Share failed', error);
-                        }
-                        
-                        // 2. Explicit Prompt for Long Press (Most reliable in WebView)
-                        alert("如果下载未开始，请长按图片选择'保存到相册'");
-                        
-                        // 3. Try standard download just in case
-                        const link = document.createElement('a');
-                        link.download = `layout_solution_${idx+1}.jpg`;
-                        link.href = dataUrl;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    };
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: '保存方案',
+                            text: '方案布局图'
+                        });
+                        return; // Success
+                    }
+                } catch (error) {
+                    console.log('WebView Share failed', error);
                 }
-                modal.style.display = 'flex';
+                
+                // 2. Fallback: Data URL Navigation (Some WebViews intercept this)
+                try {
+                    window.location.href = dataUrl;
+                    return;
+                } catch(e) {
+                     console.log('Location href failed', e);
+                }
+
+                // 3. Last Resort: Show Manual Save Modal
+                const modal = document.getElementById('downloadModal');
+                const img = document.getElementById('downloadImg');
+                const btn = document.getElementById('downloadBtnMobile');
+                
+                if (modal && img) {
+                    img.src = dataUrl;
+                    if(btn) btn.style.display = 'none';
+                    modal.style.display = 'flex';
+                    alert("自动保存失败，请长按屏幕中央的图片，选择'保存到手机'");
+                }
+
+            } else {
+                // === Mobile Browser Strategy: Prioritize Downloads Folder ===
+                
+                // 1. Try Standard Download Link (Best for "Downloads" folder)
+                try {
+                    const res = await fetch(dataUrl);
+                    const blob = await res.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = `solution_${idx+1}.jpg`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(blobUrl);
+                    return; // Success
+                } catch (e) {
+                    console.log('Browser download failed', e);
+                }
+
+                // 2. Fallback: Data URL Download
+                try {
+                    const link = document.createElement('a');
+                    link.href = dataUrl;
+                    link.download = `solution_${idx+1}.jpg`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    return;
+                } catch (e) {
+                    console.log('Data URL download failed', e);
+                }
+                
+                // 3. Fallback: Web Share (If download failed, maybe share works?)
+                try {
+                    const res = await fetch(dataUrl);
+                    const blob = await res.blob();
+                    const file = new File([blob], `solution_${idx+1}.jpg`, {type: 'image/jpeg'});
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({ files: [file] });
+                        return;
+                    }
+                } catch (e) {}
+                
+                // 4. Manual Modal
+                const modal = document.getElementById('downloadModal');
+                const img = document.getElementById('downloadImg');
+                const btn = document.getElementById('downloadBtnMobile');
+                if (modal && img) {
+                    img.src = dataUrl;
+                    if(btn) btn.style.display = 'none';
+                    modal.style.display = 'flex';
+                    alert("自动保存失败，请长按图片保存");
+                }
             }
         } else {
              const link = document.createElement('a');
@@ -2517,16 +2587,10 @@
                 <span style="font-weight:bold; color:#333; white-space:nowrap;">方案 #${idx}</span>
                 <div style="display:flex; gap:5px; align-items:center;">
                     <span class="sol-badge">${(sol.utilization * 100).toFixed(1)}% 利用率</span>
-                    <button onclick="openZoom(${idx-1})" style="background:none; border:none; cursor:pointer; color:#1890ff; font-size:14px; display:flex; align-items:center; gap:4px; padding:2px 5px; border-radius:4px; background:#e6f7ff; white-space:nowrap;">
-                        🔍 放大
-                    </button>
-                    <button onclick="downloadSolution(${idx-1})" style="background:none; border:none; cursor:pointer; color:#52c41a; font-size:14px; display:flex; align-items:center; gap:4px; padding:2px 5px; border-radius:4px; background:#f6ffed; white-space:nowrap;">
-                        ⬇️ 下载
-                    </button>
                 </div>
             </div>
             <div class="sol-body">
-                <div class="sol-canvas-wrapper">
+                <div class="sol-canvas-wrapper" onclick="openZoom(${idx-1})" style="cursor:pointer;">
                     <canvas id="${canvasId}" width="${cw}" height="${ch}"></canvas>
                 </div>
                 <div class="sol-info">
