@@ -201,6 +201,34 @@
         }
         .nav-btn:hover { background: #f0f7ff; border-color: #d6e4ff; color: #4a90e2; }
 
+        /* 统一返回按钮样式 */
+        .btn-back {
+            border: none;
+            background: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-right: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #555;
+            flex-shrink: 0;
+            padding: 0;
+        }
+        .btn-back:hover {
+            background: #f8f9fa;
+            transform: translateX(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            color: #333;
+        }
+        .btn-back:active {
+            transform: scale(0.95);
+        }
+
         /* 中等屏幕显示粒数 */
         @media (min-width: 360px) and (max-width: 480px) {
             .grain-info { display: inline !important; font-size: 9px !important; }
@@ -233,8 +261,8 @@
 
     <div class="header-sticky">
         <div style="display:flex; align-items:center; margin-bottom:10px;">
-            <button onclick="navTo('home')" style="border:none; background:#f0f2f5; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; margin-right:10px; box-shadow:0 2px 5px rgba(0,0,0,0.05); transition: all 0.2s;">
-                <span style="font-size:18px; margin-left:-2px;">🔙</span>
+            <button onclick="navTo('home')" class="btn-back">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
             <div class="nav-bar" style="flex:1; margin:0; margin-bottom:0;">
                 <button class="nav-btn" onclick="showModal('helpModal')"><span>📖</span><span>使用说明</span></button>
@@ -517,7 +545,9 @@
 <div id="page-fabric" style="display:none; min-height:100vh; background:#f0f2f5;">
     <!-- Fabric Tool Header -->
     <div style="background:white; padding:12px 16px; display:flex; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.05); position:sticky; top:0; z-index:100;">
-        <button onclick="navTo('home')" style="border:none; background:none; font-size:20px; cursor:pointer; padding:0 10px 0 0;">🔙</button>
+        <button onclick="navTo('home')" class="btn-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
         <h2 style="margin:0; font-size:16px; flex:1;">烘焙布裁剪组合工具</h2>
     </div>
 
