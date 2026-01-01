@@ -2073,10 +2073,8 @@
     function closeDownloadModal() {
         const modal = document.getElementById('downloadModal');
         const img = document.getElementById('downloadImg');
-        if (img && img.src && img.src.startsWith('blob:')) {
-            URL.revokeObjectURL(img.src);
-            img.src = '';
-        }
+        // Clear src to save memory
+        if (img) img.src = '';
         modal.style.display = 'none';
     }
 
@@ -2259,51 +2257,53 @@
         const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window);
 
         if (isMobile) {
-            canvas.toBlob(function(blob) {
-                const url = URL.createObjectURL(blob);
-                const modal = document.getElementById('downloadModal');
-                const img = document.getElementById('downloadImg');
-                const btn = document.getElementById('downloadBtnMobile');
-                
-                if (modal && img) {
-                    img.src = url;
-                    if (btn) {
-                        // Remove old event listeners
-                        const newBtn = btn.cloneNode(true);
-                        btn.parentNode.replaceChild(newBtn, btn);
-                        
-                        newBtn.onclick = async function() {
+            // Use Base64 JPEG with higher compression to ensure small size and max compatibility
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            const modal = document.getElementById('downloadModal');
+            const img = document.getElementById('downloadImg');
+            const btn = document.getElementById('downloadBtnMobile');
+            
+            if (modal && img) {
+                img.src = dataUrl;
+                if (btn) {
+                    // Remove old event listeners
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    
+                    newBtn.onclick = async function() {
+                        // 1. Try Web Share API
+                        try {
+                            const res = await fetch(dataUrl);
+                            const blob = await res.blob();
                             const fileName = `layout_solution_${idx+1}.jpg`;
+                            const file = new File([blob], fileName, {type: 'image/jpeg'});
                             
-                            // Try Web Share API Level 2 (File Share)
-                            if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, {type: 'image/jpeg'})] })) {
-                                try {
-                                    await navigator.share({
-                                        files: [new File([blob], fileName, {type: 'image/jpeg'})],
-                                        title: '方案图片',
-                                        text: '这是您的布局方案图片'
-                                    });
-                                    return;
-                                } catch (error) {
-                                    console.log('Share failed', error);
-                                }
+                            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                                await navigator.share({
+                                    files: [file],
+                                    title: '保存方案',
+                                    text: '方案布局图'
+                                });
+                                return;
                             }
-                            
-                            // Fallback 1: Direct Download (Standard)
-                            const link = document.createElement('a');
-                            link.download = fileName;
-                            link.href = url;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            
-                            // Fallback 2: Open in new window (for some WebViews)
-                            // setTimeout(() => window.open(url, '_blank'), 500);
-                        };
-                    }
-                    modal.style.display = 'flex';
+                        } catch (error) {
+                            console.log('Share failed', error);
+                        }
+                        
+                        // 2. Explicit Prompt for Long Press (Most reliable in WebView)
+                        alert("如果下载未开始，请长按图片选择'保存到相册'");
+                        
+                        // 3. Try standard download just in case
+                        const link = document.createElement('a');
+                        link.download = `layout_solution_${idx+1}.jpg`;
+                        link.href = dataUrl;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    };
                 }
-            }, 'image/jpeg', 0.9);
+                modal.style.display = 'flex';
+            }
         } else {
              const link = document.createElement('a');
              link.download = `layout_solution_${idx+1}.jpg`;
