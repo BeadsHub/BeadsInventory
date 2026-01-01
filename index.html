@@ -2109,6 +2109,22 @@
             sol.counts.forEach((c, i) => {
                 if(c > 0) lines.push({ text: `${specs[i].w}x${specs[i].h}: ${c}`, type: 'item', color: specs[i].color });
             });
+            
+            // Leftovers
+            if (sol.leftovers && sol.leftovers.length > 0) {
+                const validLeftovers = sol.leftovers.filter(l => l.w > 0.5 && l.h > 0.5);
+                if (validLeftovers.length > 0) {
+                     lines.push({ text: "剩余布料:", type: 'header' });
+                     const wasteGroups = {};
+                     validLeftovers.forEach(l => {
+                          const key = `${l.w}x${l.h}`;
+                          wasteGroups[key] = (wasteGroups[key] || 0) + 1;
+                     });
+                     for (let [size, count] of Object.entries(wasteGroups)) {
+                          lines.push({ text: `${size}cm: x${count}`, type: 'item-waste' });
+                     }
+                }
+            }
 
             // 2. Setup Canvas Dimensions
             // NUCLEAR OPTION: Mobile Max Dimension Limit = 800px
@@ -2157,6 +2173,27 @@
                     ctx.fillText(`${p.w}x${p.h}`, p.x + p.w/2, p.y + p.h/2);
                 }
             });
+            
+            // Draw leftovers
+            if(sol.leftovers) {
+                sol.leftovers.forEach(l => {
+                    if (l.w > 0.5 && l.h > 0.5) {
+                         ctx.strokeStyle = '#888';
+                         ctx.setLineDash([5/scale, 5/scale]);
+                         ctx.lineWidth = 2 / scale;
+                         ctx.strokeRect(l.x, l.y, l.w, l.h);
+                         // Dimensions
+                         if (l.w > 3 && l.h > 3) {
+                             ctx.fillStyle = '#666';
+                             ctx.font = `${12/scale}px Arial`;
+                             ctx.textAlign = 'center';
+                             ctx.textBaseline = 'middle';
+                             ctx.fillText(`${l.w}x${l.h}`, l.x + l.w/2, l.y + l.h/2);
+                         }
+                         ctx.setLineDash([]);
+                    }
+                });
+            }
             ctx.restore();
             
             // 4. Draw Info Text
@@ -2178,41 +2215,45 @@
                 currentY += LINE_HEIGHT;
             });
             
-            // --- NUCLEAR DOWNLOAD STRATEGY ---
-            if (isMobile) {
-                // Generate Data URL (Base64) - Safest for "Long Press"
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-                
-                // Show custom full-screen overlay directly
-                let overlay = document.getElementById('nuclearOverlay');
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.id = 'nuclearOverlay';
-                    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;';
-                    overlay.innerHTML = `
-                        <div style="color:white; font-size:18px; margin-bottom:20px; font-weight:bold; text-align:center;">请长按下方图片<br>选择"保存图片"</div>
-                        <img id="nuclearImg" style="max-width:100%; max-height:80%; border:2px solid white; border-radius:4px; box-shadow:0 0 20px rgba(0,0,0,0.5);" />
-                        <button onclick="document.getElementById('nuclearOverlay').style.display='none'" style="margin-top:20px; padding:10px 30px; background:white; color:black; border:none; border-radius:20px; font-size:16px;">关闭</button>
-                    `;
-                    document.body.appendChild(overlay);
-                }
-                
-                const img = document.getElementById('nuclearImg');
-                img.src = dataUrl;
-                overlay.style.display = 'flex';
-                
-            } else {
-                // PC: Keep standard download
-                const link = document.createElement('a');
-                link.download = `layout_${idx+1}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg', 0.8);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
+            // --- DIRECT DOWNLOAD STRATEGY (User Requested) ---
+            // Bypass Share API and force direct download to local storage
+            
+            await new Promise((resolve, reject) => {
+                canvas.toBlob(function(blob) {
+                    try {
+                        if (!blob) {
+                            reject(new Error("图片生成失败"));
+                            return;
+                        }
+                        
+                        // Force "Stream" type to ensure Android WebViews treat it as a download
+                        // instead of opening it in the browser/viewer.
+                        const streamBlob = new Blob([blob], { type: "application/octet-stream" });
+                        const url = URL.createObjectURL(streamBlob);
+                        
+                        const link = document.createElement('a');
+                        link.style.display = 'none';
+                        link.href = url;
+                        link.download = `solution_${idx+1}.jpg`;
+                        
+                        document.body.appendChild(link);
+                        link.click();
+                        
+                        // Cleanup after a delay to ensure click registers
+                        setTimeout(() => {
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(url);
+                        }, 2000);
+                        
+                        resolve();
+                    } catch (e) {
+                        reject(e);
+                    }
+                }, 'image/jpeg', 0.8);
+            });
 
         } catch (e) {
-            alert("生成失败: " + e.message);
+            alert("操作失败: " + e.message + "\n建议截图保存");
         } finally {
             if (btn) {
                 btn.innerText = originalText;
