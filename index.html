@@ -2081,16 +2081,16 @@
     }
 
     async function downloadSolution(idx) {
-        // UI Feedback: Indicate processing immediately
+        // UI Feedback: Immediate response
         const btn = document.getElementById('zoomDownloadBtn');
         const originalText = btn ? btn.innerText : "保存图片";
         if (btn) {
-            btn.innerText = "处理中...";
+            btn.innerText = "生成中...";
             btn.disabled = true;
             btn.style.opacity = "0.7";
         }
 
-        // Allow UI to render the "Processing" state
+        // Force UI update
         await new Promise(r => setTimeout(r, 50));
 
         try {
@@ -2100,63 +2100,42 @@
             const W = currentFabricW;
             const H = currentFabricH;
             
-            // 1. Prepare Text Data
+            // 1. Prepare Text Data (Simplified for mobile reliability)
             const lines = [];
-            lines.push({ text: `方案 #${idx+1} (${(sol.utilization * 100).toFixed(1)}% 利用率)`, type: 'title' });
-            lines.push({ text: `总尺寸: ${W}x${H} cm`, type: 'subtitle' });
-            lines.push({ text: "数量统计:", type: 'header', marginTop: 10 });
+            lines.push({ text: `方案 #${idx+1}`, type: 'title' });
+            lines.push({ text: `${W}x${H}cm | 利用率:${(sol.utilization * 100).toFixed(1)}%`, type: 'subtitle' });
+            
+            // Stats (Limit items to prevent huge images)
             sol.counts.forEach((c, i) => {
-                if(c > 0) {
-                     lines.push({ 
-                         text: `${specs[i].w}x${specs[i].h}cm: x${c}`, 
-                         type: 'item', 
-                         color: specs[i].color 
-                     });
-                }
+                if(c > 0) lines.push({ text: `${specs[i].w}x${specs[i].h}: ${c}`, type: 'item', color: specs[i].color });
             });
-            if (sol.leftovers && sol.leftovers.length > 0) {
-                const validLeftovers = sol.leftovers.filter(l => l.w > 0.5 && l.h > 0.5);
-                if (validLeftovers.length > 0) {
-                     lines.push({ text: "剩余布料:", type: 'header', marginTop: 15 });
-                     const wasteGroups = {};
-                     validLeftovers.forEach(l => {
-                          const key = `${l.w}x${l.h}`;
-                          wasteGroups[key] = (wasteGroups[key] || 0) + 1;
-                     });
-                     for (let [size, count] of Object.entries(wasteGroups)) {
-                          lines.push({ text: `${size}cm: x${count}`, type: 'item-waste' });
-                     }
-                }
-            }
 
             // 2. Setup Canvas Dimensions
+            // NUCLEAR OPTION: Mobile Max Dimension Limit = 800px
+            // This ensures it works on even the most restricted WebViews
             let PIXELS_PER_CM = 10; 
             const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window);
+            
             if (isMobile) {
                 const maxDimension = Math.max(W, H);
-                if (maxDimension * PIXELS_PER_CM > 1000) {
-                    PIXELS_PER_CM = 1000 / maxDimension; 
+                // Force max 800px to guarantee memory safety and Base64 length safety
+                if (maxDimension * PIXELS_PER_CM > 800) {
+                    PIXELS_PER_CM = 800 / maxDimension; 
                 }
             }
             const scale = PIXELS_PER_CM;
             
-            const PADDING = 30;
-            const LINE_HEIGHT = 34;
-            const FONT_TITLE = 32;
-            const FONT_HEADER = 26;
-            const FONT_NORMAL = 24;
-            
-            let textSectionHeight = PADDING * 2;
-            lines.forEach(line => {
-                if (line.marginTop) textSectionHeight += line.marginTop;
-                textSectionHeight += LINE_HEIGHT;
-            });
+            // Layout constants
+            const PADDING = 20;
+            const LINE_HEIGHT = 28;
+            let textSectionHeight = PADDING * 2 + lines.length * LINE_HEIGHT;
             
             const canvas = document.createElement('canvas');
-            canvas.width = W * scale;
-            canvas.height = H * scale + textSectionHeight;
+            canvas.width = Math.floor(W * scale);
+            canvas.height = Math.floor(H * scale + textSectionHeight);
             const ctx = canvas.getContext('2d');
             
+            // White background
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
@@ -2169,145 +2148,71 @@
                 ctx.strokeStyle = 'rgba(0,0,0,0.3)';
                 ctx.lineWidth = 1 / scale;
                 ctx.strokeRect(p.x, p.y, p.w, p.h);
-                 ctx.fillStyle = '#000';
-                 const fontSize = (p.w <= 10 || p.h <= 10) ? 16 : 24;
-                 ctx.font = `${fontSize/scale}px sans-serif`;
-                 ctx.textAlign = 'center';
-                 ctx.textBaseline = 'middle';
-                 ctx.fillText(`${p.w}x${p.h}`, p.x + p.w/2, p.y + p.h/2);
+                // Simple text
+                if (p.w > 5 && p.h > 5) {
+                    ctx.fillStyle = '#000';
+                    ctx.font = `${12/scale}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`${p.w}x${p.h}`, p.x + p.w/2, p.y + p.h/2);
+                }
             });
-            if(sol.leftovers) {
-                sol.leftovers.forEach(l => {
-                    if (l.w > 0.5 && l.h > 0.5) {
-                         ctx.strokeStyle = '#888';
-                         ctx.setLineDash([5/scale, 5/scale]);
-                         ctx.lineWidth = 2 / scale;
-                         ctx.strokeRect(l.x, l.y, l.w, l.h);
-                         ctx.fillStyle = '#666';
-                         ctx.font = `${16/scale}px sans-serif`;
-                         ctx.textAlign = 'center';
-                         ctx.textBaseline = 'middle';
-                         ctx.fillText(`${l.w}x${l.h}`, l.x + l.w/2, l.y + l.h/2);
-                         ctx.setLineDash([]);
-                    }
-                });
-            }
             ctx.restore();
             
             // 4. Draw Info Text
             let currentY = H * scale + PADDING;
-            const textX = PADDING;
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
-            ctx.beginPath();
-            ctx.moveTo(PADDING, H * scale + 10);
-            ctx.lineTo(canvas.width - PADDING, H * scale + 10);
-            ctx.strokeStyle = '#eee';
-            ctx.lineWidth = 2;
-            ctx.stroke();
             
             lines.forEach(line => {
-                if (line.marginTop) currentY += line.marginTop;
-                let fontSize = FONT_NORMAL;
-                let fontColor = '#666';
-                let isBold = false;
-                if (line.type === 'title') { fontSize = FONT_TITLE; fontColor = '#333'; isBold = true; }
-                else if (line.type === 'subtitle') { fontSize = FONT_NORMAL; fontColor = '#888'; }
-                else if (line.type === 'header') { fontSize = FONT_HEADER; fontColor = '#444'; isBold = true; }
-                
-                ctx.font = `${isBold ? 'bold ' : ''}${fontSize}px sans-serif`;
-                
-                if (line.type === 'item' && line.color) {
+                ctx.font = line.type === 'title' ? "bold 20px Arial" : "16px Arial";
+                ctx.fillStyle = '#333';
+                if (line.color) {
                     ctx.fillStyle = line.color;
-                    const boxSize = fontSize * 0.8;
-                    const boxY = currentY + (LINE_HEIGHT - boxSize)/2 - 2;
-                    ctx.fillRect(textX, boxY, boxSize, boxSize);
-                    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(textX, boxY, boxSize, boxSize);
-                    ctx.fillStyle = fontColor;
-                    ctx.fillText(line.text, textX + boxSize + 10, currentY);
-                } else if (line.type === 'item-waste') {
-                    ctx.fillStyle = fontColor;
-                    ctx.fillText(`• ${line.text}`, textX, currentY);
+                    ctx.fillRect(PADDING, currentY + 4, 12, 12);
+                    ctx.fillStyle = '#333';
+                    ctx.fillText(line.text, PADDING + 18, currentY);
                 } else {
-                    ctx.fillStyle = fontColor;
-                    ctx.fillText(line.text, textX, currentY);
+                    ctx.fillText(line.text, PADDING, currentY);
                 }
                 currentY += LINE_HEIGHT;
             });
             
-            // --- DOWNLOAD LOGIC ---
+            // --- NUCLEAR DOWNLOAD STRATEGY ---
             if (isMobile) {
-                // Generate Blob (Better Memory Usage than DataURL string)
-                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
-                if (!blob) throw new Error("图片生成失败");
+                // Generate Data URL (Base64) - Safest for "Long Press"
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
                 
-                const isWebView = /wv|Android.*Version\/|BW\/|360browser/.test(navigator.userAgent);
-                
-                if (isWebView) {
-                    // === WebView Strategy: Prioritize System Share ===
-                    let shared = false;
-                    try {
-                        const file = new File([blob], `solution_${idx+1}.jpg`, {type: 'image/jpeg'});
-                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                            await navigator.share({
-                                files: [file],
-                                title: '保存方案',
-                                text: '方案布局图'
-                            });
-                            shared = true;
-                        }
-                    } catch (e) { console.log("Share failed", e); }
-                    
-                    if (!shared) {
-                        // Fallback: Modal with Blob URL
-                        const modal = document.getElementById('downloadModal');
-                        const img = document.getElementById('downloadImg');
-                        if (modal && img) {
-                            const url = URL.createObjectURL(blob);
-                            img.src = url;
-                            // Clean up previous listeners if any? No need, just show.
-                            const btnMobile = document.getElementById('downloadBtnMobile');
-                            if(btnMobile) btnMobile.style.display = 'none'; // Manual save only
-                            modal.style.display = 'flex';
-                            alert("自动保存失败，请长按图片选择'保存到手机'");
-                        }
-                    }
-                } else {
-                    // === Browser Strategy: Direct Download ===
-                    try {
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `solution_${idx+1}.jpg`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        setTimeout(() => URL.revokeObjectURL(url), 5000);
-                    } catch (e) {
-                         throw e; // Trigger catch block
-                    }
+                // Show custom full-screen overlay directly
+                let overlay = document.getElementById('nuclearOverlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'nuclearOverlay';
+                    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;';
+                    overlay.innerHTML = `
+                        <div style="color:white; font-size:18px; margin-bottom:20px; font-weight:bold; text-align:center;">请长按下方图片<br>选择"保存图片"</div>
+                        <img id="nuclearImg" style="max-width:100%; max-height:80%; border:2px solid white; border-radius:4px; box-shadow:0 0 20px rgba(0,0,0,0.5);" />
+                        <button onclick="document.getElementById('nuclearOverlay').style.display='none'" style="margin-top:20px; padding:10px 30px; background:white; color:black; border:none; border-radius:20px; font-size:16px;">关闭</button>
+                    `;
+                    document.body.appendChild(overlay);
                 }
+                
+                const img = document.getElementById('nuclearImg');
+                img.src = dataUrl;
+                overlay.style.display = 'flex';
+                
             } else {
-                // PC: Standard Data URL
+                // PC: Keep standard download
                 const link = document.createElement('a');
-                link.download = `layout_solution_${idx+1}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                link.download = `layout_${idx+1}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.8);
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
             }
 
         } catch (e) {
-            console.error(e);
-            alert("保存过程中发生错误:\n" + e.message + "\n\n请尝试截图保存。");
-            
-            // Last Resort: Try to show modal anyway
-            try {
-                const modal = document.getElementById('downloadModal');
-                if (modal) modal.style.display = 'flex';
-            } catch(err){}
+            alert("生成失败: " + e.message);
         } finally {
             if (btn) {
                 btn.innerText = originalText;
