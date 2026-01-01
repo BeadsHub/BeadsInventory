@@ -1413,199 +1413,107 @@
     }
 
     function execRestore() {
-        const code = document.getElementById('restoreInput').value.trim();
-        if(!code) return;
+        let content = document.getElementById('restoreInput').value;
+        if (!content) return;
         
         if(!confirm("警告：恢复操作将重置当前所有库存数据，然后导入新数据。\n确认继续吗？")) return;
 
-        // 尝试解析 JSON (完整备份恢复 - 兼容旧版)
+        // 移除可能的 BOM
+        if (content.charCodeAt(0) === 0xFEFF) {
+            content = content.slice(1);
+        }
+        content = content.trim();
+
+        let jsonStr = content;
+
+        // 检测是否为 CSV 单元格封装格式 (以引号开头和结尾)
+        if (content.startsWith('"') && content.endsWith('"')) {
+            // 移除首尾引号
+            let inner = content.substring(1, content.length - 1);
+            // 还原转义的引号 ("" -> ")
+            jsonStr = inner.replace(/""/g, '"');
+        }
+
         try {
-            if (code.startsWith('{')) {
-                const parsed = JSON.parse(code);
-                if (parsed && Array.isArray(parsed.data)) {
-                    data = parsed.data;
-                    if (parsed.config && parsed.config.threshold !== undefined) {
-                        threshold = parsed.config.threshold;
-                        localStorage.setItem('bead_threshold', threshold);
-                        document.getElementById('threshold').value = threshold;
-                    }
-                    save();
-                    render();
-                    closeAllModals();
-                    alert("完整备份已成功恢复！(包含库存、日志及设置)");
-                    return;
-                }
-            }
-        } catch (e) {
-            console.warn("JSON解析失败，尝试简易格式恢复", e);
-        }
+            const backupData = JSON.parse(jsonStr);
+            let restoreItems = [];
+            let newThreshold = null;
 
-        // --- CSV 解析逻辑 (支持库存、监控状态、历史记录、配置、总消耗/补货) ---
-        const lines = code.split(/\r?\n/);
-        const newStockMap = new Map(); // ID -> { w, monitor, totalAdded, totalUsed, logs: [] }
-        let configFound = false;
-        let restoreCount = 0;
-
-        lines.forEach(line => {
-            line = line.trim();
-            if(!line) return;
-            
-            // 1. 配置信息区块
-            if(line.includes('[配置信息]')) {
-                configFound = true;
-                return;
-            }
-            if(configFound) {
-                if(line.startsWith('补货阈值(g),')) {
-                    const parts = line.split(',');
-                    const val = parseInt(parts[1]);
-                    if(!isNaN(val)) {
-                        threshold = val;
-                        localStorage.setItem('bead_threshold', threshold);
-                        document.getElementById('threshold').value = threshold;
-                    }
-                }
-                return;
-            }
-
-            // 2. 数据行 (跳过表头)
-            if(line.startsWith('色号') || line.startsWith('\uFEFF色号')) return;
-
-            // 简单的 CSV 行解析 (处理引号)
-            const parts = [];
-            let current = '';
-            let inQuote = false;
-            for(let i=0; i<line.length; i++) {
-                const char = line[i];
-                if(char === '"') {
-                    inQuote = !inQuote;
-                } else if(char === ',' && !inQuote) {
-                    parts.push(current);
-                    current = '';
-                } else {
-                    current += char;
-                }
-            }
-            parts.push(current);
-
-            if(parts.length < 2) return;
-
-            const id = parts[0].trim();
-            if(!/^[A-Z][0-9]+$/.test(id)) return; 
-
-            const w = parseFloat(parts[1]);
-            const monitorStr = parts[2] ? parts[2].trim() : '';
-            const monitor = monitorStr === '关闭' ? false : true;
-            const totalAdded = parts[3] ? parseFloat(parts[3]) || 0 : 0;
-            const totalUsed = parts[4] ? parseFloat(parts[4]) || 0 : 0;
-
-            // 日志解析
-            const logDate = parts[5] ? parts[5].replace(/"/g, '').trim() : '';
-            const logTypeStr = parts[6] ? parts[6].trim() : '';
-            const logDetail = parts[7] ? parts[7].replace(/"/g, '').trim() : '';
-
-            if(!newStockMap.has(id)) {
-                newStockMap.set(id, { w: w, monitor: monitor, totalAdded: totalAdded, totalUsed: totalUsed, logs: [] });
-                restoreCount++;
-            }
-            
-            // 添加日志
-            if(logDate && logTypeStr) {
-                let type = logTypeStr === '补货' ? 'add' : 'consume';
-                let val = 0;
-                let c = 0;
-                let isManual = false;
-
-                // 尝试从详情字符串还原数值
-                if(type === 'add') {
-                    val = parseFloat(logDetail) || 0;
-                } else {
-                    if(logDetail.includes('手动')) {
-                        isManual = true;
-                        val = Math.abs(parseFloat(logDetail)) || 0;
-                    } else {
-                        // "20粒 (≈0.2g)" -> 20
-                        c = parseInt(logDetail) || 0;
-                        val = parseFloat((c / 100).toFixed(2));
-                    }
-                }
-
-                newStockMap.get(id).logs.push({
-                    d: logDate,
-                    type: type,
-                    val: val,
-                    c: c,
-                    isManual: isManual
-                });
-            }
-        });
-
-        if (restoreCount === 0) {
-            alert("未识别到有效数据，请检查文件格式");
-            return;
-        }
-
-        // 3. 应用数据
-        data.forEach(item => {
-            if (newStockMap.has(item.id)) {
-                const stock = newStockMap.get(item.id);
-                item.w = stock.w;
-                item.monitor = stock.monitor;
-                item.logs = stock.logs;
-                item.totalAdded = stock.totalAdded;
-                item.totalUsed = stock.totalUsed;
+            // 兼容直接的数组格式 (旧版 JSON) 或新的对象格式
+            if (Array.isArray(backupData)) {
+                restoreItems = backupData;
+            } else if (backupData.items && Array.isArray(backupData.items)) {
+                restoreItems = backupData.items;
+                if (backupData.threshold) newThreshold = backupData.threshold;
+            } else if (backupData.data && Array.isArray(backupData.data)) {
+                 // 兼容之前尝试过的 JSON 结构 { data: [...] }
+                 restoreItems = backupData.data;
+                 if (backupData.config && backupData.config.threshold) newThreshold = backupData.config.threshold;
             } else {
-                item.w = 0;
-                item.logs = [];
-                item.totalAdded = 0;
-                item.totalUsed = 0;
-                // item.monitor 保持默认或重置? 既然是完整恢复，未出现的数据应视为默认状态
-                item.monitor = true; 
+                throw new Error("无效的数据格式");
             }
-        });
 
-        save();
-        render();
-        closeAllModals();
-        
-        alert(`已成功恢复 ${restoreCount} 个色号的库存、日志及配置信息。`);
+            // 构建快速查找表
+            const backupMap = new Map(restoreItems.map(i => [i.id, i]));
+            let restoreCount = 0;
+
+            // 更新现有数据
+            data.forEach(item => {
+                if (backupMap.has(item.id)) {
+                    const backupItem = backupMap.get(item.id);
+                    item.w = backupItem.w !== undefined ? backupItem.w : 0;
+                    item.monitor = backupItem.monitor !== undefined ? backupItem.monitor : true;
+                    item.logs = backupItem.logs || [];
+                    item.totalAdded = backupItem.totalAdded || 0;
+                    item.totalUsed = backupItem.totalUsed || 0;
+                    restoreCount++;
+                } else {
+                    // 如果备份中没有该色号，重置为初始状态
+                    item.w = 0;
+                    item.monitor = true;
+                    item.logs = [];
+                    item.totalAdded = 0;
+                    item.totalUsed = 0;
+                }
+            });
+
+            // 恢复阈值配置
+            if (newThreshold !== null) {
+                threshold = parseFloat(newThreshold);
+                localStorage.setItem('bead_threshold', threshold);
+                document.getElementById('threshold').value = threshold;
+            }
+
+            save();
+            render();
+            closeAllModals();
+            alert(`已成功恢复 ${restoreCount} 个色号的数据。`);
+
+        } catch (e) {
+            console.error(e);
+            alert("数据解析失败，请检查文件格式。\n错误信息: " + e.message);
+        }
     }
 
     function downloadBackupFile() {
-        // Generate CSV Content
-        let csvContent = '\uFEFF色号,当前库存(g),阈值监控,总补货(g),总消耗(g),操作时间,操作类型,变动详情\n';
-        
-        data.forEach(item => {
-            const monitorStatus = item.monitor === false ? '关闭' : '开启';
-            const tAdded = item.totalAdded || 0;
-            const tUsed = item.totalUsed || 0;
-            
-            if (!item.logs || item.logs.length === 0) {
-                // No logs, just output current stock and totals
-                csvContent += `${item.id},${item.w},${monitorStatus},${tAdded},${tUsed},,,\n`;
-            } else {
-                // Output one row per log
-                item.logs.forEach(log => {
-                    let typeStr = log.type === 'add' ? '补货' : '消耗';
-                    let detail = '';
-                    if (log.type === 'add') {
-                        detail = `+${log.val}g`;
-                    } else {
-                        const count = log.c || log.val || 0;
-                        const weight = (count / 100).toFixed(2);
-                        detail = log.isManual ? `-${weight}g (手动)` : `${count}粒 (≈${weight}g)`;
-                    }
-                    // Handle potential commas in fields by wrapping in quotes
-                    csvContent += `${item.id},${item.w},${monitorStatus},${tAdded},${tUsed},"${log.d}",${typeStr},"${detail}"\n`;
-                });
-            }
-        });
+        // 构建完整的备份对象
+        const backupObj = {
+            version: "2.0",
+            timestamp: new Date().toISOString(),
+            threshold: threshold,
+            items: data
+        };
 
-        // Append Configuration Info
-        csvContent += '\n[配置信息],,\n';
-        csvContent += `补货阈值(g),${threshold},,\n`;
+        const jsonStr = JSON.stringify(backupObj);
         
-        const fileName = `Mard_Inventory_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.csv`;
+        // CSV 转义规则：双引号转为两个双引号，整个内容用双引号包裹
+        // 这样整个 JSON 就变成了 CSV 的第一个单元格
+        const csvCell = '"' + jsonStr.replace(/"/g, '""') + '"';
+        
+        // 添加 BOM 以防止乱码
+        const csvContent = '\uFEFF' + csvCell;
+        
+        const fileName = `Mard_Inventory_Backup_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.csv`;
         
         // Strategy 1: HTML5+ (App)
         if (window.plus && window.plus.io) {
@@ -1613,7 +1521,7 @@
                 fs.root.getFile(fileName, {create: true, exclusive: false}, function(fileEntry) {
                     fileEntry.createWriter(function(writer) {
                         writer.onwrite = function() {
-                            alert(`CSV文件已导出至手机【下载/Download】文件夹:\n${fileEntry.fullPath}\n可用WPS或Excel打开。`);
+                            alert(`备份文件已导出至手机【下载/Download】文件夹:\n${fileEntry.fullPath}\n注意：此 CSV 仅包含单格 JSON 数据。`);
                         };
                         writer.onerror = function(e) {
                              alert("保存失败: " + e.message);
@@ -1648,7 +1556,7 @@
             a.click();
             setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
         } catch(e) {
-            alert("导出失败，请截图保存。");
+            alert("导出失败: " + e.message);
         }
     }
 
@@ -1675,7 +1583,7 @@
 
     function submitBatchInput() {
         const text = document.getElementById('batchInputText').value;
-        const regex = /([A-Z][0-9]+)[^0-9\.]*(\d+(\.\d+)?)/gi;
+        const regex = /([A-Z]+[0-9]+)[^0-9\.]*(\d+(\.\d+)?)/gi;
         let match;
         let count = 0;
         while ((match = regex.exec(text)) !== null) {
@@ -1745,10 +1653,10 @@
             
             // 2. 系列筛选
             if (seriesMode === 'all') return true;
-            // Mard 221 模式下排除 P, Q, R, T, Y, ZG 系列
+            // Mard 221 模式下排除 P, Q, R, T, Y 系列
             const match = d.id.match(/^[A-Z]+/);
             const series = match ? match[0] : '';
-            const extraSeries = ['P', 'Q', 'R', 'T', 'Y', 'ZG'];
+            const extraSeries = ['P', 'Q', 'R', 'T', 'Y'];
             return !extraSeries.includes(series);
         });
 
