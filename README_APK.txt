@@ -10,9 +10,9 @@
 你可以将 `index.html` 上传到任何静态网页托管服务，例如：
 - GitHub Pages
 - Vercel
-- Netlify
+- Netlifylll
 - 阿里云 OSS / 腾讯云 COS
-
+撒旦发射点
 ## 2. 打包成 Android APK
 
 由于这是一个纯 HTML/JS 应用，你可以轻松将其封装为 APK 安装包。以下是几种推荐方法：
