@@ -436,7 +436,7 @@
         • 关闭阈值的色号，右侧会显示灰色 🔕 图标，不显示红色低库存警告，也不计入“补货”统计。<br>
         • “补货”统计和“补货单”会自动过滤这些色号。</p>
         <p style="margin-bottom:10px;"><b>5. 历史记录：</b><br>点击“查看明细”按钮可查看色号的库存明细，支持删除记录，删除后库存会自动回滚。</p>
-        <p style="margin-bottom:10px;"><b>6. 数据备份：</b><br>点击“数据备份”可导出包含所有记录和设置的完整备份。更换设备时，在恢复页面粘贴该备份即可无缝迁移。</p>
+        <p style="margin-bottom:10px;"><b>6. 数据备份：</b><br>点击“数据备份”可导出包含所有记录和设置的完整备份。更换设备时，在恢复页面选择该 CSV 文件即可无缝迁移。</p>
     </div>
     <div class="modal-btn-group" style="margin-top:15px;">
         <button class="m-btn m-btn-primary" onclick="closeAllModals()" style="padding:10px; font-size:14px;">我知道了</button>
@@ -451,23 +451,31 @@
     </div>
     
     <div id="viewBackup">
-        <div class="modal-desc" style="margin-bottom:8px; text-align:left;">复制下方代码保存到备忘录:</div>
-        <textarea id="backupOutput" style="width:100%; height:120px; padding:10px; border:1px solid #eee; border-radius:10px; resize:none; font-family:monospace; font-size:12px; box-sizing:border-box; background:#fafafa; color:#555; outline:none;" readonly onclick="this.select()"></textarea>
-        <div class="modal-btn-group" style="margin-top:15px;">
-            <button class="m-btn m-btn-primary" style="padding:10px; font-size:14px;" onclick="copyBackup()">复制到剪贴板</button>
+        <div style="padding: 20px 0; text-align: center;">
+            <div style="margin-bottom: 20px; color: #666; font-size: 13px; line-height: 1.5;">
+                将当前所有色号库存及操作记录<br>导出为 CSV 表格文件。
+            </div>
+            <button class="m-btn m-btn-primary" style="width: 100%; padding: 12px; font-size: 15px; background: #52c41a; border-color: #52c41a; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="downloadBackupFile()">
+                <span>📊</span> 导出 CSV 表格
+            </button>
         </div>
     </div>
 
     <div id="viewRestore" style="display:none;">
-        <div class="modal-desc" style="margin-bottom:8px; text-align:left;">将备份代码粘贴到下方:</div>
-        <textarea id="restoreInput" style="width:100%; height:120px; padding:10px; border:1px solid #eee; border-radius:10px; resize:none; font-family:monospace; font-size:12px; box-sizing:border-box; outline:none;" placeholder="粘贴备份代码..."></textarea>
-        <div class="modal-btn-group" style="margin-top:15px;">
-            <button class="m-btn m-btn-primary" style="padding:10px; font-size:14px; background:var(--warn);" onclick="execRestore()">确认覆盖恢复</button>
+        <div style="padding: 20px 0; text-align: center;">
+            <div style="margin-bottom: 20px; color: #666; font-size: 13px; line-height: 1.5;">
+                选择之前导出的 CSV 备份文件<br>以恢复库存数据。
+            </div>
+            <input type="file" id="restoreFile" style="display:none" onchange="loadBackupFile(this)" accept=".json,.csv,.txt">
+            <button class="m-btn m-btn-primary" style="width: 100%; padding: 12px; font-size: 15px; background: #1890ff; border-color: #1890ff; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="document.getElementById('restoreFile').click()">
+                <span>📂</span> 选择备份文件
+            </button>
+            <textarea id="restoreInput" style="display:none;"></textarea>
         </div>
     </div>
     
     <div class="modal-btn-group" style="margin-top:10px;">
-        <button class="m-btn m-btn-ghost" style="padding:8px; font-size:13px;" onclick="closeAllModals()">关闭</button>
+        <button class="m-btn m-btn-ghost" style="width: 100%; padding: 12px; font-size: 15px;" onclick="closeAllModals()">关闭</button>
     </div>
 </div>
 
@@ -507,7 +515,7 @@
     <div style="text-align:left; color:#555; line-height:1.6; font-size:14px; padding:0 10px;">
         <p style="margin-bottom:12px;"><b>1. 数据安全提醒：</b><br>
         本工具数据<span style="color:#ff4d4f; font-weight:bold;">仅存储在当前浏览器的本地缓存中</span>。清理浏览器缓存将导致数据永久丢失！<br>
-        请务必定期备份数据（操作路径：页面上方“数据备份” -> “备份导出”并保存 -> 粘贴并 “恢复导入”），作者不承担数据丢失的任何后果。</p>
+        请务必定期备份数据（操作入口：页面上方“数据备份”），作者不承担数据丢失的任何后果。</p>
         
         <p style="margin-bottom:12px;"><b>2. 设备同步：</b><br>
         本工具为离线网页应用，<span style="color:#ff4d4f; font-weight:bold;">不支持多设备实时同步</span>。如需在其他设备使用，请使用备份/恢复功能手动迁移数据。</p>
@@ -1391,21 +1399,9 @@
     function openDataModal(tab) {
         showModal('dataModal');
         switchDataTab(tab);
-        if(tab === 'backup') {
-            // 导出完整数据（JSON格式），包含配置和所有记录
-            const fullBackup = {
-                version: 1,
-                timestamp: new Date().toISOString(),
-                config: {
-                    threshold: threshold
-                },
-                data: data
-            };
-            const jsonStr = JSON.stringify(fullBackup, null, 2);
-            document.getElementById('backupOutput').value = jsonStr;
-        } else {
+        // Clean up previous inputs
+        if(tab !== 'backup') {
             document.getElementById('restoreInput').value = '';
-            document.getElementById('restoreInput').placeholder = '在此粘贴备份的JSON数据，或 "色号 重量" 格式的简易数据';
         }
     }
 
@@ -1416,33 +1412,23 @@
         document.getElementById('viewRestore').style.display = tab==='restore' ? 'block' : 'none';
     }
 
-    function copyBackup() {
-        const el = document.getElementById('backupOutput');
-        el.select();
-        navigator.clipboard.writeText(el.value).then(() => alert("已复制到剪贴板"));
-    }
-
     function execRestore() {
         const code = document.getElementById('restoreInput').value.trim();
         if(!code) return;
         
         if(!confirm("警告：恢复操作将重置当前所有库存数据，然后导入新数据。\n确认继续吗？")) return;
 
-        // 尝试解析 JSON (完整备份恢复)
+        // 尝试解析 JSON (完整备份恢复 - 兼容旧版)
         try {
             if (code.startsWith('{')) {
                 const parsed = JSON.parse(code);
                 if (parsed && Array.isArray(parsed.data)) {
-                    // 1. 恢复库存数据
                     data = parsed.data;
-                    
-                    // 2. 恢复配置
                     if (parsed.config && parsed.config.threshold !== undefined) {
                         threshold = parsed.config.threshold;
                         localStorage.setItem('bead_threshold', threshold);
                         document.getElementById('threshold').value = threshold;
                     }
-
                     save();
                     render();
                     closeAllModals();
@@ -1454,37 +1440,231 @@
             console.warn("JSON解析失败，尝试简易格式恢复", e);
         }
 
-        // 解析文本格式
-        const regex = /([A-Z][0-9]+)[^0-9\.]*(\d+(\.\d+)?)/gi;
-        let match;
-        const newStock = {};
-        let count = 0;
+        // --- CSV 解析逻辑 (支持库存、监控状态、历史记录、配置、总消耗/补货) ---
+        const lines = code.split(/\r?\n/);
+        const newStockMap = new Map(); // ID -> { w, monitor, totalAdded, totalUsed, logs: [] }
+        let configFound = false;
+        let restoreCount = 0;
 
-        while ((match = regex.exec(code)) !== null) {
-            const id = match[1].toUpperCase();
-            const w = parseFloat(match[2]);
-            newStock[id] = w;
-            count++;
-        }
+        lines.forEach(line => {
+            line = line.trim();
+            if(!line) return;
+            
+            // 1. 配置信息区块
+            if(line.includes('[配置信息]')) {
+                configFound = true;
+                return;
+            }
+            if(configFound) {
+                if(line.startsWith('补货阈值(g),')) {
+                    const parts = line.split(',');
+                    const val = parseInt(parts[1]);
+                    if(!isNaN(val)) {
+                        threshold = val;
+                        localStorage.setItem('bead_threshold', threshold);
+                        document.getElementById('threshold').value = threshold;
+                    }
+                }
+                return;
+            }
 
-        if (count === 0) {
-            alert("未识别到有效数据，请检查格式 (如: A1 50)");
+            // 2. 数据行 (跳过表头)
+            if(line.startsWith('色号') || line.startsWith('\uFEFF色号')) return;
+
+            // 简单的 CSV 行解析 (处理引号)
+            const parts = [];
+            let current = '';
+            let inQuote = false;
+            for(let i=0; i<line.length; i++) {
+                const char = line[i];
+                if(char === '"') {
+                    inQuote = !inQuote;
+                } else if(char === ',' && !inQuote) {
+                    parts.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            parts.push(current);
+
+            if(parts.length < 2) return;
+
+            const id = parts[0].trim();
+            if(!/^[A-Z][0-9]+$/.test(id)) return; 
+
+            const w = parseFloat(parts[1]);
+            const monitorStr = parts[2] ? parts[2].trim() : '';
+            const monitor = monitorStr === '关闭' ? false : true;
+            const totalAdded = parts[3] ? parseFloat(parts[3]) || 0 : 0;
+            const totalUsed = parts[4] ? parseFloat(parts[4]) || 0 : 0;
+
+            // 日志解析
+            const logDate = parts[5] ? parts[5].replace(/"/g, '').trim() : '';
+            const logTypeStr = parts[6] ? parts[6].trim() : '';
+            const logDetail = parts[7] ? parts[7].replace(/"/g, '').trim() : '';
+
+            if(!newStockMap.has(id)) {
+                newStockMap.set(id, { w: w, monitor: monitor, totalAdded: totalAdded, totalUsed: totalUsed, logs: [] });
+                restoreCount++;
+            }
+            
+            // 添加日志
+            if(logDate && logTypeStr) {
+                let type = logTypeStr === '补货' ? 'add' : 'consume';
+                let val = 0;
+                let c = 0;
+                let isManual = false;
+
+                // 尝试从详情字符串还原数值
+                if(type === 'add') {
+                    val = parseFloat(logDetail) || 0;
+                } else {
+                    if(logDetail.includes('手动')) {
+                        isManual = true;
+                        val = Math.abs(parseFloat(logDetail)) || 0;
+                    } else {
+                        // "20粒 (≈0.2g)" -> 20
+                        c = parseInt(logDetail) || 0;
+                        val = parseFloat((c / 100).toFixed(2));
+                    }
+                }
+
+                newStockMap.get(id).logs.push({
+                    d: logDate,
+                    type: type,
+                    val: val,
+                    c: c,
+                    isManual: isManual
+                });
+            }
+        });
+
+        if (restoreCount === 0) {
+            alert("未识别到有效数据，请检查文件格式");
             return;
         }
 
-        // 应用数据：重置所有库存，填入新库存
+        // 3. 应用数据
         data.forEach(item => {
-            if (newStock[item.id] !== undefined) {
-                item.w = newStock[item.id];
+            if (newStockMap.has(item.id)) {
+                const stock = newStockMap.get(item.id);
+                item.w = stock.w;
+                item.monitor = stock.monitor;
+                item.logs = stock.logs;
+                item.totalAdded = stock.totalAdded;
+                item.totalUsed = stock.totalUsed;
             } else {
-                item.w = 0; // 备份中不存在的色号，库存归零
+                item.w = 0;
+                item.logs = [];
+                item.totalAdded = 0;
+                item.totalUsed = 0;
+                // item.monitor 保持默认或重置? 既然是完整恢复，未出现的数据应视为默认状态
+                item.monitor = true; 
             }
         });
 
         save();
         render();
         closeAllModals();
-        alert(`已成功恢复 ${count} 条库存记录`);
+        
+        alert(`已成功恢复 ${restoreCount} 个色号的库存、日志及配置信息。`);
+    }
+
+    function downloadBackupFile() {
+        // Generate CSV Content
+        let csvContent = '\uFEFF色号,当前库存(g),阈值监控,总补货(g),总消耗(g),操作时间,操作类型,变动详情\n';
+        
+        data.forEach(item => {
+            const monitorStatus = item.monitor === false ? '关闭' : '开启';
+            const tAdded = item.totalAdded || 0;
+            const tUsed = item.totalUsed || 0;
+            
+            if (!item.logs || item.logs.length === 0) {
+                // No logs, just output current stock and totals
+                csvContent += `${item.id},${item.w},${monitorStatus},${tAdded},${tUsed},,,\n`;
+            } else {
+                // Output one row per log
+                item.logs.forEach(log => {
+                    let typeStr = log.type === 'add' ? '补货' : '消耗';
+                    let detail = '';
+                    if (log.type === 'add') {
+                        detail = `+${log.val}g`;
+                    } else {
+                        const count = log.c || log.val || 0;
+                        const weight = (count / 100).toFixed(2);
+                        detail = log.isManual ? `-${weight}g (手动)` : `${count}粒 (≈${weight}g)`;
+                    }
+                    // Handle potential commas in fields by wrapping in quotes
+                    csvContent += `${item.id},${item.w},${monitorStatus},${tAdded},${tUsed},"${log.d}",${typeStr},"${detail}"\n`;
+                });
+            }
+        });
+
+        // Append Configuration Info
+        csvContent += '\n[配置信息],,\n';
+        csvContent += `补货阈值(g),${threshold},,\n`;
+        
+        const fileName = `Mard_Inventory_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.csv`;
+        
+        // Strategy 1: HTML5+ (App)
+        if (window.plus && window.plus.io) {
+             plus.io.requestFileSystem(plus.io.PUBLIC_DOWNLOADS, function(fs) {
+                fs.root.getFile(fileName, {create: true, exclusive: false}, function(fileEntry) {
+                    fileEntry.createWriter(function(writer) {
+                        writer.onwrite = function() {
+                            alert(`CSV文件已导出至手机【下载/Download】文件夹:\n${fileEntry.fullPath}\n可用WPS或Excel打开。`);
+                        };
+                        writer.onerror = function(e) {
+                             alert("保存失败: " + e.message);
+                        };
+                        writer.write(csvContent);
+                    }, function(e){ alert("创建写入器失败: " + e.message); });
+                }, function(e){ alert("创建文件失败: " + e.message); });
+            }, function(e) {
+                 // Fallback to Private Doc
+                 plus.io.requestFileSystem(plus.io.PRIVATE_DOC, function(fs) {
+                    fs.root.getFile(fileName, {create: true}, function(fileEntry) {
+                         fileEntry.createWriter(function(writer) {
+                             writer.onwrite = function() {
+                                 alert(`已保存至私有文档:\n${fileEntry.fullPath}`);
+                             };
+                             writer.write(csvContent);
+                         });
+                    });
+                 }, function(e2) { alert("无法访问存储: " + e2.message); });
+            });
+            return;
+        }
+
+        // Strategy 2: Web Standard
+        try {
+            const blob = new Blob([csvContent], {type: "text/csv;charset=utf-8"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+        } catch(e) {
+            alert("导出失败，请截图保存。");
+        }
+    }
+
+    function loadBackupFile(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Store content in hidden textarea for execRestore logic
+                document.getElementById('restoreInput').value = e.target.result;
+                // Immediately ask to restore
+                execRestore();
+            };
+            reader.readAsText(file);
+        }
+        input.value = '';
     }
 
     // --- 批量初始录入功能 ---
