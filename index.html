@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -2281,6 +2281,31 @@
                     }
                 }, 'image/jpeg', 0.8);
             });
+
+            // Fallback for APKs that block blob downloads: Show image for long-press
+            // Only runs if the above click() didn't trigger a page navigation/download catch
+            if (isMobile) {
+                 setTimeout(() => {
+                      const fallbackDiv = document.createElement('div');
+                      fallbackDiv.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:white; padding:10px 20px; border-radius:20px; font-size:12px; z-index:9999; pointer-events:none; opacity:0; transition:opacity 0.5s;';
+                      fallbackDiv.innerText = "如果未开始下载，请长按图片保存";
+                      document.body.appendChild(fallbackDiv);
+                      
+                      // Check if we should show fallback
+                      // Since we can't detect if download started, we show a non-intrusive toast
+                      // AND we open the image in a way that allows long-press if the download failed silently
+                      
+                      // Re-enable image interaction for long press backup
+                      const zoomImg = document.querySelector('#zoomModal img');
+                      if(zoomImg) {
+                          zoomImg.src = canvas.toDataURL('image/jpeg', 0.8); // Replace preview with full res for saving
+                          requestAnimationFrame(() => {
+                               fallbackDiv.style.opacity = '1';
+                               setTimeout(() => fallbackDiv.remove(), 4000);
+                          });
+                      }
+                 }, 1000);
+            }
 
         } catch (e) {
             alert("操作失败: " + e.message + "\n建议截图保存");
