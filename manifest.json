@@ -1,0 +1,26 @@
+{
+    "name": "MardBeads",
+    "appid": "__UNI__A1234567",
+    "description": "Mard拼豆工具箱",
+    "version": {
+        "name": "1.0.0",
+        "code": 100
+    },
+    "transformPx": false,
+    "app-plus": {
+        "modules": {
+            "Gallery": {},
+            "Bitmap": {}
+        },
+        "distribute": {
+            "android": {
+                "permissions": [
+                    "<uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\"/>"
+                ]
+            },
+            "ios": {},
+            "sdkConfigs": {}
+        }
+    }
+}
