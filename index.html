@@ -624,6 +624,7 @@
         <div style="overflow:auto; flex:1; display:flex; justify-content:center; align-items:center; background:#f9f9f9; border-radius:8px; border:1px solid #eee; padding:10px;">
             <canvas id="zoomCanvas"></canvas>
         </div>
+        <button id="zoomDownloadBtn" onclick="downloadSolution(currentZoomIdx)" style="margin-top:10px; padding:8px 20px; background:#52c41a; color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;">保存图片</button>
         <div id="zoomStats" style="margin-top:10px; width:100%; max-height:150px; overflow-y:auto; border:1px solid #eee; padding:5px; border-radius:4px; box-sizing: border-box; background: #fafafa;"></div>
         <div style="margin-top:15px; display:flex; justify-content:center;">
              <button onclick="closeZoom()" style="padding:8px 20px; background:#f0f0f0; border:1px solid #ddd; border-radius:6px; cursor:pointer;">关闭</button>
@@ -1986,6 +1987,7 @@
     }
 
     function openZoom(idx) {
+        currentZoomIdx = idx;
         const sol = currentRenderedSolutions[idx];
         if (!sol) return;
         
@@ -2078,239 +2080,240 @@
         modal.style.display = 'none';
     }
 
-    function downloadSolution(idx) {
-        const sol = currentRenderedSolutions[idx];
-        if (!sol) return;
-        
-        const W = currentFabricW;
-        const H = currentFabricH;
-        
-        // 1. Prepare Text Data
-        const lines = [];
-        
-        // Title
-        lines.push({ text: `方案 #${idx+1} (${(sol.utilization * 100).toFixed(1)}% 利用率)`, type: 'title' });
-        lines.push({ text: `总尺寸: ${W}x${H} cm`, type: 'subtitle' });
-        
-        // Stats
-        lines.push({ text: "数量统计:", type: 'header', marginTop: 10 });
-        sol.counts.forEach((c, i) => {
-            if(c > 0) {
-                 lines.push({ 
-                     text: `${specs[i].w}x${specs[i].h}cm: x${c}`, 
-                     type: 'item', 
-                     color: specs[i].color 
-                 });
-            }
-        });
-        
-        // Leftovers
-        if (sol.leftovers && sol.leftovers.length > 0) {
-            const validLeftovers = sol.leftovers.filter(l => l.w > 0.5 && l.h > 0.5);
-            if (validLeftovers.length > 0) {
-                 lines.push({ text: "剩余布料:", type: 'header', marginTop: 15 });
-                 const wasteGroups = {};
-                 validLeftovers.forEach(l => {
-                      const key = `${l.w}x${l.h}`;
-                      wasteGroups[key] = (wasteGroups[key] || 0) + 1;
-                 });
-                 // Sort keys for consistent order?
-                 for (let [size, count] of Object.entries(wasteGroups)) {
-                      lines.push({ text: `${size}cm: x${count}`, type: 'item-waste' });
-                 }
-            }
+    async function downloadSolution(idx) {
+        // UI Feedback: Indicate processing immediately
+        const btn = document.getElementById('zoomDownloadBtn');
+        const originalText = btn ? btn.innerText : "保存图片";
+        if (btn) {
+            btn.innerText = "处理中...";
+            btn.disabled = true;
+            btn.style.opacity = "0.7";
         }
 
-        // 2. Setup Canvas Dimensions
-        const PIXELS_PER_CM = 10; 
-        const scale = PIXELS_PER_CM;
-        
-        // Style constants
-        const PADDING = 30;
-        const LINE_HEIGHT = 34;
-        const FONT_TITLE = 32;
-        const FONT_HEADER = 26;
-        const FONT_NORMAL = 24;
-        
-        // Calculate required height for text
-        let textSectionHeight = PADDING * 2;
-        lines.forEach(line => {
-            if (line.marginTop) textSectionHeight += line.marginTop;
-            textSectionHeight += LINE_HEIGHT;
-        });
-        
-        const canvas = document.createElement('canvas');
-        canvas.width = W * scale;
-        canvas.height = H * scale + textSectionHeight;
-        
-        const ctx = canvas.getContext('2d');
-        
-        // Fill white background
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // 3. Draw Layout (Top part)
-        ctx.save();
-        ctx.scale(scale, scale);
-        
-        // Draw placements
-        sol.placements.forEach(p => {
-            ctx.fillStyle = p.color;
-            ctx.fillRect(p.x, p.y, p.w, p.h);
-            ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-            ctx.lineWidth = 1 / scale;
-            ctx.strokeRect(p.x, p.y, p.w, p.h);
+        // Allow UI to render the "Processing" state
+        await new Promise(r => setTimeout(r, 50));
+
+        try {
+            const sol = currentRenderedSolutions[idx];
+            if (!sol) throw new Error("方案数据丢失");
             
-            // Text
-             ctx.fillStyle = '#000';
-             const fontSize = (p.w <= 10 || p.h <= 10) ? 16 : 24;
-             ctx.font = `${fontSize/scale}px sans-serif`;
-             ctx.textAlign = 'center';
-             ctx.textBaseline = 'middle';
-             ctx.fillText(`${p.w}x${p.h}`, p.x + p.w/2, p.y + p.h/2);
-        });
-        
-        // Draw leftovers
-        if(sol.leftovers) {
-            sol.leftovers.forEach(l => {
-                if (l.w > 0.5 && l.h > 0.5) {
-                     ctx.strokeStyle = '#888';
-                     ctx.setLineDash([5/scale, 5/scale]);
-                     ctx.lineWidth = 2 / scale;
-                     ctx.strokeRect(l.x, l.y, l.w, l.h);
-                     
-                     // Dimensions
-                     ctx.fillStyle = '#666';
-                     ctx.font = `${16/scale}px sans-serif`;
-                     ctx.textAlign = 'center';
-                     ctx.textBaseline = 'middle';
-                     ctx.fillText(`${l.w}x${l.h}`, l.x + l.w/2, l.y + l.h/2);
-                     ctx.setLineDash([]);
+            const W = currentFabricW;
+            const H = currentFabricH;
+            
+            // 1. Prepare Text Data
+            const lines = [];
+            lines.push({ text: `方案 #${idx+1} (${(sol.utilization * 100).toFixed(1)}% 利用率)`, type: 'title' });
+            lines.push({ text: `总尺寸: ${W}x${H} cm`, type: 'subtitle' });
+            lines.push({ text: "数量统计:", type: 'header', marginTop: 10 });
+            sol.counts.forEach((c, i) => {
+                if(c > 0) {
+                     lines.push({ 
+                         text: `${specs[i].w}x${specs[i].h}cm: x${c}`, 
+                         type: 'item', 
+                         color: specs[i].color 
+                     });
                 }
             });
-        }
-        ctx.restore();
-        
-        // 4. Draw Info Text (Bottom part)
-        let currentY = H * scale + PADDING;
-        const textX = PADDING;
-        
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        
-        // Draw divider line
-        ctx.beginPath();
-        ctx.moveTo(PADDING, H * scale + 10);
-        ctx.lineTo(canvas.width - PADDING, H * scale + 10);
-        ctx.strokeStyle = '#eee';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        
-        lines.forEach(line => {
-            if (line.marginTop) currentY += line.marginTop;
-            
-            let fontSize = FONT_NORMAL;
-            let fontColor = '#666';
-            let isBold = false;
-            
-            if (line.type === 'title') {
-                fontSize = FONT_TITLE;
-                fontColor = '#333';
-                isBold = true;
-            } else if (line.type === 'subtitle') {
-                fontSize = FONT_NORMAL;
-                fontColor = '#888';
-            } else if (line.type === 'header') {
-                fontSize = FONT_HEADER;
-                fontColor = '#444';
-                isBold = true;
+            if (sol.leftovers && sol.leftovers.length > 0) {
+                const validLeftovers = sol.leftovers.filter(l => l.w > 0.5 && l.h > 0.5);
+                if (validLeftovers.length > 0) {
+                     lines.push({ text: "剩余布料:", type: 'header', marginTop: 15 });
+                     const wasteGroups = {};
+                     validLeftovers.forEach(l => {
+                          const key = `${l.w}x${l.h}`;
+                          wasteGroups[key] = (wasteGroups[key] || 0) + 1;
+                     });
+                     for (let [size, count] of Object.entries(wasteGroups)) {
+                          lines.push({ text: `${size}cm: x${count}`, type: 'item-waste' });
+                     }
+                }
             }
-            
-            ctx.font = `${isBold ? 'bold ' : ''}${fontSize}px sans-serif`;
-            
-            if (line.type === 'item' && line.color) {
-                // Draw color box
-                ctx.fillStyle = line.color;
-                const boxSize = fontSize * 0.8;
-                const boxY = currentY + (LINE_HEIGHT - boxSize)/2 - 2;
-                ctx.fillRect(textX, boxY, boxSize, boxSize);
-                
-                ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(textX, boxY, boxSize, boxSize);
-                
-                ctx.fillStyle = fontColor;
-                ctx.fillText(line.text, textX + boxSize + 10, currentY);
-            } else if (line.type === 'item-waste') {
-                // Draw dashed box icon? Or just text
-                ctx.fillStyle = fontColor;
-                ctx.fillText(`• ${line.text}`, textX, currentY);
-            } else {
-                ctx.fillStyle = fontColor;
-                ctx.fillText(line.text, textX, currentY);
-            }
-            
-            currentY += LINE_HEIGHT;
-        });
-        
-        // Trigger Download or Show Modal (Mobile)
-        const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window);
 
-        if (isMobile) {
-            // Use Base64 JPEG with higher compression to ensure small size and max compatibility
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-            const modal = document.getElementById('downloadModal');
-            const img = document.getElementById('downloadImg');
-            const btn = document.getElementById('downloadBtnMobile');
+            // 2. Setup Canvas Dimensions
+            let PIXELS_PER_CM = 10; 
+            const isMobile = window.innerWidth <= 768 || ('ontouchstart' in window);
+            if (isMobile) {
+                const maxDimension = Math.max(W, H);
+                if (maxDimension * PIXELS_PER_CM > 1000) {
+                    PIXELS_PER_CM = 1000 / maxDimension; 
+                }
+            }
+            const scale = PIXELS_PER_CM;
             
-            if (modal && img) {
-                img.src = dataUrl;
-                if (btn) {
-                    // Remove old event listeners
-                    const newBtn = btn.cloneNode(true);
-                    btn.parentNode.replaceChild(newBtn, btn);
-                    
-                    newBtn.onclick = async function() {
-                        // 1. Try Web Share API
-                        try {
-                            const res = await fetch(dataUrl);
-                            const blob = await res.blob();
-                            const fileName = `layout_solution_${idx+1}.jpg`;
-                            const file = new File([blob], fileName, {type: 'image/jpeg'});
-                            
-                            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                                await navigator.share({
-                                    files: [file],
-                                    title: '保存方案',
-                                    text: '方案布局图'
-                                });
-                                return;
-                            }
-                        } catch (error) {
-                            console.log('Share failed', error);
+            const PADDING = 30;
+            const LINE_HEIGHT = 34;
+            const FONT_TITLE = 32;
+            const FONT_HEADER = 26;
+            const FONT_NORMAL = 24;
+            
+            let textSectionHeight = PADDING * 2;
+            lines.forEach(line => {
+                if (line.marginTop) textSectionHeight += line.marginTop;
+                textSectionHeight += LINE_HEIGHT;
+            });
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = W * scale;
+            canvas.height = H * scale + textSectionHeight;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 3. Draw Layout
+            ctx.save();
+            ctx.scale(scale, scale);
+            sol.placements.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.w, p.h);
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                ctx.lineWidth = 1 / scale;
+                ctx.strokeRect(p.x, p.y, p.w, p.h);
+                 ctx.fillStyle = '#000';
+                 const fontSize = (p.w <= 10 || p.h <= 10) ? 16 : 24;
+                 ctx.font = `${fontSize/scale}px sans-serif`;
+                 ctx.textAlign = 'center';
+                 ctx.textBaseline = 'middle';
+                 ctx.fillText(`${p.w}x${p.h}`, p.x + p.w/2, p.y + p.h/2);
+            });
+            if(sol.leftovers) {
+                sol.leftovers.forEach(l => {
+                    if (l.w > 0.5 && l.h > 0.5) {
+                         ctx.strokeStyle = '#888';
+                         ctx.setLineDash([5/scale, 5/scale]);
+                         ctx.lineWidth = 2 / scale;
+                         ctx.strokeRect(l.x, l.y, l.w, l.h);
+                         ctx.fillStyle = '#666';
+                         ctx.font = `${16/scale}px sans-serif`;
+                         ctx.textAlign = 'center';
+                         ctx.textBaseline = 'middle';
+                         ctx.fillText(`${l.w}x${l.h}`, l.x + l.w/2, l.y + l.h/2);
+                         ctx.setLineDash([]);
+                    }
+                });
+            }
+            ctx.restore();
+            
+            // 4. Draw Info Text
+            let currentY = H * scale + PADDING;
+            const textX = PADDING;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.beginPath();
+            ctx.moveTo(PADDING, H * scale + 10);
+            ctx.lineTo(canvas.width - PADDING, H * scale + 10);
+            ctx.strokeStyle = '#eee';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            lines.forEach(line => {
+                if (line.marginTop) currentY += line.marginTop;
+                let fontSize = FONT_NORMAL;
+                let fontColor = '#666';
+                let isBold = false;
+                if (line.type === 'title') { fontSize = FONT_TITLE; fontColor = '#333'; isBold = true; }
+                else if (line.type === 'subtitle') { fontSize = FONT_NORMAL; fontColor = '#888'; }
+                else if (line.type === 'header') { fontSize = FONT_HEADER; fontColor = '#444'; isBold = true; }
+                
+                ctx.font = `${isBold ? 'bold ' : ''}${fontSize}px sans-serif`;
+                
+                if (line.type === 'item' && line.color) {
+                    ctx.fillStyle = line.color;
+                    const boxSize = fontSize * 0.8;
+                    const boxY = currentY + (LINE_HEIGHT - boxSize)/2 - 2;
+                    ctx.fillRect(textX, boxY, boxSize, boxSize);
+                    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(textX, boxY, boxSize, boxSize);
+                    ctx.fillStyle = fontColor;
+                    ctx.fillText(line.text, textX + boxSize + 10, currentY);
+                } else if (line.type === 'item-waste') {
+                    ctx.fillStyle = fontColor;
+                    ctx.fillText(`• ${line.text}`, textX, currentY);
+                } else {
+                    ctx.fillStyle = fontColor;
+                    ctx.fillText(line.text, textX, currentY);
+                }
+                currentY += LINE_HEIGHT;
+            });
+            
+            // --- DOWNLOAD LOGIC ---
+            if (isMobile) {
+                // Generate Blob (Better Memory Usage than DataURL string)
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+                if (!blob) throw new Error("图片生成失败");
+                
+                const isWebView = /wv|Android.*Version\/|BW\/|360browser/.test(navigator.userAgent);
+                
+                if (isWebView) {
+                    // === WebView Strategy: Prioritize System Share ===
+                    let shared = false;
+                    try {
+                        const file = new File([blob], `solution_${idx+1}.jpg`, {type: 'image/jpeg'});
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                files: [file],
+                                title: '保存方案',
+                                text: '方案布局图'
+                            });
+                            shared = true;
                         }
-                        
-                        // 2. Explicit Prompt for Long Press (Most reliable in WebView)
-                        alert("如果下载未开始，请长按图片选择'保存到相册'");
-                        
-                        // 3. Try standard download just in case
+                    } catch (e) { console.log("Share failed", e); }
+                    
+                    if (!shared) {
+                        // Fallback: Modal with Blob URL
+                        const modal = document.getElementById('downloadModal');
+                        const img = document.getElementById('downloadImg');
+                        if (modal && img) {
+                            const url = URL.createObjectURL(blob);
+                            img.src = url;
+                            // Clean up previous listeners if any? No need, just show.
+                            const btnMobile = document.getElementById('downloadBtnMobile');
+                            if(btnMobile) btnMobile.style.display = 'none'; // Manual save only
+                            modal.style.display = 'flex';
+                            alert("自动保存失败，请长按图片选择'保存到手机'");
+                        }
+                    }
+                } else {
+                    // === Browser Strategy: Direct Download ===
+                    try {
+                        const url = URL.createObjectURL(blob);
                         const link = document.createElement('a');
-                        link.download = `layout_solution_${idx+1}.jpg`;
-                        link.href = dataUrl;
+                        link.href = url;
+                        link.download = `solution_${idx+1}.jpg`;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                    };
+                        setTimeout(() => URL.revokeObjectURL(url), 5000);
+                    } catch (e) {
+                         throw e; // Trigger catch block
+                    }
                 }
-                modal.style.display = 'flex';
+            } else {
+                // PC: Standard Data URL
+                const link = document.createElement('a');
+                link.download = `layout_solution_${idx+1}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
-        } else {
-             const link = document.createElement('a');
-             link.download = `layout_solution_${idx+1}.jpg`;
-             link.href = canvas.toDataURL('image/jpeg', 0.9);
-             document.body.appendChild(link);
-             link.click();
-             document.body.removeChild(link);
+
+        } catch (e) {
+            console.error(e);
+            alert("保存过程中发生错误:\n" + e.message + "\n\n请尝试截图保存。");
+            
+            // Last Resort: Try to show modal anyway
+            try {
+                const modal = document.getElementById('downloadModal');
+                if (modal) modal.style.display = 'flex';
+            } catch(err){}
+        } finally {
+            if (btn) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            }
         }
     }
 
@@ -2517,16 +2520,10 @@
                 <span style="font-weight:bold; color:#333; white-space:nowrap;">方案 #${idx}</span>
                 <div style="display:flex; gap:5px; align-items:center;">
                     <span class="sol-badge">${(sol.utilization * 100).toFixed(1)}% 利用率</span>
-                    <button onclick="openZoom(${idx-1})" style="background:none; border:none; cursor:pointer; color:#1890ff; font-size:14px; display:flex; align-items:center; gap:4px; padding:2px 5px; border-radius:4px; background:#e6f7ff; white-space:nowrap;">
-                        🔍 放大
-                    </button>
-                    <button onclick="downloadSolution(${idx-1})" style="background:none; border:none; cursor:pointer; color:#52c41a; font-size:14px; display:flex; align-items:center; gap:4px; padding:2px 5px; border-radius:4px; background:#f6ffed; white-space:nowrap;">
-                        ⬇️ 下载
-                    </button>
                 </div>
             </div>
             <div class="sol-body">
-                <div class="sol-canvas-wrapper">
+                <div class="sol-canvas-wrapper" onclick="openZoom(${idx-1})" style="cursor:pointer;">
                     <canvas id="${canvasId}" width="${cw}" height="${ch}"></canvas>
                 </div>
                 <div class="sol-info">
