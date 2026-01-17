@@ -15,7 +15,7 @@
         .header-sticky { position: sticky; top: 0; background: white; z-index: 100; border-bottom: 2px solid #eee; padding: 12px 15px; }
         .top-bar { display: flex; flex-direction: column; margin-bottom: 10px; }
         .stats { 
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; 
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; 
             background: #f8f9fa; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box;
             /* justify-items: center; text-align: center;  <-- Remove this to allow individual alignment */
         }
@@ -165,32 +165,84 @@
             /* 头部移动端适配 */
             .header-sticky { padding: 8px 10px; }
             /* 调整列宽比例，给第一列（色号）更多空间 */
-            .stats { padding: 8px; gap: 5px !important; margin-right: 5px; grid-template-columns: 1.3fr 0.9fr 0.9fr 0.9fr !important; }
+            .stats { padding: 8px; gap: 5px !important; margin-right: 5px; grid-template-columns: 1.3fr 0.9fr 0.9fr !important; }
             .top-bar { margin-bottom: 5px; flex-wrap: wrap; row-gap: 8px; }
             .btn-text { font-size: 11px; }
             /* 调整下拉框在移动端的大小 */
             #seriesFilter { font-size: 13px !important; max-width: 100% !important; }
             
             /* 导航栏移动端适配 */
-            .nav-bar { display: flex !important; flex-wrap: nowrap !important; overflow-x: auto; padding: 6px 4px !important; justify-content: space-between !important; gap: 2px !important; }
-            .nav-btn { padding: 4px 4px !important; font-size: 11px !important; white-space: nowrap; flex-shrink: 0; }
-            /* 隐藏滚动条但保留功能 */
-            .nav-bar::-webkit-scrollbar { display: none; }
+            .nav-bar { overflow: visible !important; padding: 6px 4px !important; justify-content: flex-end !important; gap: 10px !important; }
+            .nav-btn { padding: 4px 8px !important; font-size: 12px !important; white-space: nowrap; flex-shrink: 0; }
         }
         
         /* 导航栏样式 */
         .nav-bar { 
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; align-items: center; 
+            display: flex; justify-content: flex-end; gap: 10px; align-items: center; 
             padding: 6px 10px; 
             margin-top: 5px;
             margin-bottom: 8px;
             background: #f8f9fa; 
             border-radius: 8px; 
         }
-        /* 导航栏对齐 - 与Stats栏对齐 */
-        .nav-bar > button:first-child { justify-self: start; padding-left: 8px; }
-        .nav-bar > button:last-child { justify-self: end; padding-right: 8px; }
-        .nav-bar > button:nth-child(2), .nav-bar > button:nth-child(3) { justify-self: center; }
+
+        /* 系列筛选样式 */
+        .series-filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+            padding: 0 2px;
+        }
+        .series-chip {
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: #f5f5f5;
+            color: #666;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid transparent;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .series-chip:active {
+            transform: scale(0.95);
+        }
+        .series-chip.selected {
+            background: #e6f7ff;
+            color: #1890ff;
+            border-color: #91d5ff;
+            font-weight: bold;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 5px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 8px 0;
+            min-width: 140px;
+            z-index: 1000;
+            border: 1px solid #eee;
+        }
+        .dropdown-item {
+            padding: 10px 16px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .dropdown-item:hover {
+            background: #f5f7fa;
+            color: var(--primary);
+        }
 
         .nav-btn {
             display: flex; align-items: center; gap: 4px;
@@ -234,6 +286,277 @@
             .grain-info { display: inline !important; font-size: 9px !important; }
         }
 
+        /* 底部导航栏 Bottom Dock */
+        .bottom-dock {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 32px);
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            z-index: 190;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .dock-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            flex: 1;
+            color: #999;
+            transition: all 0.2s;
+        }
+        
+        .dock-item.active {
+            color: var(--primary);
+        }
+        
+        .dock-icon {
+            width: 24px;
+            height: 24px;
+            transition: transform 0.2s;
+            margin-bottom: 2px;
+        }
+        .dock-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: currentColor;
+        }
+        .dock-item:active .dock-icon {
+            transform: scale(0.9);
+        }
+        .dock-label {
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        /* 底部菜单 Bottom Sheet */
+        .bottom-sheet {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .bottom-sheet.show {
+            display: block;
+            opacity: 1;
+        }
+        .sheet-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            border-radius: 24px 24px 0 0;
+            padding: 20px;
+            box-sizing: border-box;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bottom-sheet.show .sheet-content {
+            transform: translateY(0);
+        }
+        .sheet-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; font-weight: bold; font-size: 16px; color: #333;
+        }
+        .close-sheet {
+            font-size: 24px; color: #999; cursor: pointer; padding: 5px;
+        }
+        .sheet-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;
+        }
+        .sheet-item {
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            cursor: pointer;
+        }
+        .sheet-icon-box {
+            width: 48px; height: 48px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            transition: transform 0.1s;
+        }
+        .sheet-item:active .sheet-icon-box {
+            transform: scale(0.95);
+        }
+        .sheet-item span { font-size: 12px; color: #666; }
+
+        /* Card Layout */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+            gap: 12px;
+            padding: 10px;
+        }
+
+        .bead-card {
+            background: white;
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            position: relative;
+            transition: all 0.2s;
+            overflow: hidden;
+        }
+
+        .bead-card.selected {
+            border-color: var(--primary);
+            background: #f0f7ff;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .card-check {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .bead-card.selected .card-check {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .bead-card.selected .card-check::after {
+            content: '✓'; color: white; font-size: 12px; font-weight: bold;
+        }
+
+        .card-id {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            font-family: monospace;
+            letter-spacing: 0.5px;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 0;
+            background: #f9fafb;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        
+        .card-body:active { background: #f3f4f6; }
+
+        .card-weight {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            line-height: 1.2;
+        }
+
+        .card-unit {
+            font-size: 12px;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+        
+        .weight-badge.low { color: #ff4d4f; }
+
+        .card-grain {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 8px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .card-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 10px;
+            color: #9ca3af;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-card-action {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .btn-add {
+            background: #e6f7ff;
+            color: #0099ff;
+        }
+        .btn-add:active { background: #bae7ff; transform: scale(0.95); }
+
+        .btn-info {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        .btn-info:active { background: #e5e7eb; transform: scale(0.95); }
+
+        /* Mobile optimizations */
+        @media (max-width: 480px) {
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                padding: 10px 8px;
+            }
+            
+            .bead-card {
+                padding: 10px;
+                border-radius: 14px;
+            }
+            
+            .card-weight { font-size: 20px; }
+            .card-swatch { width: 28px; height: 28px; }
+        }
     </style>
 </head>
 <body>
@@ -256,19 +579,12 @@
     <div onclick="showDevInfo()" style="margin-top: 40px; color: #666; font-size: 12px; cursor: pointer; text-decoration: underline;">开发者信息</div>
 </div>
 
-<div id="page-beads" style="display:none;">
+<div id="page-beads" style="display:none; padding-bottom: 80px;">
 <div class="container">
 
     <div class="header-sticky">
         <div style="display:flex; align-items:center; margin-bottom:10px;">
-            <button onclick="navTo('home')" class="btn-back">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-            </button>
-            <div class="nav-bar" style="flex:1; margin:0; margin-bottom:0;">
-                <button class="nav-btn" onclick="showModal('helpModal')"><span>📖</span><span>使用说明</span></button>
-                <button class="nav-btn" onclick="openBatchInput()"><span>📊</span><span>初始录入</span></button>
-                <button class="nav-btn" onclick="openDataModal('backup')"><span>⚙️</span><span>数据备份</span></button>
-            </div>
+            <div style="flex:1;"></div>
         </div>
         <div class="top-bar">
             <div class="stats">
@@ -293,38 +609,56 @@
                         <span style="font-size:12px; color:#333;">g</span>
                     </div>
                 </div>
-                <div>
-                    <span style="font-size:12px; color:#999; margin-bottom:2px;">设置</span>
-                    <button class="btn-text" onclick="openIgnoredModal()" style="font-size:12px; padding:0; text-decoration:underline; white-space:nowrap; margin-top:2px; color:#4a90e2;">忽略清单</button>
-                </div>
             </div>
         </div>
 
-        <input type="text" id="search" placeholder="输入色号搜索..." oninput="render()">
-        
-        <div style="display:flex; align-items:center; padding:0px 0px; font-size:12px; color:#999; margin-top:5px;">
-            <div style="width:5px;"></div>
-            <div style="flex:1; display:flex; align-items:center;">
-                 <span style="margin-right:5px;">排序：</span>
-                 <select id="sortSelect" onchange="changeSortMode()" style="font-size:12px; color:#333; border:1px solid #eee; background:transparent; outline:none; padding:2px; border-radius:4px; cursor:pointer;">
-                    <option value="id">按色号排序</option>
-                    <option value="stock_desc">库存由多到少</option>
-                    <option value="stock_asc">库存由少到多</option>
-                    <option value="usage_desc">消耗量由多到少</option>
-                    <option value="usage_asc">消耗量由少到多</option>
-                    <option value="restock_desc">补货量由多到少</option>
-                    <option value="restock_asc">补货量由少到多</option>
-                 </select>
-            </div>
-            <div style="width:60px;"></div>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+            <input type="text" id="search" placeholder="输入色号搜索..." oninput="render()" style="flex:1; margin-bottom:0;">
+            <button id="btn-toggle-filter" onclick="toggleFilterVisibility()" style="
+                border: 1px solid #ddd;
+                background: #fff;
+                color: #666;
+                padding: 8px 12px;
+                border-radius: 8px;
+                font-size: 14px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 42px; /* Match input height roughly */
+            ">
+                🎨
+            </button>
         </div>
+        
+        <div id="series-filter-container" class="series-filter-container" style="display:none;">
+            <div class="series-chip" onclick="toggleSeries('A')">A</div>
+            <div class="series-chip" onclick="toggleSeries('B')">B</div>
+            <div class="series-chip" onclick="toggleSeries('C')">C</div>
+            <div class="series-chip" onclick="toggleSeries('D')">D</div>
+            <div class="series-chip" onclick="toggleSeries('E')">E</div>
+            <div class="series-chip" onclick="toggleSeries('F')">F</div>
+            <div class="series-chip" onclick="toggleSeries('G')">G</div>
+            <div class="series-chip" onclick="toggleSeries('H')">H</div>
+            <div class="series-chip" onclick="toggleSeries('M')">M</div>
+            <div class="series-chip" onclick="toggleSeries('P')">P</div>
+            <div class="series-chip" onclick="toggleSeries('Q')">Q</div>
+            <div class="series-chip" onclick="toggleSeries('R')">R</div>
+            <div class="series-chip" onclick="toggleSeries('T')">T</div>
+            <div class="series-chip" onclick="toggleSeries('Y')">Y</div>
+            <div class="series-chip" onclick="toggleSeries('ZG')">ZG</div>
+        </div>
+        
+
     </div>
 
-    <div id="grid"></div>
+    <div id="grid" class="grid-container"></div>
     <div style="text-align:center; padding:10px; color:#999; font-size:10px;">
         开发者: 小红书用户āōē，ID 11535779483，使用AI工具开发
     </div>
 </div>
+
+
 
     <div id="footer" class="footer-bar" style="display:none;">
         <div class="footer-top">
@@ -345,6 +679,106 @@
     </div>
 
 </div> <!-- End page-beads -->
+
+    <div id="footer-dock" class="bottom-dock">
+        <div class="dock-item active" onclick="navToDock('inventory')">
+            <span class="dock-icon">
+                <svg viewBox="0 0 24 24"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"/></svg>
+            </span>
+            <span class="dock-label">库存</span>
+        </div>
+        <div class="dock-item" onclick="navToDock('scan')">
+            <span class="dock-icon">
+                <svg viewBox="0 0 24 24"><path d="M5 5h4V3H5c-1.1 0-2 .9-2 2v4h2V5zm14-2h-4v2h4v4h2V5c0-1.1-.9-2-2-2zm0 16h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zM5 19h4v2H5c-1.1 0-2-.9-2-2v-4h2v4z"/><rect x="7" y="9" width="10" height="6" rx="1"/></svg>
+            </span>
+            <span class="dock-label">扫描</span>
+        </div>
+        <div class="dock-item" onclick="navToDock('stats')">
+            <span class="dock-icon">
+                <svg viewBox="0 0 24 24"><path d="M4 19h4v-7H4v7zm6 0h4V5h-4v14zm6 0h4v-10h-4v10z"/></svg>
+            </span>
+            <span class="dock-label">统计</span>
+        </div>
+        <div class="dock-item" onclick="toggleMoreMenu()">
+            <span class="dock-icon">
+                <svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+            </span>
+            <span class="dock-label">更多</span>
+        </div>
+    </div>
+
+    <div id="moreMenuSheet" class="bottom-sheet">
+        <div class="sheet-content">
+            <div class="sheet-header">
+                <span>更多功能</span>
+                <span class="close-sheet" onclick="toggleMoreMenu()">×</span>
+            </div>
+            <div class="sheet-grid">
+                <div class="sheet-item" onclick="showModal('helpModal'); toggleMoreMenu()">
+                    <div class="sheet-icon-box" style="background:#e6f7ff; color:#1890ff;">📖</div>
+                    <span>使用说明</span>
+                </div>
+                <div class="sheet-item" onclick="openDataModal('backup'); toggleMoreMenu()">
+                    <div class="sheet-icon-box" style="background:#fff7e6; color:#fa8c16;">⚙️</div>
+                    <span>数据备份</span>
+                </div>
+                <div class="sheet-item" onclick="openIgnoredModal(); toggleMoreMenu()">
+                    <div class="sheet-icon-box" style="background:#fff0f6; color:#eb2f96;">🚫</div>
+                    <span>忽略清单</span>
+                </div>
+                 <div class="sheet-item" onclick="navTo('home'); toggleMoreMenu()">
+                    <div class="sheet-icon-box" style="background:#f9f0ff; color:#722ed1;">🏠</div>
+                    <span>返回首页</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div id="page-stats" style="display:none; padding-bottom: 80px;">
+    <div class="container">
+        <div style="position: sticky; top: 0; background: #fff; z-index: 100; padding-top: 20px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; margin-bottom: 20px;">
+            <div style="display:flex; justify-content:center; align-items:center; position:relative; margin-bottom:15px;">
+                <h3 style="font-size: 18px; font-weight: bold; margin: 0; text-align: center; color: #333;">数据统计</h3>
+                <select id="statsSeriesFilter" onchange="syncAndRenderStats()" style="position:absolute; right:0; top:50%; transform:translateY(-50%); font-size:12px; padding:4px 8px; border:1px solid #ddd; border-radius:12px; background:#fff; outline:none; color:#666;">
+                    <option value="221">Mard 221</option>
+                    <option value="all">Mard 全系列</option>
+                </select>
+            </div>
+            
+            <!-- 概览卡片 -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <div style="background: #f0f5ff; padding: 15px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">总库存重量</div>
+                    <div id="ana-total-stock" style="font-size: 18px; font-weight: bold; color: #2f54eb;">0g</div>
+                </div>
+                <div style="background: #fff1f0; padding: 15px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">总消耗重量</div>
+                    <div id="ana-total-used" style="font-size: 18px; font-weight: bold; color: #f5222d;">0g</div>
+                </div>
+                <div style="background: #f6ffed; padding: 15px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">在库色数</div>
+                    <div id="ana-active-count" style="font-size: 18px; font-weight: bold; color: #52c41a;">0</div>
+                </div>
+                <div style="background: #fff7e6; padding: 15px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">低库存数</div>
+                    <div id="ana-low-count" style="font-size: 18px; font-weight: bold; color: #fa8c16;">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div style="margin-bottom: 20px;">
+            <h4 style="font-size: 14px; color: #333; margin-bottom: 10px; border-left: 3px solid #2f54eb; padding-left: 8px;">消耗 Top 5</h4>
+            <div id="ana-top-used" style="background: #fff; border: 1px solid #f0f0f0; border-radius: 8px; padding: 10px;"></div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <h4 style="font-size: 14px; color: #333; margin-bottom: 10px; border-left: 3px solid #722ed1; padding-left: 8px;">系列库存分布 (重量)</h4>
+            <div id="ana-series-dist" style="background: #fff; border: 1px solid #f0f0f0; border-radius: 8px; padding: 10px;"></div>
+        </div>
+    </div>
+</div>
+
 
     <!-- 弹窗部分 -->
 
@@ -549,6 +983,8 @@
     </div>
 </div>
 
+
+
 <!-- Fabric Tool Page -->
 <div id="page-fabric" style="display:none; min-height:100vh; background:#f0f2f5;">
     <!-- Fabric Tool Header -->
@@ -579,7 +1015,7 @@
                 <button onclick="addSpec()" style="font-size:12px; background:#e6f7ff; color:#1890ff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">+ 添加</button>
             </h3>
             <div style="font-size:12px; color:#999; margin-bottom:10px; line-height:1.4;">
-                规格参考：一块52钉板规格为14*14cm, 一块78钉板规格为14*21cm, 一块104钉板规格为28*28cm
+                规格参考：一块52钉板规格为14*14cm, 一块78钉板规格为21*21cm, 一块104钉板规格为28*28cm
             </div>
             <div id="specList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
                 <!-- Specs will be injected here -->
@@ -689,14 +1125,20 @@
         document.getElementById('page-home').style.display = 'none';
         document.getElementById('page-beads').style.display = 'none';
         document.getElementById('page-fabric').style.display = 'none';
+        document.getElementById('page-stats').style.display = 'none';
         
+        // Hide dock by default, show only for main pages
+        document.getElementById('footer-dock').style.display = 'none';
+
         if (page === 'home') {
             document.getElementById('page-home').style.display = 'flex';
         } else if (page === 'beads') {
             document.getElementById('page-beads').style.display = 'block';
+            document.getElementById('footer-dock').style.display = 'flex'; // Show dock
             checkWelcome();
         } else if (page === 'fabric') {
             document.getElementById('page-fabric').style.display = 'block';
+            // Dock remains hidden for fabric page
             
             // Restore Fabric State
             const savedSpecs = localStorage.getItem('fabric_specs');
@@ -787,8 +1229,8 @@
 
     let threshold = parseFloat(localStorage.getItem('bead_threshold')) || 5;
     document.getElementById('threshold').value = threshold; // 修复阈值回显
-    let currentSortMode = 'id'; // 排序模式状态
     let sel = new Set();
+    let selectedSeries = new Set(); // New series filter
     let currentEditId = null;
 
     function formatTime(now) {
@@ -801,13 +1243,7 @@
         return `${y}/${m}/${d} ${h}:${min}:${s}`;
     }
 
-    let collapsedSeries = new Set();
 
-    function toggleSeries(key) {
-        if(collapsedSeries.has(key)) collapsedSeries.delete(key);
-        else collapsedSeries.add(key);
-        render();
-    }
 
     function createRow(item) {
         const isMonitored = item.monitor !== false;
@@ -848,34 +1284,81 @@
              totalUsed = parseFloat(totalUsed.toFixed(2));
              item.totalUsed = totalUsed; 
         }
+        
         const monitorIcon = !isMonitored ? '<span style="font-size:12px; margin-left:2px; opacity:0.5;">🔕</span>' : '';
+        const lowStyle = isLow ? 'color:#ff4d4f;' : '';
 
         const row = document.createElement('div');
-        row.className = `bead-row ${sel.has(item.id) ? 'selected' : ''}`;
+        row.className = `bead-card ${sel.has(item.id) ? 'selected' : ''}`;
         row.onclick = () => toggleSelect(item.id);
         
         row.innerHTML = `
-            <div class="col-select"><input type="checkbox" ${sel.has(item.id)?'checked':''}></div>
-            <div class="col-color"><div class="swatch" style="background:${item.hex}"></div></div>
-            <div class="col-id" style="display:flex; align-items:center;">${item.id}${monitorIcon}</div>
-            <div class="col-weight" style="display:flex; flex-direction:column; justify-content:center; gap:2px;">
-                <div class="weight-primary-row" style="display:flex; align-items:center; gap:15px;">
-                    <div style="cursor:pointer; display:flex; align-items:baseline;" onclick="event.stopPropagation(); manualEdit('${item.id}')">
-                        <span class="weight-badge ${isLow ? 'low' : ''}">${item.w}g</span>
-                        <span class="grain-info" style="font-size:10px; color:#999; margin-left:4px;">≈${grainCount}粒</span>
-                    </div>
+            <div class="card-header">
+                <div class="swatch card-swatch" style="background:${item.hex}"></div>
+                <div class="card-id">
+                    ${item.id}
+                    ${monitorIcon}
                 </div>
-                <div class="weight-detail-row" style="font-size:10px; color:#999; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                     <span style="white-space:nowrap;">总耗: <b style="color:#ff4d4f; font-weight:normal;">${totalUsed}g</b></span>
-                     <span style="white-space:nowrap;">总补: <b style="color:#52c41a; font-weight:normal;">${totalAdded}g</b></span>
-                     <button class="btn-detail" onclick="event.stopPropagation(); openHistory('${item.id}')">查看明细</button>
+                <div class="card-check"></div>
+            </div>
+            
+            <div class="card-body" onclick="event.stopPropagation(); manualEdit('${item.id}')">
+                <div class="card-weight" style="${lowStyle}">${item.w}<span class="card-unit">g</span></div>
+                <div class="card-grain">≈${grainCount}粒</div>
+                <div style="width: 80%; height: 4px; background: #f0f0f0; border-radius: 2px; margin: 6px auto 0; overflow: hidden;">
+                    <div style="width: ${Math.min((item.w / 50) * 100, 100)}%; height: 100%; background: ${item.hex}; transition: width 0.3s;"></div>
                 </div>
             </div>
-            <div class="col-action">
-                <button class="btn-plus" onclick="event.stopPropagation(); quickAdd('${item.id}')">+10g</button>
+
+            <div class="card-footer">
+                <div class="card-stats">
+                    <div>用: ${totalUsed}g</div>
+                    <div>补: ${totalAdded}g</div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-card-action btn-info" onclick="event.stopPropagation(); openHistory('${item.id}')"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M4 6h12v2H4zm0 5h8v2H4zm0 5h6v2H4zm14.5-2c-1.93 0-3.5 1.57-3.5 3.5s1.57 3.5 3.5 3.5 3.5-1.57 3.5-3.5-1.57-3.5-3.5-3.5z m3.71 6.71l-2.12-2.12c.56-.8.88-1.76.88-2.79 0-2.65-2.15-4.8-4.8-4.8s-4.8 2.15-4.8 4.8 2.15 4.8 4.8 4.8c1.03 0 1.99-.32 2.79-.88l2.12 2.12c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41z"/></svg></button>
+                    <button class="btn-card-action btn-add" onclick="event.stopPropagation(); quickAdd('${item.id}')" style="font-size: 10px; font-weight: bold; width: auto; padding: 0 4px;">
+                        +10
+                    </button>
+                </div>
             </div>
         `;
         return row;
+    }
+
+    function toggleSeries(s) {
+        if (selectedSeries.has(s)) {
+            selectedSeries.delete(s);
+        } else {
+            selectedSeries.add(s);
+        }
+        
+        // Update UI
+        const container = document.getElementById('series-filter-container');
+        Array.from(container.children).forEach(chip => {
+            if (selectedSeries.has(chip.innerText)) {
+                chip.classList.add('selected');
+            } else {
+                chip.classList.remove('selected');
+            }
+        });
+        
+        render();
+    }
+
+    function toggleFilterVisibility() {
+        const container = document.getElementById('series-filter-container');
+        const btn = document.getElementById('btn-toggle-filter');
+        
+        if (container.style.display === 'none') {
+            container.style.display = 'flex';
+            btn.style.background = '#e6f7ff';
+            btn.style.borderColor = '#91d5ff';
+        } else {
+            container.style.display = 'none';
+            btn.style.background = '#fff';
+            btn.style.borderColor = '#ddd';
+        }
     }
 
     function render() {
@@ -886,42 +1369,48 @@
         // 保存到 localStorage
         localStorage.setItem('bead_series_filter', seriesMode);
 
+        // Update series chips visibility
+        const extraSeries = ['P', 'Q', 'R', 'T', 'Y', 'ZG'];
+        const container = document.getElementById('series-filter-container');
+        if (container) {
+            Array.from(container.children).forEach(chip => {
+                const s = chip.innerText;
+                if (extraSeries.includes(s)) {
+                    // Hide special series if mode is 221
+                    if (seriesMode === '221') {
+                        chip.style.display = 'none';
+                        // If hidden chip was selected, deselect it
+                        if (selectedSeries.has(s)) {
+                            selectedSeries.delete(s);
+                            chip.classList.remove('selected');
+                        }
+                    } else {
+                        chip.style.display = ''; // Restore visibility
+                    }
+                }
+            });
+        }
+
         const grid = document.getElementById('grid');
         grid.innerHTML = '';
         
         // 系列筛选逻辑
         let displayData = data.filter(item => {
-            if (seriesMode === 'all') return true;
-            // Mard 221 模式下排除 P, Q, R, T, Y, ZG 系列
             const match = item.id.match(/^[A-Z]+/);
             const series = match ? match[0] : '';
-            const extraSeries = ['P', 'Q', 'R', 'T', 'Y', 'ZG'];
+
+            // New: Checkbox filter优先
+            if (selectedSeries.size > 0) {
+                return selectedSeries.has(series);
+            }
+
+            if (seriesMode === 'all') return true;
+            // Mard 221 模式下排除 P, Q, R, T, Y, ZG 系列
             return !extraSeries.includes(series);
         });
         
-        // 排序逻辑
-        if (currentSortMode === 'usage_desc') {
-            displayData.sort((a, b) => (b.totalUsed || 0) - (a.totalUsed || 0));
-        } else if (currentSortMode === 'usage_asc') {
-            displayData.sort((a, b) => (a.totalUsed || 0) - (b.totalUsed || 0));
-        } else if (currentSortMode === 'stock_desc') {
-            displayData.sort((a, b) => b.w - a.w); // 降序
-        } else if (currentSortMode === 'stock_asc') {
-            displayData.sort((a, b) => a.w - b.w); // 升序
-        } else if (currentSortMode.startsWith('restock')) {
-             displayData.sort((a, b) => {
-                 const getRestock = (item) => {
-                     if(!item.logs) return 0;
-                     return item.logs.reduce((sum, log) => sum + (log.type === 'add' ? (log.val||0) : 0), 0);
-                 };
-                 const valA = getRestock(a);
-                 const valB = getRestock(b);
-                 return currentSortMode === 'restock_desc' ? valB - valA : valA - valB;
-             });
-        } else {
-            // 默认按ID字母+数字排序
-            displayData.sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true, sensitivity: 'base'}));
-        }
+        // 默认按ID字母+数字排序
+        displayData.sort((a, b) => a.id.localeCompare(b.id, undefined, {numeric: true, sensitivity: 'base'}));
 
         // 计算低库存数量（基于当前搜索过滤）
         let lowCount = 0;
@@ -932,66 +1421,17 @@
         });
         document.getElementById('count-low').innerText = lowCount;
 
-        // 分组显示逻辑（仅在默认排序且无搜索时启用）
-        if (currentSortMode === 'id' && q === '') {
-             const groups = {};
-             displayData.forEach(item => {
-                 // 提取系列前缀 (支持 ZG 这种双字母系列)
-                 const match = item.id.match(/^[A-Z]+/);
-                 let key = match ? match[0] : '#';
-                 if(!groups[key]) groups[key] = [];
-                 groups[key].push(item);
-             });
-             
-             const seriesNames = {
-                'P': '珠光',
-                'Q': '温变',
-                'R': '透明果冻水晶',
-                'T': '透明',
-                'Y': '夜光',
-                'ZG': '光变'
-             };
-
-             Object.keys(groups).sort().forEach(series => {
-                 const items = groups[series];
-                 const isCollapsed = collapsedSeries.has(series);
-                 const seriesDesc = seriesNames[series] ? ` (${seriesNames[series]})` : '';
-                 
-                 const header = document.createElement('div');
-                 header.onclick = () => toggleSeries(series);
-                 header.style.cssText = 'background:#f8f9fa; padding:10px 15px; font-weight:bold; color:#555; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between; align-items:center;';
-                 header.innerHTML = `
-                    <span>${series}系列${seriesDesc} (${items.length})</span>
-                    <span style="transform:${isCollapsed?'rotate(-90deg)':'rotate(0deg)'}; transition:transform 0.2s; display:flex; align-items:center;">
-                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="#999" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </span>
-                 `;
-                 grid.appendChild(header);
-                 
-                 if(!isCollapsed) {
-                     items.forEach(item => {
-                         grid.appendChild(createRow(item));
-                     });
-                 }
-             });
-        } else {
-             // 扁平列表模式
-             displayData.forEach(item => {
-                 if (item.id.includes(q)) {
-                     grid.appendChild(createRow(item));
-                 }
-             });
-        }
+        // 扁平列表模式
+        displayData.forEach(item => {
+            if (item.id.includes(q)) {
+                grid.appendChild(createRow(item));
+            }
+        });
         
         save();
     }
 
-    function changeSortMode() {
-        currentSortMode = document.getElementById('sortSelect').value;
-        render();
-    }
+
 
     function toggleSelect(id) {
         sel.has(id) ? sel.delete(id) : sel.add(id);
@@ -1703,6 +2143,134 @@
         }
 
         showModal('lowStockModal');
+    }
+
+    function renderStats() {
+        // 0. 应用筛选逻辑 (保持与 inventory 页面一致)
+        let seriesMode = document.getElementById('seriesFilter').value;
+        // Sync stats dropdown to match
+        const statsSelect = document.getElementById('statsSeriesFilter');
+        if(statsSelect && statsSelect.value !== seriesMode) {
+             statsSelect.value = seriesMode;
+        }
+
+        const extraSeries = ['P', 'Q', 'R', 'T', 'Y', 'ZG'];
+        
+        let statsData = data.filter(item => {
+            const match = item.id.match(/^[A-Z]+/);
+            const series = match ? match[0] : '';
+
+            // Checkbox filter 优先
+            if (typeof selectedSeries !== 'undefined' && selectedSeries.size > 0) {
+                return selectedSeries.has(series);
+            }
+
+            if (seriesMode === 'all') return true;
+            // Mard 221 模式下排除 P, Q, R, T, Y, ZG 系列
+            return !extraSeries.includes(series);
+        });
+
+        // 1. 基础数据统计
+        const totalStock = statsData.reduce((sum, item) => sum + (item.w || 0), 0);
+        const totalUsed = statsData.reduce((sum, item) => sum + (item.totalUsed || 0), 0);
+        const activeCount = statsData.filter(item => (item.w || 0) > 0).length;
+        const lowCount = statsData.filter(item => item.monitor !== false && (item.w || 0) < threshold).length;
+
+        // 更新概览数字
+        document.getElementById('ana-total-stock').textContent = `${totalStock.toFixed(1)}g`;
+        document.getElementById('ana-total-used').textContent = `${totalUsed.toFixed(1)}g`;
+        document.getElementById('ana-active-count').textContent = activeCount;
+        document.getElementById('ana-low-count').textContent = lowCount;
+
+        // 2. 消耗 Top 5
+        const topUsed = [...statsData]
+            .sort((a, b) => (b.totalUsed || 0) - (a.totalUsed || 0))
+            .slice(0, 5)
+            .filter(item => (item.totalUsed || 0) > 0);
+
+        const topContainer = document.getElementById('ana-top-used');
+        topContainer.innerHTML = '';
+        if (topUsed.length === 0) {
+            topContainer.innerHTML = '<div style="text-align:center; color:#999; font-size:12px; padding:10px;">暂无消耗数据</div>';
+        } else {
+            const maxUsed = topUsed[0].totalUsed;
+            topUsed.forEach(item => {
+                const percent = (item.totalUsed / maxUsed) * 100;
+                const row = document.createElement('div');
+                row.style.marginBottom = '8px';
+                row.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;">
+                        <span style="font-weight:bold;">${item.id}</span>
+                        <span style="color:#666;">${item.totalUsed.toFixed(1)}g</span>
+                    </div>
+                    <div style="background:#f0f0f0; height:6px; border-radius:3px; overflow:hidden;">
+                        <div style="background:#ffb6c1; width:${percent}%; height:100%;"></div>
+                    </div>
+                `;
+                topContainer.appendChild(row);
+            });
+        }
+
+        // 3. 系列库存分布
+        const seriesDist = {};
+        statsData.forEach(item => {
+            if ((item.w || 0) > 0) {
+                // 提取系列前缀 (例如 A, B, C...)
+                const match = item.id.match(/^[A-Z]+/);
+                if (match) {
+                    const series = match[0];
+                    if (!seriesDist[series]) seriesDist[series] = 0;
+                    seriesDist[series] += item.w;
+                }
+            }
+        });
+
+        // 转换为数组并按字母顺序排序
+        const seriesArray = Object.keys(seriesDist).map(key => ({
+            name: key,
+            val: seriesDist[key]
+        })).sort((a, b) => a.name.localeCompare(b.name));
+
+        const distContainer = document.getElementById('ana-series-dist');
+        distContainer.innerHTML = '';
+        
+        if (seriesArray.length === 0) {
+            distContainer.innerHTML = '<div style="text-align:center; color:#999; font-size:12px; padding:10px;">暂无库存数据</div>';
+        } else {
+            // 计算最大值用于进度条比例
+            const maxVal = Math.max(...seriesArray.map(item => item.val));
+            
+            // 显示所有系列，不再折叠
+            seriesArray.forEach(item => {
+                const percent = (item.val / maxVal) * 100;
+                const row = document.createElement('div');
+                row.style.marginBottom = '8px';
+                row.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;">
+                        <span style="font-weight:bold;">${item.name} 系列</span>
+                        <span style="color:#666;">${item.val.toFixed(1)}g</span>
+                    </div>
+                    <div style="background:#f0f0f0; height:6px; border-radius:3px; overflow:hidden;">
+                        <div style="background:#87cefa; width:${percent}%; height:100%;"></div>
+                    </div>
+                `;
+                distContainer.appendChild(row);
+            });
+        }
+
+
+    }
+
+    function syncAndRenderStats() {
+        const val = document.getElementById('statsSeriesFilter').value;
+        const mainSelect = document.getElementById('seriesFilter');
+        if(mainSelect.value !== val) {
+             mainSelect.value = val;
+             // Update localStorage and trigger main render to keep sync
+             localStorage.setItem('bead_series_filter', val);
+             render(); 
+        }
+        renderStats();
     }
 
     // --- 水印功能 --- 新用户欢迎弹窗 ---
@@ -2692,6 +3260,71 @@
             }
         }, 0);
     }
+    function toggleMainMenu() {
+        const menu = document.getElementById('mainMenuDropdown');
+        const isVisible = menu.style.display === 'block';
+        menu.style.display = isVisible ? 'none' : 'block';
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function(e) {
+        // Handle dropdown menu close (legacy, removing)
+        const menu = document.getElementById('mainMenuDropdown');
+        if (menu && menu.style.display === 'block') menu.style.display = 'none';
+
+        // Handle bottom sheet close
+        const sheet = document.getElementById('moreMenuSheet');
+        if (sheet && sheet.classList.contains('show') && e.target === sheet) {
+            toggleMoreMenu();
+        }
+    });
+
+    function navToDock(tab) {
+        // Reset all active states
+        document.querySelectorAll('.dock-item').forEach(el => el.classList.remove('active'));
+        
+        // Set active state
+        let index = 0;
+        if(tab === 'scan') index = 1;
+        if(tab === 'stats') index = 2;
+        if(tab === 'more') index = 3; 
+        
+        document.querySelectorAll('.dock-item')[index].classList.add('active');
+
+        // Ensure dock is visible when navigating via dock
+        document.getElementById('footer-dock').style.display = 'flex';
+
+        if (tab === 'inventory') {
+            document.getElementById('page-beads').style.display = 'block';
+            document.getElementById('page-stats').style.display = 'none';
+            document.getElementById('page-fabric').style.display = 'none';
+            document.getElementById('page-home').style.display = 'none';
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        } else if (tab === 'scan') {
+             openBatchInput();
+        } else if (tab === 'stats') {
+             document.getElementById('page-beads').style.display = 'none';
+             document.getElementById('page-stats').style.display = 'block';
+             document.getElementById('page-fabric').style.display = 'none';
+             document.getElementById('page-home').style.display = 'none';
+             renderStats();
+             window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+    }
+
+    function toggleMoreMenu() {
+        const sheet = document.getElementById('moreMenuSheet');
+        if (sheet.classList.contains('show')) {
+            sheet.classList.remove('show');
+            setTimeout(() => { sheet.style.display = 'none'; }, 300);
+        } else {
+            sheet.style.display = 'block';
+            // Trigger reflow
+            sheet.offsetHeight; 
+            sheet.classList.add('show');
+        }
+    }
+
 </script>
 </body>
 </html>
