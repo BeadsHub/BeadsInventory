@@ -8,15 +8,48 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <title>MARD 豆库 -拼豆库存管理工具</title>
     <style>
-        :root { --primary: #4a90e2; --warn: #ff4d4f; --bg: #f0f2f5; --success: #52c41a; }
+        :root { --primary: #4a90e2; --warn: #ff4d4f; --bg: #f5f7fa; --success: #52c41a; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 0; font-size: 14px; color: #333; overscroll-behavior-y: contain; }
         .container { max-width: 600px; margin: 0 auto; background: white; min-height: 100vh; padding-bottom: 90px; }
         
 
 
-        /* 头部控制区 */
+        /* Pull to Refresh Indicator */
+    #ptr-indicator {
+        position: fixed;
+        top: -50px;
+        left: 0;
+        width: 100%;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #888;
+        font-size: 14px;
+        z-index: 10000;
+        transition: transform 0.2s;
+        pointer-events: none;
+    }
+    #ptr-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #888;
+        border-top-color: transparent;
+        border-radius: 50%;
+        margin-right: 10px;
+        display: none;
+        animation: ptr-spin 0.8s linear infinite;
+    }
+    #ptr-icon {
+        font-size: 20px;
+        margin-right: 8px;
+        transition: transform 0.3s;
+    }
+    @keyframes ptr-spin {
+        to { transform: rotate(360deg); }
+    }
+    /* 头部控制区 */
         .header-sticky { position: sticky; top: 0; background: white; z-index: 100; border-bottom: 2px solid #eee; padding: 12px 15px; }
-        .top-bar { display: flex; flex-direction: column; margin-bottom: 10px; }
         .stats { 
             display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; 
             background: #f8f9fa; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box;
@@ -698,19 +731,93 @@
 
         .stats-summary-card {
             background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        /* Plan Time Filter Styles */
+        .plan-filter-ui {
+            margin-bottom: 20px;
+        }
+        .plan-segmented-control {
+            display: flex;
+            background: #bae7ff; /* Light Blue as user requested */
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .plan-segment-btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            color: #fff; /* White text on green */
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .plan-segment-btn.active {
+            background: white;
+            color: #333;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .plan-date-navigator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            height: 30px;
+            background: #bae7ff;
             border-radius: 20px;
-            padding: 25px 20px;
+            width: fit-content;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        .plan-nav-btn {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .stats-summary-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.04);
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+        }
+        .stats-card-horizontal {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
         }
         .donut-chart-wrapper {
-            width: 140px;
-            height: 140px;
+            width: 90px;
+            height: 90px;
             position: relative;
-            margin-bottom: 25px;
+            margin: 0;
+            flex-shrink: 0;
         }
         .donut-chart {
             width: 100%;
@@ -721,30 +828,39 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 0;
         }
         .donut-chart::after {
             content: "";
             position: absolute;
-            width: 116px;
-            height: 116px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 74px;
+            height: 74px;
             background: white;
             border-radius: 50%;
+            z-index: 5;
         }
         .donut-label {
             position: absolute;
-            z-index: 1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
             text-align: center;
             display: flex;
             flex-direction: column;
+            width: 100%;
         }
         .donut-percent {
-            font-size: 28px;
+            font-size: 20px;
             font-weight: 800;
             color: #333;
-            line-height: 1.2;
+            line-height: 1.1;
         }
         .donut-text {
-            font-size: 12px;
+            font-size: 10px;
             color: #999;
         }
 
@@ -885,6 +1001,105 @@
             background: #fa8c16;
             border-radius: 2px;
         }
+/* Plan Chart Styles */
+        #stats-plan-chart {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+            overflow-x: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px; /* Moved to bottom */
+            font-size: 11px;
+            color: #666;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0.5;
+            filter: grayscale(100%);
+        }
+        .legend-item.active {
+            border-color: #1890ff; /* Blue border */
+            background: rgba(24, 144, 255, 0.05);
+            opacity: 1;
+            filter: none;
+        }
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+        }
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            height: 140px;
+            padding-bottom: 5px;
+            min-width: 100%;
+            padding-right: 10px;
+            box-sizing: border-box;
+        }
+        .chart-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 65px;
+        }
+        .chart-bars-group {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 2px;
+            height: 120px;
+            width: 100%;
+            position: relative;
+        }
+        .chart-bar {
+            width: 8px;
+            border-radius: 2px 2px 0 0;
+            transition: height 0.3s;
+            min-height: 2px;
+            position: relative;
+        }
+        /* Tooltip-ish on hover (optional) */
+        .chart-bar:hover::after,
+        .chart-bar.active::after {
+            content: attr(title);
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            z-index: 20;
+            pointer-events: none; /* Prevent tooltip from capturing clicks */
+            margin-top: 4px;
+        }
+        .chart-label {
+            margin-top: 8px;
+            font-size: 10px;
+            color: #999;
+            text-align: center;
+            white-space: nowrap;
+        }
+
     </style>
     <script>
         // Pre-check default page to avoid flashing
@@ -899,7 +1114,13 @@
 </head>
 <body>
 
-<div id="page-home" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div id="ptr-indicator">
+        <span id="ptr-icon">⬇️</span>
+        <div id="ptr-spinner"></div>
+        <span id="ptr-text">下拉刷新...</span>
+    </div>
+
+<div id="page-home" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:var(--bg);">
     <h1 style="color:#333; margin-bottom:40px; font-size:24px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Mard拼豆工具箱</h1>
     <div style="display:flex; flex-direction:column; gap:20px; width:80%; max-width:300px;">
         <button onclick="navTo('beads')" style="padding:20px; font-size:18px; border:none; border-radius:16px; background:white; color:#4a90e2; box-shadow:0 10px 20px rgba(74, 144, 226, 0.2); cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; gap:10px; transition: transform 0.2s;">
@@ -1018,8 +1239,7 @@
 </div>
 
 
-
-    <div id="footer" class="footer-bar" style="display:none;">
+<div id="footer" class="footer-bar" style="display:none;">
         <div class="footer-top">
             <div class="footer-info">
                 <span>已选 <b id="selNum" style="color:#ffd700; font-size:18px;">0</b> 色</span>
@@ -1088,7 +1308,7 @@
                  </div>
                  
                  <!-- Ignored List -->
-                 <div onclick="openIgnoredModal()" style="display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer;">
+                 <div onclick="openIgnoredModal(true)" style="display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer;">
                      <div style="width: 40px; height: 40px; border-radius: 50%; background: #fff0f6; color: #eb2f96; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 20px;">🚫</div>
                      <div style="flex: 1;">
                          <div style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px;">忽略清单</div>
@@ -1125,43 +1345,96 @@
 <div id="page-stats" style="display:none; padding-bottom: 80px;">
     <div class="container" style="padding: 15px;">
         <div class="stats-header">
-            <h2 class="stats-title">统计</h2>
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <h2 class="stats-title" style="margin: 20px 0;">统计</h2>
+                <button id="btn-toggle-stats-filter" onclick="toggleStatsFilterVisibility()" style="
+                    border: 1px solid #ddd;
+                    background: #fff;
+                    color: #666;
+                    padding: 6px 10px;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    cursor: pointer;
+                    display: none; 
+                    align-items: center;
+                    justify-content: center;
+                    height: 32px;
+                ">🎨</button>
+            </div>
             <select id="statsSeriesFilter" class="stats-dropdown" onchange="syncAndRenderStats()">
                 <option value="221">Mard 221</option>
                 <option value="all">Mard 全系列</option>
             </select>
         </div>
 
+        <!-- Stats Series Filter -->
+        <div id="statsSeriesFilterContainer" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom: 20px; padding: 0 5px;">
+            <!-- Buttons injected here -->
+        </div>
+
 
 
         <div id="stats-usage-view">
-            <div class="stats-summary-card">
+            <div class="stats-summary-card stats-card-horizontal">
+                <div class="metric-item" style="flex:1;">
+                    <div id="stats-total-stock" class="metric-val" style="font-size:20px;">0g</div>
+                    <div class="metric-label">总库存</div>
+                </div>
+                
                 <div class="donut-chart-wrapper">
                     <div id="stats-donut" class="donut-chart">
                         <div class="donut-label">
                             <span id="stats-donut-percent" class="donut-percent">0%</span>
-                            <span class="donut-text">持仓率</span>
+                            <span class="donut-text">已消耗</span>
+                            <span id="stats-donut-value" style="font-size: 11px; color: #666; font-weight: bold; margin-top: 2px;">0g</span>
                         </div>
                     </div>
                 </div>
-                <div class="stats-metrics">
-                    <div class="metric-item">
-                        <div id="stats-total-stock" class="metric-val">0g</div>
-                        <div class="metric-label">总库存</div>
-                    </div>
-                    <div class="metric-item">
-                        <div id="stats-total-used" class="metric-val">0g</div>
-                        <div class="metric-label">总消耗</div>
-                    </div>
-                    <div class="metric-item">
-                        <div id="stats-low-count" class="metric-val" style="color: #ff4d4f;">0</div>
-                        <div class="metric-label">缺货</div>
-                    </div>
+
+                <div class="metric-item" onclick="enableStatsLowStock()" style="cursor: pointer; flex:1;">
+                    <div id="stats-low-count" class="metric-val" style="color: #ff4d4f; font-size:20px;">0</div>
+                    <div class="metric-label">缺货</div>
                 </div>
             </div>
 
+            <!-- Plan Stats Card -->
+            <div class="stats-summary-card" style="padding: 20px 20px; align-items: stretch;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h4 style="margin: 0; font-size: 15px; color: #333; font-weight: 600; display:flex; align-items:center; flex: 1;">
+                        <span style="margin-right:6px;">📅</span> 计划概览
+                        <span id="btn-toggle-plan-chart" onclick="togglePlanChartVisibility()" style="margin-left: auto; cursor: pointer; color: #999; padding: 4px; display: flex; align-items: center; transition: transform 0.3s;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </span>
+                    </h4>
+                </div>
+                
+                <!-- Plan Filter Removed -->
+                
+                <div class="stats-metrics" style="border-top: 1px solid #f0f0f0; padding-top: 15px;">
+                    <div class="metric-item">
+                        <div id="stats-plan-total" class="metric-val" style="font-size: 20px;">0</div>
+                        <div class="metric-label">总计划</div>
+                    </div>
+                    <div class="metric-item">
+                        <div id="stats-plan-completed" class="metric-val" style="color: #52c41a; font-size: 20px;">0</div>
+                        <div class="metric-label">已完成</div>
+                    </div>
+                    <div class="metric-item">
+                        <div id="stats-plan-pending" class="metric-val" style="color: #faad14; font-size: 20px;">0</div>
+                        <div class="metric-label">计划中</div>
+                    </div>
+                </div>
+
+                <div id="stats-plan-chart" style="display: none; margin-top: 15px; border-top: 1px solid #f0f0f0; padding-top: 15px;"></div>
+            </div>
+
             <div class="stats-filter-row">
-                <span class="switch-label">仅显示低库存</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="switch-label">仅显示低库存</span>
+                    <span onclick="copyLowStock()" style="cursor: pointer; color: #4a90e2; font-size: 16px; display: flex; align-items: center; padding: 4px;" title="复制缺货清单">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </span>
+                </div>
                 <label class="switch">
                     <input type="checkbox" id="stats-low-filter" onchange="renderStats()">
                     <span class="slider"></span>
@@ -1210,7 +1483,7 @@
         
         <!-- Status Banner -->
         <div id="planDetailStatus" style="background: #fffbe6; color: #fa8c16; padding: 15px; border-radius: 8px; font-size: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; text-align: center;">
-             <span>📅</span> 计划中 - 尚未扣减库存
+             <span></span> 计划中 - 尚未扣减库存
         </div>
 
         <!-- Key Stats -->
@@ -1476,9 +1749,9 @@
         
         <!-- Sort Actions -->
         <div style="display: flex; gap: 8px; margin-top: 10px;">
-             <button onclick="toggleStockCheckMissingPriority()" id="btn-check-missing" style="font-size: 12px; padding: 2px 8px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">优先缺货</button>
-             <button onclick="toggleStockCheckSort('code')" id="btn-check-code" style="font-size: 12px; padding: 2px 8px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">色号排序</button>
-             <button onclick="toggleStockCheckSort('qty')" id="btn-check-qty" style="font-size: 12px; padding: 2px 8px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">用量排序</button>
+             <button onclick="toggleStockCheckMissingPriority()" id="btn-check-missing" style="font-size: 12px; padding: 2px 8px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">缺货</button>
+             <button onclick="toggleStockCheckSort('code')" id="btn-check-code" style="font-size: 12px; padding: 2px 8px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">色号</button>
+             <button onclick="toggleStockCheckSort('qty')" id="btn-check-qty" style="font-size: 12px; padding: 2px 8px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">用量</button>
         </div>
     </div>
     
@@ -1493,9 +1766,9 @@
 
 <div id="dataModal" class="modal" style="width:85%; max-width:340px;">
     <h3 style="font-size:16px; font-weight:bold; margin-bottom:12px;">数据备份</h3>
-    <div style="display:flex; gap:10px; margin-bottom:15px; background:#f5f7fa; padding:4px; border-radius:10px;">
-        <button id="tabBackup" class="m-btn m-btn-ghost" style="flex:1; padding:8px; font-size:13px; border-radius:8px;" onclick="switchDataTab('backup')">备份导出</button>
-        <button id="tabRestore" class="m-btn m-btn-ghost" style="flex:1; padding:8px; font-size:13px; border-radius:8px;" onclick="switchDataTab('restore')">恢复导入</button>
+    <div class="data-tabs" style="display:flex; border-bottom:1px solid #eee; margin-bottom:15px;">
+        <div id="tabBackup" class="data-tab active" onclick="switchDataTab('backup')" style="flex:1; text-align:center; padding:10px; cursor:pointer; font-weight:bold; color:#4a90e2; border-bottom:2px solid #4a90e2;">备份导出</div>
+        <div id="tabRestore" class="data-tab" onclick="switchDataTab('restore')" style="flex:1; text-align:center; padding:10px; cursor:pointer; color:#666; border-bottom:2px solid transparent;">恢复导入</div>
     </div>
     
     <div id="viewBackup">
@@ -1503,9 +1776,6 @@
             <div style="margin-bottom: 20px; color: #666; font-size: 13px; line-height: 1.5;">
                 将当前所有色号库存及操作记录<br>导出为 TXT 文本文件。
             </div>
-            <button class="m-btn m-btn-primary" style="width: 100%; padding: 12px; font-size: 15px; background: #52c41a; border-color: #52c41a; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="downloadBackupFile()">
-                <span>📤</span> 导出备份 (TXT)
-            </button>
         </div>
     </div>
 
@@ -1515,16 +1785,19 @@
                 选择之前导出的TXT备份文件<br>以恢复库存数据。
             </div>
             <input type="file" id="restoreFile" style="display:none" accept=".txt,.csv,.json,image/*" onchange="loadBackupFile(this)">
-            <button class="m-btn m-btn-primary" style="width: 100%; padding: 12px; font-size: 15px; background: #1890ff; border-color: #1890ff; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="document.getElementById('restoreFile').click()">
-                <span>📂</span> 选择备份文件 (TXT)
-            </button>
             <textarea id="restoreInput" style="display:none;"></textarea>
             <input type="number" id="threshold" style="display:none;" value="0">
         </div>
     </div>
     
-    <div class="modal-btn-group" style="margin-top:10px;">
-        <button class="m-btn m-btn-ghost" style="width: 100%; padding: 12px; font-size: 15px;" onclick="closeAllModals()">关闭</button>
+    <div class="modal-btn-group" style="margin-top:10px; display:flex; flex-direction:row; flex-wrap:nowrap; gap:10px;">
+        <button class="m-btn m-btn-ghost" style="flex:1; width:auto; padding: 12px; font-size: 15px; white-space:nowrap;" onclick="closeAllModals()">关闭</button>
+        <button id="btnBackupAction" class="m-btn m-btn-primary" style="flex:1; width:auto; padding: 12px; font-size: 15px; background: #52c41a; border-color: #52c41a; display: flex; align-items: center; justify-content: center; gap: 8px; white-space:nowrap;" onclick="downloadBackupFile()">
+            <span>📤</span> 导出备份 (TXT)
+        </button>
+        <button id="btnRestoreAction" class="m-btn m-btn-primary" style="display:none; flex:1; width:auto; padding: 12px; font-size: 15px; background: #1890ff; border-color: #1890ff; align-items: center; justify-content: center; gap: 8px; white-space:nowrap;" onclick="document.getElementById('restoreFile').click()">
+            <span>📂</span> 选择备份文件 (TXT)
+        </button>
     </div>
 </div>
 
@@ -1589,13 +1862,13 @@
 
     <!-- Bottom Action Bar -->
     <div style="padding:20px; background:rgba(0,0,0,0.8); display:flex; gap:15px; flex-shrink:0; z-index: 20;">
-        <button class="m-btn m-btn-ghost" onclick="closeCropPreview()" style="flex:1; color:white; border-color:rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <button class="m-btn m-btn-ghost" onclick="closeCropPreview()" style="flex:1; color:white; border-color:rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
                 <path d="M17 15h2V7c0-1.1-.9-2-2-2H9v2h8v8zM7 17V1H5v4H1v2h4v10c0 1.1.9 2 2 2h10v4h2v-4h4v-2H7z"/>
             </svg>
             重新裁切
         </button>
-        <button class="m-btn m-btn-primary" onclick="confirmScanFromPreview()" style="flex:2; background:#6c5ce7; border-color:#6c5ce7;">确认并识别</button>
+        <button class="m-btn m-btn-primary" onclick="confirmScanFromPreview()" style="flex:1; background:#6c5ce7; border-color:#6c5ce7; white-space: nowrap;">确认并识别</button>
     </div>
 </div>
 
@@ -1696,6 +1969,9 @@
 <div id="ignoredModal" class="modal" style="width:85%; max-width:340px;">
     <h3>已忽略提醒的色号</h3>
     <div class="modal-desc">以下色号不参与低库存预警</div>
+    <!-- Series Filter -->
+    <div id="ignoredSeriesFilter" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; max-height:80px; overflow-y:auto; padding:2px;"></div>
+    
     <div id="ignoredList" style="max-height:300px; overflow-y:auto; border:1px solid #eee; border-radius:10px; margin-bottom:15px; padding:5px;"></div>
     <div class="modal-btn-group">
         <button class="m-btn m-btn-primary" onclick="closeAllModals()">关闭</button>
@@ -1715,63 +1991,66 @@
 </div>
 
 <div id="aiUsageModal" class="modal" style="width:90%; max-width:400px; max-height: 85vh; overflow-y: auto;">
-    <h3 style="text-align: center;">AI模型配置</h3>
-    <div class="modal-desc" style="margin-bottom: 10px; text-align: center;">管理API Key及查看使用额度 (每日20次/Key/模型)</div>
-    <div id="aiUsageDate" style="font-size: 12px; color: #999; text-align: center; margin-bottom: 15px;"></div>
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px;">
-        <span style="font-weight: bold; color: #333; font-size: 14px;">我的API Keys</span>
-        <button onclick="toggleAddKeyForm()" style="border: none; background: none; color: #4a90e2; font-size: 24px; font-weight: bold; cursor: pointer; padding: 0 8px; line-height: 1;">+</button>
+    <div class="modal-header" style="text-align:center; margin-bottom:15px;">
+        <h3 style="margin:0;">AI模型配置</h3>
+        <div id="aiUsageDate" style="font-size: 12px; color: #999; margin-top:4px;"></div>
     </div>
 
-    <!-- Add Key Form (Hidden) -->
-    <div id="addKeyForm" style="display: none; background: #f9f9f9; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed #4a90e2;">
-        <div style="font-size: 13px; font-weight: bold; color: #555; margin-bottom: 8px;">添加新Key</div>
-        <input type="text" id="newKeyName" placeholder="名称 (例如: 公司Key)" style="width: 100%; margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
-        <input type="text" id="newKeyVal" placeholder="sk-..." style="width: 100%; margin-bottom: 15px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button onclick="toggleAddKeyForm()" style="padding: 6px 16px; border: 1px solid #ddd; background: white; border-radius: 6px; font-size: 13px; color: #666;">取消</button>
-            <button onclick="saveNewKey()" style="padding: 6px 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: bold;">保存</button>
+    <div class="ai-tabs" style="display:flex; border-bottom:1px solid #eee; margin-bottom:15px;">
+        <div id="tab-btn-quota" class="ai-tab active" onclick="switchAITab('quota')" style="flex:1; text-align:center; padding:10px; cursor:pointer; font-weight:bold; color:#4a90e2; border-bottom:2px solid #4a90e2;">额度管理</div>
+        <div id="tab-btn-keys" class="ai-tab" onclick="switchAITab('keys')" style="flex:1; text-align:center; padding:10px; cursor:pointer; color:#666; border-bottom:2px solid transparent;">API Keys</div>
+        <div id="tab-btn-models" class="ai-tab" onclick="switchAITab('models')" style="flex:1; text-align:center; padding:10px; cursor:pointer; color:#666; border-bottom:2px solid transparent;">模型列表</div>
+    </div>
+
+    <!-- Quota Tab -->
+    <div id="tab-content-quota" style="display:block;">
+        <div class="modal-desc" style="margin-bottom: 15px; text-align: center; color:#666; font-size:13px;">
+            每日额度 = 20 × Key数量 (当前: <span id="totalDailyLimit" style="font-weight:bold;">0</span>)
+        </div>
+        <div id="quotaList" style="display:flex; flex-direction:column; gap:12px; background: #f5f7fa; border-radius: 12px; padding: 15px;">
+            <!-- Quota Items injected via JS -->
+        </div>
+        <div style="margin-top:15px; text-align:center;">
+             <button class="m-btn m-btn-ghost" onclick="resetAllAIUsage()" style="color: #ff4d4f; border-color: #ff4d4f; width:100%;">重置所有额度</button>
         </div>
     </div>
 
-    <!-- Key List Container -->
-    <div id="aiKeyList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
-        <!-- Keys injected via JS -->
-    </div>
+    <!-- Keys Tab -->
+    <div id="tab-content-keys" style="display:none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px;">
+            <span style="font-weight: bold; color: #333; font-size: 14px;">我的API Keys</span>
+            <button onclick="toggleAddKeyForm()" style="border: none; background: none; color: #4a90e2; font-size: 24px; font-weight: bold; cursor: pointer; padding: 0 8px; line-height: 1;">+</button>
+        </div>
 
-    <div style="border-top: 1px solid #eee; margin-bottom: 15px;"></div>
-
-    <h4 style="font-size: 14px; margin: 0 0 10px 0; color: #333;">当前 Key (<span id="activeKeyNameDisplay"></span>) 使用情况</h4>
-    <div style="background: #f5f7fa; border-radius: 12px; padding: 15px; margin-bottom: 15px;">
-        <!-- Item 1 -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="font-weight: bold; color: #333;">gemini-3-flash</span>
-            <div style="display: flex; align-items: center; gap: 5px;">
-                <input type="number" id="use-g3" class="usage-input" style="width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 4px;" onchange="saveCurrentUsage()">
-                <span style="color: #999; font-size: 12px;">/ 20</span>
+        <!-- Add Key Form (Hidden) -->
+        <div id="addKeyForm" style="display: none; background: #f9f9f9; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed #4a90e2;">
+            <div style="font-size: 13px; font-weight: bold; color: #555; margin-bottom: 8px;">添加新Key</div>
+            <input type="text" id="newKeyName" placeholder="名称 (例如: 公司Key)" style="width: 100%; margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
+            <input type="text" id="newKeyVal" placeholder="sk-..." style="width: 100%; margin-bottom: 15px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="toggleAddKeyForm()" style="padding: 6px 16px; border: 1px solid #ddd; background: white; border-radius: 6px; font-size: 13px; color: #666;">取消</button>
+                <button onclick="saveNewKey()" style="padding: 6px 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: bold;">保存</button>
             </div>
         </div>
-        <!-- Item 2 -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <span style="font-weight: bold; color: #333;">gemini-2.5-flash</span>
-            <div style="display: flex; align-items: center; gap: 5px;">
-                <input type="number" id="use-g25" class="usage-input" style="width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 4px;" onchange="saveCurrentUsage()">
-                <span style="color: #999; font-size: 12px;">/ 20</span>
-            </div>
-        </div>
-        <!-- Item 3 -->
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: bold; color: #333;">gemini-2.5-flash-lite</span>
-            <div style="display: flex; align-items: center; gap: 5px;">
-                <input type="number" id="use-g25l" class="usage-input" style="width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 4px;" onchange="saveCurrentUsage()">
-                <span style="color: #999; font-size: 12px;">/ 20</span>
-            </div>
+
+        <!-- Key List Container -->
+        <div id="aiKeyList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+            <!-- Keys injected via JS -->
         </div>
     </div>
-    
-    <div class="modal-btn-group">
-        <button class="m-btn m-btn-ghost" onclick="resetActiveAIUsage()" style="color: #ff4d4f; border-color: #ff4d4f;">重置当前 Key 额度</button>
+
+    <!-- Models Tab -->
+    <div id="tab-content-models" style="display:none;">
+        <div style="margin-bottom: 10px; color: #666; font-size: 13px; text-align: center;">
+            自定义模型调用顺序 (从上到下优先调用)
+        </div>
+        <div id="modelListContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+            <!-- Models injected via JS -->
+        </div>
+        <button onclick="addModelFromUI()" style="width:100%; padding:10px; border:1px dashed #4a90e2; background:#f0f7ff; color:#4a90e2; border-radius:8px; font-weight:bold; cursor:pointer;">+ 添加模型</button>
+    </div>
+
+    <div class="modal-btn-group" style="margin-top:20px;">
         <button class="m-btn m-btn-primary" onclick="closeAllModals()">完成</button>
     </div>
 </div>
@@ -1863,6 +2142,27 @@
     <div style="display: flex; gap: 12px;">
         <button onclick="closeAllModals()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
         <button onclick="confirmResetUsage()" style="flex: 1; padding: 10px; border: none; background: #4a90e2; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">重置</button>
+    </div>
+</div>
+
+<div id="modelEditModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 id="modelEditTitle" style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">添加模型</h3>
+    <div style="margin-bottom: 20px;">
+        <label style="font-size: 14px; color: #666; display: block; margin-bottom: 8px;">模型名称：</label>
+        <input type="text" id="modelNameInput" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;" placeholder="例如: gemini-1.5-pro" onkeypress="if(event.key === 'Enter') submitModelEdit()">
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeModelEditModal()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button onclick="submitModelEdit()" style="flex: 1; padding: 10px; border: none; background: #4a90e2; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">确定</button>
+    </div>
+</div>
+
+<div id="modelDeleteModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">删除确认</h3>
+    <p id="modelDeleteMsg" style="text-align: center; color: #666; font-size: 14px; margin-bottom: 24px; line-height: 1.5;"></p>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeModelDeleteModal()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button onclick="confirmDeleteModel()" style="flex: 1; padding: 10px; border: none; background: #ff4d4f; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">删除</button>
     </div>
 </div>
 
@@ -2014,9 +2314,15 @@
 
 <script>
     const ModelUsageManager = {
-        limit: 20,
+        baseLimitPerKey: 20,
         storageKey: 'ai_usage_data',
         defaultKey: "",
+        
+        defaultModels: [
+            'gemini-3-flash-preview',
+            'gemini-2.5-flash',
+            'gemini-2.5-flash-lite'
+        ],
         
         getData() {
             let data = null;
@@ -2026,12 +2332,12 @@
                 data = null;
             }
 
-            // Migration logic: If no data or old structure (no keys array)
+            // Migration logic
             if (!data || !data.keys) {
                 console.log('ModelUsageManager: Initializing or migrating to multi-key structure...');
                 const oldApiKey = (data && data.apiKey) ? data.apiKey : this.defaultKey;
                 const oldUsage = (data && data.usage) ? data.usage : {};
-                const newId = Date.now().toString(); // use timestamp as ID
+                const newId = Date.now().toString(); 
                 
                 return {
                     date: (data && data.date) ? data.date : new Date().toDateString(),
@@ -2041,8 +2347,15 @@
                         name: '默认Key',
                         apiKey: oldApiKey,
                         usage: oldUsage
-                    }]
+                    }],
+                    modelOrder: [...this.defaultModels]
                 };
+            }
+            
+            // Ensure modelOrder exists
+            if (!data.modelOrder) {
+                data.modelOrder = [...this.defaultModels];
+                this.saveData(data);
             }
             
             return data;
@@ -2052,13 +2365,30 @@
             localStorage.setItem(this.storageKey, JSON.stringify(data));
         },
 
+        getPTDateTime() {
+            // Returns YYYY-MM-DD HH:mm in Pacific Time
+            return new Date().toLocaleDateString('en-CA', {
+                timeZone: 'America/Los_Angeles',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).replace(',', '');
+        },
+
+        getPTDate() {
+            // Returns YYYY-MM-DD in Pacific Time (America/Los_Angeles)
+            // Works correctly for DST (PDT/PST)
+            return new Date().toLocaleDateString('en-CA', {
+                timeZone: 'America/Los_Angeles'
+            }); // en-CA gives YYYY-MM-DD format
+        },
+
         checkReset() {
             const data = this.getData();
-            const today = new Date().toDateString();
+            const today = this.getPTDate();
             if (data.date !== today) {
-                console.log('ModelUsageManager: New day detected. Resetting all usage.');
+                console.log(`ModelUsageManager: New day detected (${today}). Resetting all usage.`);
                 data.date = today;
-                // Reset usage for ALL keys
                 if (data.keys) {
                     data.keys.forEach(k => k.usage = {});
                 }
@@ -2097,7 +2427,6 @@
                 apiKey: apiKey || '',
                 usage: {}
             });
-            // If it's the only key (shouldn't happen due to migration, but safe check), make it active
             if (data.keys.length === 1) {
                 data.activeKeyId = newId;
             }
@@ -2121,12 +2450,10 @@
             if (idx > -1) {
                 data.keys.splice(idx, 1);
                 
-                // If we deleted the active key, switch to another
                 if (data.activeKeyId === id) {
                     if (data.keys.length > 0) {
                         data.activeKeyId = data.keys[0].id;
                     } else {
-                        // No keys left, create default
                         const newId = Date.now().toString();
                         data.keys.push({ id: newId, name: '默认Key', apiKey: '', usage: {} });
                         data.activeKeyId = newId;
@@ -2136,79 +2463,402 @@
             }
         },
 
-        // --- Usage Logic (Operates on Active Key) ---
-        getApiKey() {
-            const key = this.getActiveKey();
-            return key ? key.apiKey : '';
+        setKeyUsage(keyId, model, usage) {
+            const data = this.getData();
+            const key = data.keys.find(k => k.id === keyId);
+            if (key) {
+                let val = parseInt(usage);
+                if (isNaN(val) || val < 0) val = 0;
+                // Allow setting usage > baseLimitPerKey, but it will effectively be "used up"
+                key.usage[model] = val;
+                this.saveData(data);
+            }
         },
 
-        canUse(model) {
-            this.checkReset();
-            const key = this.getActiveKey();
-            if (!key) return false;
-            return (key.usage[model] || 0) < this.limit;
+        moveKey(id, direction) {
+            const data = this.getData();
+            const index = data.keys.findIndex(k => k.id === id);
+            if (index === -1) return;
+
+            if (direction === 'up' && index > 0) {
+                // Swap with index - 1
+                [data.keys[index], data.keys[index - 1]] = [data.keys[index - 1], data.keys[index]];
+                this.saveData(data);
+            } else if (direction === 'down' && index < data.keys.length - 1) {
+                // Swap with index + 1
+                [data.keys[index], data.keys[index + 1]] = [data.keys[index + 1], data.keys[index]];
+                this.saveData(data);
+            }
         },
 
-        increment(model) {
+        moveModel(modelName, direction) {
+            const data = this.getData();
+            if (!data.modelOrder) data.modelOrder = [...this.defaultModels];
+            
+            const index = data.modelOrder.indexOf(modelName);
+            if (index === -1) return;
+
+            if (direction === 'up' && index > 0) {
+                [data.modelOrder[index], data.modelOrder[index - 1]] = [data.modelOrder[index - 1], data.modelOrder[index]];
+                this.saveData(data);
+            } else if (direction === 'down' && index < data.modelOrder.length - 1) {
+                [data.modelOrder[index], data.modelOrder[index + 1]] = [data.modelOrder[index + 1], data.modelOrder[index]];
+                this.saveData(data);
+            }
+        },
+
+        renameModel(oldName, newName) {
+            const data = this.getData();
+            if (!data.modelOrder) data.modelOrder = [...this.defaultModels];
+            
+            const index = data.modelOrder.indexOf(oldName);
+            if (index > -1 && newName && newName.trim() !== '') {
+                data.modelOrder[index] = newName.trim();
+                // Also migrate usage data if needed, but for now just rename the list item
+                // Ideally we should rename keys in usage objects too, but that's complex. 
+                // Since this is just a preference list, it's fine. 
+                // However, if the user renames a model that has quota, the quota will be "lost" or reset for the new name.
+                // Let's try to migrate usage too.
+                if (data.keys) {
+                    data.keys.forEach(k => {
+                        if (k.usage && k.usage[oldName] !== undefined) {
+                            k.usage[newName] = k.usage[oldName];
+                            delete k.usage[oldName];
+                        }
+                    });
+                }
+                this.saveData(data);
+            }
+        },
+
+        deleteModel(modelName) {
+            const data = this.getData();
+            if (!data.modelOrder) data.modelOrder = [...this.defaultModels];
+            
+            const index = data.modelOrder.indexOf(modelName);
+            if (index > -1) {
+                data.modelOrder.splice(index, 1);
+                
+                // Clean up usage data for this model from all keys
+                if (data.keys) {
+                    data.keys.forEach(k => {
+                        if (k.usage && k.usage[modelName] !== undefined) {
+                            delete k.usage[modelName];
+                        }
+                    });
+                }
+                
+                this.saveData(data);
+            }
+        },
+
+        // --- Global Usage Logic ---
+        getModelList() {
+            const data = this.getData();
+            return data.modelOrder && data.modelOrder.length > 0 ? data.modelOrder : this.defaultModels;
+        },
+
+        setModelList(list) {
+            const data = this.getData();
+            data.modelOrder = list;
+            this.saveData(data);
+        },
+
+        addModels(newModels) {
+            const data = this.getData();
+            let current = new Set(data.modelOrder || this.defaultModels);
+            let added = false;
+            
+            newModels.forEach(m => {
+                if (!current.has(m)) {
+                    current.add(m);
+                    added = true;
+                }
+            });
+
+            if (added) {
+                data.modelOrder = Array.from(current);
+                this.saveData(data);
+            }
+            return data.modelOrder;
+        },
+
+        getGlobalLimit() {
+            const keys = this.getKeys();
+            return keys.length * this.baseLimitPerKey;
+        },
+
+        getGlobalUsage(model) {
             this.checkReset();
+            const keys = this.getKeys();
+            return keys.reduce((sum, k) => sum + (k.usage[model] || 0), 0);
+        },
+
+        setGlobalRemaining(model, remaining) {
             const data = this.getData();
-            const key = data.keys.find(k => k.id === data.activeKeyId);
-            if (key) {
-                key.usage[model] = (key.usage[model] || 0) + 1;
-                this.saveData(data);
+            const globalLimit = data.keys.length * this.baseLimitPerKey;
+            let targetUsed = globalLimit - parseInt(remaining);
+            if (isNaN(targetUsed) || targetUsed < 0) targetUsed = 0;
+            if (targetUsed > globalLimit) targetUsed = globalLimit;
+
+            // Distribute usage across keys
+            data.keys.forEach(k => k.usage[model] = 0);
+            
+            let remainingToDistribute = targetUsed;
+            for (let k of data.keys) {
+                if (remainingToDistribute <= 0) break;
+                let fill = Math.min(remainingToDistribute, this.baseLimitPerKey);
+                k.usage[model] = fill;
+                remainingToDistribute -= fill;
             }
+            this.saveData(data);
         },
-        
-        getUsage(model) {
-            this.checkReset();
-            const key = this.getActiveKey();
-            return key ? (key.usage[model] || 0) : 0;
-        },
-        
-        setUsage(model, count) {
-            const data = this.getData();
-            const key = data.keys.find(k => k.id === data.activeKeyId);
-            if (key) {
-                key.usage[model] = parseInt(count) || 0;
-                this.saveData(data);
-            }
-        },
-        
-        resetActiveUsage() {
-            const data = this.getData();
-            const key = data.keys.find(k => k.id === data.activeKeyId);
-            if (key) {
-                key.usage = {};
-                this.saveData(data);
-            }
-        },
-        
+
         resetAll() {
              const data = this.getData();
              data.keys.forEach(k => k.usage = {});
              this.saveData(data);
+        },
+
+        // --- Key Management & Usage ---
+        // Returns { apiKey: string, keyId: string } or null
+        getUsableKeyObj(model) {
+            this.checkReset();
+            const data = this.getData();
+            // If model specified, find first key with quota
+            if (model) {
+                const validKey = data.keys.find(k => (k.usage[model] || 0) < this.baseLimitPerKey);
+                if (validKey) return { apiKey: validKey.apiKey, keyId: validKey.id };
+            }
+            // Fallback: Return active key or first key
+            const key = data.keys.find(k => k.id === data.activeKeyId) || data.keys[0];
+            return key ? { apiKey: key.apiKey, keyId: key.id } : null;
+        },
+
+        getApiKey(model) {
+             const keyObj = this.getUsableKeyObj(model);
+             return keyObj ? keyObj.apiKey : '';
+        },
+
+        canUse(model) {
+            this.checkReset();
+            const data = this.getData();
+            // Check if ANY key has quota for this model
+            return data.keys.some(k => (k.usage[model] || 0) < this.baseLimitPerKey);
+        },
+
+        increment(model, keyId) {
+            this.checkReset();
+            const data = this.getData();
+            let key;
+            
+            if (keyId) {
+                // Precise increment based on used key
+                key = data.keys.find(k => k.id === keyId);
+            }
+            
+            // Fallback logic if no keyId provided or key not found (legacy safety)
+            if (!key) {
+                key = data.keys.find(k => (k.usage[model] || 0) < this.baseLimitPerKey);
+            }
+            
+            if (key) {
+                key.usage[model] = (key.usage[model] || 0) + 1;
+                this.saveData(data);
+            } else {
+                // Should not happen if canUse was checked, but fallback to active
+                const active = data.keys.find(k => k.id === data.activeKeyId);
+                if (active) {
+                    active.usage[model] = (active.usage[model] || 0) + 1;
+                    this.saveData(data);
+                }
+            }
+        },
+        
+        getUsage(model) {
+            // Legacy/Fallback helper
+            return this.getGlobalUsage(model);
+        },
+
+        async logAvailableModels() {
+            const apiKey = this.getApiKey();
+            if (!apiKey) return;
+            console.log("Checking available models...");
+            try {
+                // Try to list models to see exact names
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+                const data = await response.json();
+                if (data.models) {
+                    console.log("=== Available Gemini Models (API) ===");
+                    const simplified = data.models.map(m => ({
+                        id: m.name.replace('models/', ''),
+                        displayName: m.displayName,
+                        methods: m.supportedGenerationMethods
+                    }));
+                    console.table(simplified);
+                }
+            } catch (e) {
+                console.warn("Failed to list models:", e);
+            }
         }
     };
 
     // Initialize immediately
     ModelUsageManager.checkReset();
-    // Clean up old testing key if exists
     localStorage.removeItem('ai_model_usage_v1');
 
     function openAIUsageModal() {
-        ModelUsageManager.checkReset(); // Ensure date is correct
+        ModelUsageManager.checkReset();
         
-        // Set Date
-        const today = new Date();
-        const y = today.getFullYear();
-        const m = String(today.getMonth() + 1).padStart(2, '0');
-        const d = String(today.getDate()).padStart(2, '0');
-        document.getElementById('aiUsageDate').innerText = `${y}/${m}/${d}`;
+        const ptDateTime = ModelUsageManager.getPTDateTime();
+        document.getElementById('aiUsageDate').innerText = `${ptDateTime.replace(/-/g, '/')} (Pacific Time)`;
 
-        renderAIKeyList();
-        renderActiveKeyUsage();
-        
+        switchAITab('quota');
         showModal('aiUsageModal');
+        
+        // Diagnostic: Log available models to help debug naming issues
+        ModelUsageManager.logAvailableModels();
+    }
+
+    function switchAITab(tabName) {
+        // Update Tabs UI
+        ['quota', 'keys', 'models'].forEach(t => {
+            const btn = document.getElementById(`tab-btn-${t}`);
+            const content = document.getElementById(`tab-content-${t}`);
+            
+            if (btn && content) {
+                if (t === tabName) {
+                    btn.className = 'ai-tab active';
+                    btn.style.color = '#4a90e2';
+                    btn.style.borderBottomColor = '#4a90e2';
+                    content.style.display = 'block';
+                } else {
+                    btn.className = 'ai-tab';
+                    btn.style.color = '#666';
+                    btn.style.borderBottomColor = 'transparent';
+                    content.style.display = 'none';
+                }
+            }
+        });
+
+        if (tabName === 'quota') {
+            renderQuotaTab();
+        } else if (tabName === 'keys') {
+            renderAIKeyList();
+        } else if (tabName === 'models') {
+            renderModelCollectionTab();
+        }
+    }
+
+    function renderQuotaTab() {
+        const globalLimit = ModelUsageManager.getGlobalLimit();
+        const limitEl = document.getElementById('totalDailyLimit');
+        if(limitEl) limitEl.innerText = globalLimit;
+
+        const list = document.getElementById('quotaList');
+        if(!list) return;
+        list.innerHTML = '';
+
+        const models = ModelUsageManager.getModelList();
+        
+        models.forEach(model => {
+            const used = ModelUsageManager.getGlobalUsage(model);
+            const remaining = globalLimit - used;
+            
+            const rowWrapper = document.createElement('div');
+            rowWrapper.style.borderBottom = '1px dashed #eee';
+            if (models.indexOf(model) === models.length - 1) rowWrapper.style.borderBottom = 'none';
+
+            const row = document.createElement('div');
+            row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 10px 0;';
+            
+            row.innerHTML = `
+                <div style="flex:1; padding-right: 4px; min-width: 0;">
+                    <span style="font-weight: bold; color: #333; font-size:13px; word-break: break-word; line-height: 1.2;">${model}</span>
+                </div>
+                
+                <button onclick="toggleUsageDetails('${model}')" style="background:none; border:none; cursor:pointer; color:#4a90e2; padding:4px; display:flex; align-items:center; justify-content: center; flex-shrink:0; margin-right: 4px;" title="查看详情">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+
+                <div style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;">
+                    <span style="font-size:11px; color:#666; white-space:nowrap;">剩余:</span>
+                    <input type="number" value="${remaining}" 
+                           onchange="updateGlobalRemaining('${model}', this.value)"
+                           style="width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 2px; font-weight:bold; color:#4a90e2; font-size:13px;">
+                    <span style="color: #999; font-size: 11px; white-space:nowrap;">/ ${globalLimit}</span>
+                </div>
+            `;
+            
+            const detailsDiv = document.createElement('div');
+            detailsDiv.id = `details-${model}`;
+            detailsDiv.style.display = 'none';
+            detailsDiv.style.backgroundColor = '#f0f7ff';
+            detailsDiv.style.padding = '8px';
+            detailsDiv.style.borderRadius = '6px';
+            detailsDiv.style.marginBottom = '8px';
+            detailsDiv.style.fontSize = '12px';
+            detailsDiv.style.color = '#555';
+
+            rowWrapper.appendChild(row);
+            rowWrapper.appendChild(detailsDiv);
+            list.appendChild(rowWrapper);
+        });
+    }
+
+    function toggleUsageDetails(model) {
+        const el = document.getElementById(`details-${model}`);
+        if (!el) return;
+        
+        if (el.style.display === 'none') {
+            // Render details
+            const keys = ModelUsageManager.getKeys();
+            let html = '<div style="font-weight:bold; margin-bottom:4px; color:#4a90e2;">各 Key 使用详情:</div>';
+            
+            if (keys.length === 0) {
+                html += '<div>暂无 Key</div>';
+            } else {
+                keys.forEach(k => {
+                    const u = (k.usage && k.usage[model]) ? k.usage[model] : 0;
+                    html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:2px 0; border-bottom:1px solid rgba(0,0,0,0.05);">
+                        <span>${k.name}</span>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <span style="font-size:12px; color:#666;">已用:</span>
+                            <input type="number" value="${u}" 
+                                   onchange="updateKeyUsage('${k.id}', '${model}', this.value)"
+                                   style="width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 2px; font-size:12px; color:#333;">
+                        </div>
+                    </div>`;
+                });
+            }
+            
+            el.innerHTML = html;
+            el.style.display = 'block';
+        } else {
+            el.style.display = 'none';
+        }
+    }
+
+    function updateKeyUsage(keyId, model, val) {
+        ModelUsageManager.setKeyUsage(keyId, model, val);
+        renderQuotaTab(); // Re-render to update global remaining
+        // Re-open details
+        const el = document.getElementById(`details-${model}`);
+        if(el) el.style.display = 'none'; // toggleUsageDetails will open it
+        toggleUsageDetails(model);
+    }
+
+    function updateGlobalRemaining(model, val) {
+        ModelUsageManager.setGlobalRemaining(model, val);
+        renderQuotaTab();
+    }
+    
+    function resetAllAIUsage() {
+        if(confirm('确定要重置所有模型的今日已用额度吗？')) {
+            ModelUsageManager.resetAll();
+            renderQuotaTab();
+            showToast('已重置所有额度');
+        }
     }
 
     const ICON_EYE = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
@@ -2220,71 +2870,56 @@
         listEl.innerHTML = '';
         
         let keys = ModelUsageManager.getKeys();
-        const activeId = ModelUsageManager.getActiveKeyId();
         
-        // Sort keys: Active one first, then others
-        const sortedKeys = [...keys].sort((a, b) => {
-            if (a.id === activeId) return -1;
-            if (b.id === activeId) return 1;
-            return 0;
-        });
-        
-        sortedKeys.forEach(k => {
-            const isActive = k.id === activeId;
+        keys.forEach((k, index) => {
             const div = document.createElement('div');
+            div.className = 'ai-key-item';
+            div.style.cssText = `
+                display: flex; flex-direction: column; gap: 8px; 
+                padding: 12px; border-radius: 10px; border: 1px solid #e0e0e0;
+                background: #fff; margin-bottom: 10px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            `;
             
-            if (isActive) {
-                // Active Key: Expanded Card View
-                div.className = 'ai-key-item active';
-                div.style.cssText = `
-                    display: flex; flex-direction: column; gap: 8px; 
-                    padding: 12px; border-radius: 10px; border: 1px solid #4a90e2;
-                    background: #f0f7ff; position: relative; transition: all 0.2s;
-                    box-shadow: 0 2px 5px rgba(74, 144, 226, 0.1);
-                `;
-                
-                div.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 18px; height: 18px; border-radius: 50%; background: #4a90e2; border: 3px solid white; box-shadow: 0 0 0 1px #4a90e2;"></div>
-                        <input type="text" value="${k.name}" placeholder="Key名称" 
-                               onchange="updateKeyName('${k.id}', this.value)"
-                               style="flex: 1; border: none; background: transparent; font-weight: bold; color: #333; font-size: 15px; outline: none; border-bottom: 1px dashed transparent;"
-                               onfocus="this.style.borderBottomColor='#4a90e2'" onblur="this.style.borderBottomColor='transparent'">
-                        
-                        <button onclick="deleteKey('${k.id}')" style="color: #ff4d4f; background: none; border: none; font-size: 18px; cursor: pointer; padding: 0 5px; opacity: 0.8;">&times;</button>
-                    </div>
+            const isFirst = index === 0;
+            const isLast = index === keys.length - 1;
+
+            div.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 24px; height: 24px; display:flex; align-items:center; justify-content:center; background:#f0f2f5; border-radius:50%; color:#666; font-size:12px; font-weight:bold;">${index + 1}</div>
+                    <input type="text" value="${k.name}" placeholder="Key名称" 
+                           onchange="updateKeyName('${k.id}', this.value)"
+                           style="flex: 1; border: none; background: transparent; font-weight: bold; color: #333; font-size: 15px; outline: none; border-bottom: 1px dashed transparent;"
+                           onfocus="this.style.borderBottomColor='#4a90e2'" onblur="this.style.borderBottomColor='transparent'">
                     
-                    <div style="display: flex; align-items: center; gap: 8px; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #e0e0e0;">
-                        <span style="font-size: 12px; color: #999; font-weight: bold;">Key</span>
-                        <input type="password" value="${k.apiKey}" placeholder="AIza..." 
-                               onchange="updateKeyVal('${k.id}', this.value)"
-                               style="flex: 1; border: none; font-size: 12px; font-family: monospace; color: #555; outline: none; background: transparent;">
-                        <button onclick="toggleKeyVis(this)" style="background:none; border:none; cursor:pointer; font-size:14px; padding:0; display:flex; align-items:center; color: #bbb;">${ICON_EYE}</button>
+                    <div style="display:flex; gap:2px;">
+                        <button onclick="moveKey('${k.id}', 'up')" ${isFirst ? 'disabled' : ''} style="color: ${isFirst ? '#ccc' : '#666'}; background: none; border: none; cursor: ${isFirst ? 'default' : 'pointer'}; padding: 4px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                        </button>
+                        <button onclick="moveKey('${k.id}', 'down')" ${isLast ? 'disabled' : ''} style="color: ${isLast ? '#ccc' : '#666'}; background: none; border: none; cursor: ${isLast ? 'default' : 'pointer'}; padding: 4px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
                     </div>
-                `;
-            } else {
-                // Inactive Key: Collapsed / Compact View
-                div.className = 'ai-key-item inactive';
-                div.style.cssText = `
-                    display: flex; align-items: center; gap: 10px; 
-                    padding: 10px 12px; border-radius: 8px; border: 1px solid #eee;
-                    background: #fff; cursor: pointer; transition: all 0.2s;
-                `;
-                div.onclick = (e) => {
-                     // Prevent triggering if delete button clicked or editing name (if enabled later)
-                     if(e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-                     selectKey(k.id);
-                };
+
+                    <button onclick="deleteKey('${k.id}')" style="color: #ff4d4f; background: none; border: none; font-size: 18px; cursor: pointer; padding: 0 5px; margin-left:5px;">&times;</button>
+                </div>
                 
-                div.innerHTML = `
-                    <div style="width: 18px; height: 18px; border-radius: 50%; border: 1px solid #ccc; background: white;"></div>
-                    <span style="font-size: 14px; color: #666; flex: 1; font-weight: 500;">${k.name}</span>
-                    <button onclick="deleteKey('${k.id}')" style="color: #ddd; background: none; border: none; font-size: 18px; cursor: pointer; padding: 0 5px;">&times;</button>
-                `;
-            }
+                <div style="display: flex; align-items: center; gap: 8px; background: #f9f9f9; padding: 6px 10px; border-radius: 6px; border: 1px solid #eee;">
+                    <span style="font-size: 12px; color: #999; font-weight: bold;">Key</span>
+                    <input type="password" value="${k.apiKey}" placeholder="AIza..." 
+                           onchange="updateKeyVal('${k.id}', this.value)"
+                           style="flex: 1; border: none; font-size: 12px; font-family: monospace; color: #555; outline: none; background: transparent;">
+                    <button onclick="toggleKeyVis(this)" style="background:none; border:none; cursor:pointer; font-size:14px; padding:0; display:flex; align-items:center; color: #bbb;">${ICON_EYE}</button>
+                </div>
+            `;
             
             listEl.appendChild(div);
         });
+    }
+
+    function moveKey(id, direction) {
+        ModelUsageManager.moveKey(id, direction);
+        renderAIKeyList();
     }
 
     function toggleKeyVis(btn) {
@@ -2300,18 +2935,6 @@
                 btn.style.color = '#bbb';
             }
         }
-    }
-
-    function renderActiveKeyUsage() {
-        const activeKey = ModelUsageManager.getActiveKey();
-        if (!activeKey) return;
-        
-        const nameDisplay = document.getElementById('activeKeyNameDisplay');
-        if (nameDisplay) nameDisplay.innerText = activeKey.name;
-        
-        document.getElementById('use-g3').value = ModelUsageManager.getUsage('gemini-3-flash');
-        document.getElementById('use-g25').value = ModelUsageManager.getUsage('gemini-2.5-flash');
-        document.getElementById('use-g25l').value = ModelUsageManager.getUsage('gemini-2.5-flash-lite');
     }
 
     function toggleAddKeyForm() {
@@ -2342,23 +2965,17 @@
         valInput.value = '';
         toggleAddKeyForm();
         
-        // Refresh list (new key becomes active automatically in addKey logic, so it will be at top)
+        // Refresh list
         renderAIKeyList();
-        renderActiveKeyUsage();
     }
 
     function selectKey(id) {
         ModelUsageManager.setActiveKey(id);
         renderAIKeyList(); // Re-render to update styling
-        renderActiveKeyUsage();
     }
 
     function updateKeyName(id, val) {
         ModelUsageManager.updateKey(id, { name: val });
-        if (ModelUsageManager.getActiveKeyId() === id) {
-            const nameDisplay = document.getElementById('activeKeyNameDisplay');
-            if (nameDisplay) nameDisplay.innerText = val;
-        }
     }
 
     function updateKeyVal(id, val) {
@@ -2376,7 +2993,6 @@
         if (pendingDeleteKeyId) {
             ModelUsageManager.deleteKey(pendingDeleteKeyId);
             renderAIKeyList();
-            renderActiveKeyUsage();
             pendingDeleteKeyId = null;
         }
         // Only close the confirmation modal, keep the main modal open
@@ -2384,22 +3000,141 @@
         if (modal) modal.style.display = 'none';
     }
 
-    function saveCurrentUsage() {
-        ModelUsageManager.setUsage('gemini-3-flash', document.getElementById('use-g3').value);
-        ModelUsageManager.setUsage('gemini-2.5-flash', document.getElementById('use-g25').value);
-        ModelUsageManager.setUsage('gemini-2.5-flash-lite', document.getElementById('use-g25l').value);
+    // --- Model Collection Management ---
+    function renderModelCollectionTab() {
+        const listEl = document.getElementById('modelListContainer');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        
+        const models = ModelUsageManager.getModelList();
+        
+        models.forEach((model, index) => {
+            const div = document.createElement('div');
+            div.className = 'model-item';
+            div.style.cssText = `
+                display: flex; align-items: center; gap: 8px; 
+                padding: 12px; border-radius: 10px; border: 1px solid #e0e0e0;
+                background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            `;
+            
+            const isFirst = index === 0;
+            const isLast = index === models.length - 1;
+
+            div.innerHTML = `
+                <div style="width: 24px; height: 24px; display:flex; align-items:center; justify-content:center; background:#f0f2f5; border-radius:50%; color:#666; font-size:12px; font-weight:bold; flex-shrink: 0;">${index + 1}</div>
+                
+                <div style="flex:1; margin-left: 8px; word-break: break-word; font-weight:bold; color:#333; font-size:13px; line-height: 1.2;">
+                    ${model}
+                </div>
+                
+                <div style="display:flex; align-items:center; gap:4px; margin-left:8px;">
+                     <button onclick="renameModelFromUI('${model}')" style="background:none; border:none; cursor:pointer; color:#4a90e2; padding:6px; display:flex; align-items:center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                    
+                    <button onclick="moveModelUI('${model}', 'up')" ${isFirst ? 'disabled' : ''} style="color: ${isFirst ? '#ccc' : '#666'}; background: none; border: none; cursor: ${isFirst ? 'default' : 'pointer'}; padding: 6px; display:flex; align-items:center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                    </button>
+                    
+                    <button onclick="moveModelUI('${model}', 'down')" ${isLast ? 'disabled' : ''} style="color: ${isLast ? '#ccc' : '#666'}; background: none; border: none; cursor: ${isLast ? 'default' : 'pointer'}; padding: 6px; display:flex; align-items:center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+
+                    <button onclick="deleteModelFromUI('${model}')" style="color: #ff4d4f; background: none; border: none; font-size: 18px; cursor: pointer; padding: 6px; display:flex; align-items:center; margin-left: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            `;
+            
+            listEl.appendChild(div);
+        });
     }
 
-    function resetActiveAIUsage() {
-        showModal('resetUsageConfirmModal');
+    function moveModelUI(model, direction) {
+        ModelUsageManager.moveModel(model, direction);
+        renderModelCollectionTab();
     }
 
-    function confirmResetUsage() {
-        ModelUsageManager.resetActiveUsage();
-        renderActiveKeyUsage();
-        showToast('已重置');
-        const modal = document.getElementById('resetUsageConfirmModal');
-        if (modal) modal.style.display = 'none';
+    function addModelFromUI() {
+        currentModelEditMode = 'add';
+        document.getElementById('modelEditTitle').innerText = '添加模型';
+        document.getElementById('modelNameInput').value = '';
+        showModal('modelEditModal');
+        setTimeout(() => document.getElementById('modelNameInput').focus(), 50);
+    }
+
+    function renameModelFromUI(oldName) {
+        currentModelEditMode = 'rename';
+        currentModelOldName = oldName;
+        document.getElementById('modelEditTitle').innerText = '重命名模型';
+        document.getElementById('modelNameInput').value = oldName;
+        showModal('modelEditModal');
+        setTimeout(() => document.getElementById('modelNameInput').select(), 50);
+    }
+
+    function closeModelEditModal() {
+        document.getElementById('modelEditModal').style.display = 'none';
+    }
+
+    function submitModelEdit() {
+        const nameInput = document.getElementById('modelNameInput');
+        const name = nameInput.value.trim();
+        
+        if (!name) {
+            alert('请输入模型名称');
+            return;
+        }
+
+        if (currentModelEditMode === 'add') {
+            // Check if exists
+            const existing = ModelUsageManager.getModelList();
+            if (existing.includes(name)) {
+                alert('该模型已存在');
+                return;
+            }
+            ModelUsageManager.addModels([name]);
+            
+            // Show success feedback
+            showToast(`模型 "${name}" 添加成功`);
+            
+            // Close modal after success
+            renderModelCollectionTab();
+            renderQuotaTab();
+            closeModelEditModal();
+            
+        } else if (currentModelEditMode === 'rename') {
+            if (name !== currentModelOldName) {
+                const existing = ModelUsageManager.getModelList();
+                if (existing.includes(name)) {
+                    alert('该模型名已存在');
+                    return;
+                }
+                ModelUsageManager.renameModel(currentModelOldName, name);
+            }
+            renderModelCollectionTab();
+            renderQuotaTab();
+            closeModelEditModal();
+        }
+    }
+
+    function deleteModelFromUI(modelName) {
+        currentModelToDelete = modelName;
+        document.getElementById('modelDeleteMsg').innerText = `确定要删除模型 "${modelName}" 吗？\n删除后将不再调用该模型。`;
+        showModal('modelDeleteModal');
+    }
+
+    function closeModelDeleteModal() {
+        document.getElementById('modelDeleteModal').style.display = 'none';
+    }
+
+    function confirmDeleteModel() {
+        if (currentModelToDelete) {
+            ModelUsageManager.deleteModel(currentModelToDelete);
+            renderModelCollectionTab();
+            renderQuotaTab();
+            closeModelDeleteModal();
+            currentModelToDelete = null;
+        }
     }
 
     function updatePullToRefresh(page) {
@@ -2581,6 +3316,9 @@
     let sel = new Set();
     let selectedSeries = new Set(); // New series filter
     let currentEditId = null;
+    let currentModelEditMode = 'add'; // 'add' or 'rename'
+    let currentModelOldName = '';
+    let currentModelToDelete = null;
     let currentRevertPlanId = null;
     let currentDeletePlanId = null;
     let currentMoveOutPlanId = null;
@@ -3373,10 +4111,29 @@
     }
 
     function switchDataTab(tab) {
-        document.getElementById('tabBackup').className = tab==='backup' ? 'm-btn m-btn-primary' : 'm-btn m-btn-ghost';
-        document.getElementById('tabRestore').className = tab==='restore' ? 'm-btn m-btn-primary' : 'm-btn m-btn-ghost';
+        // Reset styles
+        ['tabBackup', 'tabRestore'].forEach(id => {
+            const el = document.getElementById(id);
+            el.style.fontWeight = 'normal';
+            el.style.color = '#666';
+            el.style.borderBottom = '2px solid transparent';
+            el.classList.remove('active');
+        });
+
+        // Set active style
+        const activeId = tab === 'backup' ? 'tabBackup' : 'tabRestore';
+        const activeEl = document.getElementById(activeId);
+        activeEl.style.fontWeight = 'bold';
+        activeEl.style.color = '#4a90e2';
+        activeEl.style.borderBottom = '2px solid #4a90e2';
+        activeEl.classList.add('active');
+
         document.getElementById('viewBackup').style.display = tab==='backup' ? 'block' : 'none';
         document.getElementById('viewRestore').style.display = tab==='restore' ? 'block' : 'none';
+
+        // Toggle footer buttons
+        document.getElementById('btnBackupAction').style.display = tab==='backup' ? 'flex' : 'none';
+        document.getElementById('btnRestoreAction').style.display = tab==='restore' ? 'flex' : 'none';
     }
 
     function execRestore() {
@@ -3495,53 +4252,78 @@
             threshold: threshold,
             items: data,
             plans: JSON.parse(localStorage.getItem('bead_plans') || '[]'),
-            // Use ModelUsageManager.getData() to ensure we export the full structure (keys, names, usage)
-            // even if it was just migrated in memory and not yet saved to disk.
-            aiData: ModelUsageManager.getData()
+            // Use ModelUsageManager.getData() and perform cleanup to ensure we don't export ghost data
+            aiData: (() => {
+                const d = ModelUsageManager.getData();
+                if (d && d.modelOrder && d.keys) {
+                    const activeModels = new Set(d.modelOrder);
+                    d.keys.forEach(k => {
+                        if (k.usage) {
+                            Object.keys(k.usage).forEach(m => {
+                                if (!activeModels.has(m)) delete k.usage[m];
+                            });
+                        }
+                    });
+                }
+                return d;
+            })()
         };
 
         const jsonStr = JSON.stringify(backupObj, null, 2);
         const fileName = `Mard_Inventory_Backup_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.txt`;
         
         
-        // Strategy 1: HTML5+ (App) - File System Download (Direct to Downloads)
+        // Strategy 1: HTML5+ (App) - File System Download (Prioritize Public Downloads)
         if (window.plus && window.plus.io) {
-             plus.io.requestFileSystem(plus.io.PUBLIC_DOWNLOADS, function(fs) {
-                fs.root.getFile(fileName, {create: true, exclusive: false}, function(fileEntry) {
+             // 尝试直接访问手机公共下载目录 /storage/emulated/0/Download/
+             // 这能解决部分 Android 机型 PUBLIC_DOWNLOADS 指向私有目录导致文件无法在文件管理器中找到的问题
+             const publicDownloadPath = "file:///storage/emulated/0/Download/";
+             
+             plus.io.resolveLocalFileSystemURL(publicDownloadPath, function(entry) {
+                entry.getFile(fileName, {create: true, exclusive: false}, function(fileEntry) {
                     fileEntry.createWriter(function(writer) {
                         writer.onwrite = function() {
-                            // Show full path to user
-                            const fullPath = fileEntry.fullPath; // e.g., /storage/emulated/0/Android/data/... or /Downloads/...
-                            // Usually PUBLIC_DOWNLOADS maps to /storage/emulated/0/Download/ on standard Android
-                            // But fileEntry.fullPath might be internal path. 
-                            // fileEntry.toURL() gives file://...
-                            
-                            // Let's try to give a user-friendly path hint
-                            showToast(`备份已导出！\n路径: 手机存储/Download/${fileName}`);
-                            alert(`备份成功！\n\n文件已保存至手机【下载/Download】文件夹。\n\n文件名: ${fileName}`);
+                            showToast(`备份已导出！\n路径: Download/${fileName}`);
+                            alert(`备份成功！\n\n文件已保存至手机公共【Download】文件夹。\n\n文件名: ${fileName}\n\n(导入时请在“下载”或“Download”分类中查找)`);
                         };
                         writer.onerror = function(e) {
-                             alert("保存失败: " + e.message);
+                             console.error("写入公共目录失败", e);
+                             fallbackToSystemDownloads(); // 写入失败尝试回退
                         };
                         writer.write(jsonStr);
-                    }, function(e){ alert("创建写入器失败: " + e.message); });
-                }, function(e){ alert("创建文件失败: " + e.message); });
-            }, function(e) {
-                 // Fallback to Private Doc if Downloads not accessible
-                 plus.io.requestFileSystem(plus.io.PRIVATE_DOC, function(fs) {
-                    fs.root.getFile(fileName, {create: true}, function(fileEntry) {
-                         fileEntry.createWriter(function(writer) {
-                             writer.onwrite = function() {
-                                 const path = fileEntry.fullPath;
-                                 showToast(`已保存至应用私有目录`);
-                                 alert(`备份已保存！\n\n路径: ${path}\n\n(注意: 私有目录文件卸载应用后会被删除)`);
-                             };
-                             writer.write(jsonStr);
-                         });
+                    }, function(e){ 
+                        console.error("创建写入器失败", e);
+                        fallbackToSystemDownloads();
                     });
-                 }, function(e2) { alert("无法访问存储: " + e2.message); });
-            });
-            return;
+                }, function(e){ 
+                    console.error("创建文件失败", e);
+                    fallbackToSystemDownloads();
+                });
+             }, function(e) {
+                 console.log("无法直接访问 Download 目录，尝试使用系统 API", e);
+                 fallbackToSystemDownloads();
+             });
+
+             function fallbackToSystemDownloads() {
+                plus.io.requestFileSystem(plus.io.PUBLIC_DOWNLOADS, function(fs) {
+                    fs.root.getFile(fileName, {create: true, exclusive: false}, function(fileEntry) {
+                        fileEntry.createWriter(function(writer) {
+                            writer.onwrite = function() {
+                                const fullPath = fileEntry.fullPath;
+                                showToast(`备份已导出！\n路径: .../downloads/${fileName}`);
+                                alert(`备份成功！\n\n文件保存路径: ${fullPath}\n\n注意：如果文件管理器找不到该文件，请尝试查看 Android/data 目录或使用手机自带的"文件管理"App搜索文件名。`);
+                            };
+                            writer.onerror = function(e) {
+                                alert("保存失败: " + e.message);
+                            };
+                            writer.write(jsonStr);
+                        }, function(e){ alert("创建写入器失败: " + e.message); });
+                    }, function(e){ alert("创建文件失败: " + e.message); });
+                }, function(e) {
+                    alert("无法访问存储系统: " + e.message);
+                });
+             }
+             return;
         }
 
         // Strategy 2: Web Standard
@@ -3606,13 +4388,87 @@
         navigator.clipboard.writeText(el.value).then(() => showToast("已复制到剪贴板"));
     }
 
-    function openIgnoredModal() {
+    let selectedIgnoredSeries = new Set();
+
+    function openIgnoredModal(reset = false) {
+        if (reset) selectedIgnoredSeries.clear();
+        
+        renderIgnoredSeriesFilter();
+        renderIgnoredList();
+        
+        showModal('ignoredModal');
+    }
+
+    function renderIgnoredSeriesFilter() {
         const list = data.filter(d => d.monitor === false);
+        const container = document.getElementById('ignoredSeriesFilter');
+        container.innerHTML = '';
+
+        if (list.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+        container.style.display = 'flex';
+
+        // Extract series
+        const seriesSet = new Set();
+        list.forEach(item => {
+            const match = item.id.match(/^[A-Z]+/);
+            if (match) seriesSet.add(match[0]);
+        });
+        const seriesList = Array.from(seriesSet).sort();
+
+        if (seriesList.length <= 1) {
+             container.style.display = 'none'; // Don't show filter if only 1 or 0 series
+             return;
+        }
+
+        seriesList.forEach(s => {
+            const isSelected = selectedIgnoredSeries.has(s);
+            const btn = document.createElement('div');
+            btn.textContent = s;
+            btn.style.cssText = `
+                padding: 4px 12px;
+                border-radius: 15px;
+                font-size: 13px;
+                cursor: pointer;
+                border: 1px solid ${isSelected ? '#4a90e2' : '#ddd'};
+                background: ${isSelected ? '#4a90e2' : '#f5f5f5'};
+                color: ${isSelected ? '#fff' : '#666'};
+                transition: all 0.2s;
+                user-select: none;
+            `;
+            btn.onclick = () => toggleIgnoredSeries(s);
+            container.appendChild(btn);
+        });
+    }
+
+    function toggleIgnoredSeries(s) {
+        if (selectedIgnoredSeries.has(s)) {
+            selectedIgnoredSeries.delete(s);
+        } else {
+            selectedIgnoredSeries.add(s);
+        }
+        renderIgnoredSeriesFilter();
+        renderIgnoredList();
+    }
+
+    function renderIgnoredList() {
+        let list = data.filter(d => d.monitor === false);
+        
+        // Apply filter
+        if (selectedIgnoredSeries.size > 0) {
+            list = list.filter(item => {
+                const match = item.id.match(/^[A-Z]+/);
+                return match && selectedIgnoredSeries.has(match[0]);
+            });
+        }
+
         const container = document.getElementById('ignoredList');
         container.innerHTML = '';
         
         if(list.length === 0) {
-            container.innerHTML = '<div style="padding:20px; text-align:center; color:#999; font-size:12px;">当前没有忽略任何色号</div>';
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:#999; font-size:12px;">没有匹配的色号</div>';
         } else {
             list.forEach(item => {
                 const row = document.createElement('div');
@@ -3620,15 +4476,14 @@
                 row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #f0f0f0; gap: 10px;';
                 row.innerHTML = `
                     <div style="display:flex; align-items:center; gap:10px; flex: 1; overflow: hidden;">
-                        <div class="swatch" style="width:24px; height:24px; background:${item.hex}; border-radius:50%; border:1px solid #eee; flex-shrink: 0;"></div>
-                        <span style="font-weight:bold; font-family:monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.id}</span>
+                        <div class="swatch" style="width:24px; height:24px; background:${item.hex}; border-radius:6px; border:1px solid #eee; flex-shrink: 0;"></div>
+                        <span style="font-weight:bold; font-size:15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.id}</span>
                     </div>
-                    <button onclick="restoreMonitor('${item.id}')" style="background:#fff; border:1px solid #ccc; color:#333; padding:6px 12px; border-radius:4px; font-size:13px; cursor:pointer; flex-shrink:0;">恢复提醒</button>
+                    <button onclick="restoreMonitor('${item.id}')" style="background:#fff; border:1px solid #d9d9d9; color:#666; padding:6px 12px; border-radius:4px; font-size:13px; cursor:pointer; flex-shrink:0; transition:all 0.2s;" onmouseover="this.style.color='#1890ff';this.style.borderColor='#1890ff'" onmouseout="this.style.color='#666';this.style.borderColor='#d9d9d9'">恢复提醒</button>
                 `;
                 container.appendChild(row);
             });
         }
-        showModal('ignoredModal');
     }
 
     function restoreMonitor(id) {
@@ -3638,6 +4493,7 @@
             save();
             render();
             openIgnoredModal(); // 刷新列表
+            showToast('已恢复提醒');
         }
     }
 
@@ -3706,6 +4562,106 @@
 
 
 
+    let selectedStatsSeries = new Set();
+    let isStatsFilterVisible = false;
+    
+    // Plan Stats Filter State Removed
+
+    function toggleStatsFilterVisibility() {
+        isStatsFilterVisible = !isStatsFilterVisible;
+        renderStats();
+    }
+
+    function enableStatsLowStock() {
+        const checkbox = document.getElementById('stats-low-filter');
+        if(checkbox) {
+            checkbox.checked = true;
+            renderStats();
+            showToast('已切换至低库存模式');
+        }
+    }
+
+    function copyLowStock() {
+        // Reuse logic to get current filtered scope
+        let seriesMode = document.getElementById('seriesFilter').value;
+        const extraSeries = ['P', 'Q', 'R', 'T', 'Y', 'ZG'];
+        
+        // 1. Base Filter (Series Mode)
+        let candidates = data.filter(item => {
+            const match = item.id.match(/^[A-Z]+/);
+            const series = match ? match[0] : '';
+            if (seriesMode === 'all') return true;
+            return !extraSeries.includes(series);
+        });
+
+        // 2. Stats Series Button Filter
+        if (selectedStatsSeries.size > 0) {
+            candidates = candidates.filter(item => {
+                 const match = item.id.match(/^[A-Z]+/);
+                 const series = match ? match[0] : '';
+                 return selectedStatsSeries.has(series);
+            });
+        }
+
+        // 3. Filter Low Stock
+        const lowStockItems = candidates.filter(item => item.monitor !== false && (item.w || 0) < threshold);
+        
+        if (lowStockItems.length === 0) {
+            showToast('当前没有缺货色号');
+            return;
+        }
+
+        // 4. Sort
+        lowStockItems.sort((a, b) => {
+             const matchA = a.id.match(/^([A-Z]+)(\d+)$/);
+             const matchB = b.id.match(/^([A-Z]+)(\d+)$/);
+             if (matchA && matchB) {
+                 if (matchA[1] !== matchB[1]) return matchA[1].localeCompare(matchB[1]);
+                 return parseInt(matchA[2]) - parseInt(matchB[2]);
+             }
+             return a.id.localeCompare(b.id);
+        });
+
+        // 5. Generate Text (IDs only)
+        const text = lowStockItems.map(item => item.id).join('\n');
+        
+        // 6. Copy
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`已复制 ${lowStockItems.length} 个缺货色号`);
+            }).catch(err => {
+                fallbackCopy(text);
+            });
+        } else {
+            fallbackCopy(text);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed'; // Prevent scrolling to bottom
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showToast('已复制缺货色号');
+        } catch (err) {
+            showToast('复制失败');
+        }
+        document.body.removeChild(textarea);
+    }
+
+    function toggleStatsSeries(series) {
+        if (selectedStatsSeries.has(series)) {
+            selectedStatsSeries.delete(series);
+        } else {
+            selectedStatsSeries.add(series);
+        }
+        renderStats();
+    }
+
     function renderStats() {
         // 0. 应用筛选逻辑 (保持与 inventory 页面一致)
         let seriesMode = document.getElementById('seriesFilter').value;
@@ -3717,19 +4673,68 @@
 
         const extraSeries = ['P', 'Q', 'R', 'T', 'Y', 'ZG'];
         
-        let statsData = data.filter(item => {
+        // Base Data: Filtered by Series Mode ONLY (for generating filter buttons)
+        let baseStatsData = data.filter(item => {
             const match = item.id.match(/^[A-Z]+/);
             const series = match ? match[0] : '';
-
-            // Checkbox filter 优先
-            if (typeof selectedSeries !== 'undefined' && selectedSeries.size > 0) {
-                return selectedSeries.has(series);
-            }
-
             if (seriesMode === 'all') return true;
-            // Mard 221 模式下排除 P, Q, R, T, Y, ZG 系列
             return !extraSeries.includes(series);
         });
+
+        // 0.1 Render Stats Series Filter Buttons
+        const filterContainer = document.getElementById('statsSeriesFilterContainer');
+        const toggleBtn = document.getElementById('btn-toggle-stats-filter');
+
+        if (filterContainer) {
+            const seriesSet = new Set();
+            baseStatsData.forEach(item => {
+                const match = item.id.match(/^[A-Z]+/);
+                if (match) seriesSet.add(match[0]);
+            });
+            const seriesList = Array.from(seriesSet).sort();
+
+            if (seriesList.length <= 1) {
+                filterContainer.style.display = 'none';
+                if(toggleBtn) toggleBtn.style.display = 'none';
+            } else {
+                // Show toggle button logic
+                if(toggleBtn) {
+                    toggleBtn.style.display = 'flex';
+                    if (isStatsFilterVisible) {
+                        toggleBtn.style.background = '#e6f7ff';
+                        toggleBtn.style.borderColor = '#91d5ff';
+                    } else {
+                        toggleBtn.style.background = '#fff';
+                        toggleBtn.style.borderColor = '#ddd';
+                    }
+                }
+
+                if (isStatsFilterVisible) {
+                    filterContainer.style.display = 'flex';
+                    filterContainer.innerHTML = '';
+                    seriesList.forEach(s => {
+                        const isSelected = selectedStatsSeries.has(s);
+                        const btn = document.createElement('div');
+                        btn.textContent = s;
+                        btn.className = `series-chip ${isSelected ? 'selected' : ''}`;
+                        btn.onclick = () => toggleStatsSeries(s);
+                        filterContainer.appendChild(btn);
+                    });
+                } else {
+                    filterContainer.style.display = 'none';
+                }
+            }
+        }
+
+        // 0.2 Apply Series Button Filter (for Totals and List)
+        let statsData = baseStatsData;
+        if (selectedStatsSeries.size > 0) {
+            statsData = baseStatsData.filter(item => {
+                 const match = item.id.match(/^[A-Z]+/);
+                 const series = match ? match[0] : '';
+                 return selectedStatsSeries.has(series);
+            });
+        }
 
         // 1. 基础数据统计
         const totalStock = statsData.reduce((sum, item) => sum + (item.w || 0), 0);
@@ -3737,10 +4742,13 @@
         // Low stock: monitor is true (or undefined/default) AND stock < threshold
         const lowCount = statsData.filter(item => item.monitor !== false && (item.w || 0) < threshold).length;
         
-        // Calculate Holding Rate (Items with stock > 0 / Total Items in view)
-        const totalItems = statsData.length;
-        const activeItems = statsData.filter(item => (item.w || 0) > 0).length;
-        const holdingRate = totalItems > 0 ? Math.round((activeItems / totalItems) * 100) : 0;
+        // Calculate Usage Rate: Total Used / Total Stock * 100%
+        let usageRate = 0;
+        if (totalStock > 0) {
+            usageRate = Math.round((totalUsed / totalStock) * 100);
+        } else if (totalUsed > 0) {
+            usageRate = 100; // Stock is 0 but used > 0, treat as maxed
+        }
 
         // 2. 更新概览数字
         const elTotalStock = document.getElementById('stats-total-stock');
@@ -3755,14 +4763,45 @@
             elLowCount.style.color = lowCount > 0 ? '#ff4d4f' : '#333';
         }
 
-        // 3. 更新甜甜圈图
+        // 3. 更新甜甜圈图 (已消耗)
         const donut = document.getElementById('stats-donut');
         const donutPercent = document.getElementById('stats-donut-percent');
+        const donutValue = document.getElementById('stats-donut-value');
         if(donut && donutPercent) {
-            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#4a90e2';
-            donut.style.background = `conic-gradient(${primaryColor} 0% ${holdingRate}%, #f0f0f0 ${holdingRate}% 100%)`;
-            donutPercent.textContent = `${holdingRate}%`;
+            const visualRate = Math.min(usageRate, 100);
+            // Use standard blue/green for usage
+            donut.style.background = `conic-gradient(#52c41a 0% ${visualRate}%, #f0f0f0 ${visualRate}% 100%)`;
+            donutPercent.textContent = `${usageRate}%`;
+            
+            if(donutValue) {
+                donutValue.textContent = `${totalUsed.toFixed(1)}g`;
+            }
         }
+
+        // 3.1 更新计划统计
+        let plans = [];
+        try {
+            plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
+        } catch (e) {
+            console.error('Error loading plans for stats:', e);
+        }
+
+        // Use All Plans for Global Summary
+        const planTotal = plans.length;
+        const planCompleted = plans.filter(p => p.status === 'completed').length;
+        const planPending = planTotal - planCompleted;
+
+        const elPlanTotal = document.getElementById('stats-plan-total');
+        if(elPlanTotal) elPlanTotal.textContent = planTotal;
+        
+        const elPlanCompleted = document.getElementById('stats-plan-completed');
+        if(elPlanCompleted) elPlanCompleted.textContent = planCompleted;
+        
+        const elPlanPending = document.getElementById('stats-plan-pending');
+        if(elPlanPending) elPlanPending.textContent = planPending;
+
+        // Render Plan Chart
+        renderPlanChart(plans);
 
         // 4. 更新排行榜 (Stats Rank List)
         const rankListEl = document.getElementById('stats-rank-list');
@@ -3830,6 +4869,147 @@
         });
         
         rankListEl.appendChild(fragment);
+    }
+
+    function toggleChartBar(el) {
+        // Toggle active state on the clicked bar
+        // Optional: Close others
+        const isActive = el.classList.contains('active');
+        document.querySelectorAll('.chart-bar.active').forEach(b => b.classList.remove('active'));
+        if (!isActive) {
+            el.classList.add('active');
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                el.classList.remove('active');
+            }, 3000);
+        }
+    }
+
+    // Plan Chart Config Global
+    let planChartConfig = {
+        total: true,
+        completed: true,
+        pending: true
+    };
+
+    function togglePlanChartFilter(type) {
+        if (planChartConfig.hasOwnProperty(type)) {
+            planChartConfig[type] = !planChartConfig[type];
+            // Re-render only the chart part by calling renderStats() 
+            // Note: renderStats() is efficient enough for this small DOM update
+            renderStats();
+        }
+    }
+
+    function togglePlanChartVisibility() {
+        const chartEl = document.getElementById('stats-plan-chart');
+        const btn = document.getElementById('btn-toggle-plan-chart');
+        if (!chartEl || !btn) return;
+
+        const isHidden = chartEl.style.display === 'none';
+        
+        if (isHidden) {
+            chartEl.style.display = 'block';
+            btn.style.transform = 'rotate(180deg)';
+        } else {
+            chartEl.style.display = 'none';
+            btn.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function renderPlanChart(plans) {
+        const chartEl = document.getElementById('stats-plan-chart');
+        if (!chartEl) return;
+        
+        // Ensure horizontal scrolling if content overflows
+        chartEl.style.overflowX = 'auto';
+
+        // 1. Group data by Month (YYYY-MM)
+        const monthMap = new Map(); // "2025-01" -> { total: 0, completed: 0, pending: 0 }
+        
+        // Sort plans by date
+        plans.sort((a, b) => (a.created || 0) - (b.created || 0));
+
+        if (plans.length === 0) {
+            chartEl.innerHTML = '<div style="text-align:center; color:#ccc; padding:20px; font-size:12px;">暂无计划数据</div>';
+            return;
+        }
+
+        // Populate Map
+        plans.forEach(p => {
+            const d = new Date(p.created || Date.now());
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            
+            if (!monthMap.has(key)) {
+                monthMap.set(key, { total: 0, completed: 0, pending: 0 });
+            }
+            const entry = monthMap.get(key);
+            entry.total++;
+            if (p.status === 'completed') entry.completed++;
+            else entry.pending++; 
+        });
+
+        // Convert to Array and Sort
+        const data = Array.from(monthMap.entries()).map(([key, val]) => ({
+            key,
+            ...val
+        })).sort((a, b) => a.key.localeCompare(b.key));
+
+        // Find Max Value for scaling
+        let maxVal = 0;
+        data.forEach(d => {
+            maxVal = Math.max(maxVal, d.total); // Total is usually the highest
+        });
+        if (maxVal === 0) maxVal = 1;
+
+        // 2. Build HTML
+        let html = `<div class="chart-container">`;
+
+        data.forEach(item => {
+            const hTotal = (item.total / maxVal) * 100;
+            const hComp = (item.completed / maxVal) * 100;
+            const hPend = (item.pending / maxVal) * 100;
+            
+            // Parse date for label (e.g. "2026-01" -> "2026年1月")
+            const [y, m] = item.key.split('-');
+            const label = `${y}年${parseInt(m)}月`; 
+
+            // Conditional Bar Styles
+            const styleTotal = planChartConfig.total ? `height:${hTotal}%; background:#4a90e2;` : `display:none;`;
+            const styleComp = planChartConfig.completed ? `height:${hComp}%; background:#52c41a;` : `display:none;`;
+            const stylePend = planChartConfig.pending ? `height:${hPend}%; background:#faad14;` : `display:none;`;
+
+            html += `
+                <div class="chart-col">
+                    <div class="chart-bars-group">
+                        <div class="chart-bar" style="${styleTotal}" title="总计: ${item.total}" onclick="toggleChartBar(this)"></div>
+                        <div class="chart-bar" style="${styleComp}" title="完成: ${item.completed}" onclick="toggleChartBar(this)"></div>
+                        <div class="chart-bar" style="${stylePend}" title="计划: ${item.pending}" onclick="toggleChartBar(this)"></div>
+                    </div>
+                    <div class="chart-label">${label}</div>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+        
+        // Add Interactive Legend at Bottom
+        html += `
+            <div class="chart-legend">
+                <div class="legend-item ${planChartConfig.total ? 'active' : ''}" onclick="togglePlanChartFilter('total')">
+                    <div class="legend-dot" style="background:#4a90e2;"></div>总计划
+                </div>
+                <div class="legend-item ${planChartConfig.completed ? 'active' : ''}" onclick="togglePlanChartFilter('completed')">
+                    <div class="legend-dot" style="background:#52c41a;"></div>已完成
+                </div>
+                <div class="legend-item ${planChartConfig.pending ? 'active' : ''}" onclick="togglePlanChartFilter('pending')">
+                    <div class="legend-dot" style="background:#faad14;"></div>计划中
+                </div>
+            </div>
+        `;
+
+        chartEl.innerHTML = html;
     }
 
     function syncAndRenderStats() {
@@ -5189,7 +6369,7 @@
             });
 
             // 2. Dynamic Model Discovery & Prioritization
-            const API_KEY = ModelUsageManager.getApiKey(); 
+            // API Key will be retrieved per model to ensure load balancing
             statusEl.innerText = "正在获取可用模型列表...";
             
             let candidateModels = [];
@@ -5201,7 +6381,7 @@
 
             // Define strict priority list as requested
             let priorityList = [
-                'gemini-3-flash',
+                'gemini-3-flash-preview',
                 'gemini-2.5-flash',
                 'gemini-2.5-flash-lite'
             ];
@@ -5251,36 +6431,83 @@
 
                     console.log(`Attempting model: ${modelName}`);
                     
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
+                    const keyObj = ModelUsageManager.getUsableKeyObj(modelName);
+                    if (!keyObj || !keyObj.apiKey) throw new Error("No available API Key for this model (Quota exceeded)");
+                    
+                    const dynamicKey = keyObj.apiKey;
+                    const usedKeyId = keyObj.keyId;
 
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [
-                                    { text: prompt },
-                                    { inline_data: { mime_type: "image/png", data: base64Data } }
-                                ]
-                            }]
-                        })
-                    });
+                    // Support multiple API versions for newer/preview models
+                    const apiVersions = ['v1beta', 'v1alpha'];
+                    let response = null;
+                    let success = false;
+                    let fetchError = null;
 
-                    if (!response.ok) {
-                        const errData = await response.json();
-                        throw new Error(errData.error?.message || `API Status ${response.status}`);
+                    for (const version of apiVersions) {
+                        try {
+                            const url = `https://generativelanguage.googleapis.com/${version}/models/${modelName}:generateContent?key=${dynamicKey}`;
+                            
+                            const attemptResp = await fetch(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{
+                                        parts: [
+                                            { text: prompt },
+                                            { inline_data: { mime_type: "image/png", data: base64Data } }
+                                        ]
+                                    }]
+                                })
+                            });
+
+                            if (attemptResp.status === 404 && version === 'v1beta') {
+                                console.warn(`Model ${modelName} not found in v1beta, trying v1alpha...`);
+                                continue; // Try next version
+                            }
+
+                            if (!attemptResp.ok) {
+                                const errData = await attemptResp.json();
+                                throw new Error(errData.error?.message || `API Status ${attemptResp.status}`);
+                            }
+
+                            response = attemptResp;
+                            success = true;
+                            break; // Success
+                        } catch (verErr) {
+                            fetchError = verErr;
+                            // If it's a 404, we might retry loop. If other error (like 429), stop trying versions and fail model.
+                            if (!verErr.message.includes('404') && !verErr.message.includes('Not Found')) {
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!success) {
+                        throw fetchError || new Error("Model not found in any API version");
                     }
 
                     result = await response.json();
                     usedModel = modelName;
-                    console.log(`Success with model: ${modelName}`);
-                    ModelUsageManager.increment(modelName); // Track usage
+                    console.log(`Success with model: ${modelName} using KeyID: ${usedKeyId}`);
+                    ModelUsageManager.increment(modelName, usedKeyId); // Track usage for specific key
                     break; // Success! Exit loop
 
                 } catch (e) {
                     console.warn(`Model ${modelName} failed:`, e.message);
                     lastError = e;
-                    // Continue to next model in loop
+                    
+                    // Show specific error to user and pause briefly so they can see why it failed
+                    const shortMsg = e.message.length > 60 ? e.message.slice(0, 60) + '...' : e.message;
+                    let friendlyMsg = shortMsg;
+                    if (e.message.includes('404')) friendlyMsg = "模型不存在 (404)";
+                    if (e.message.includes('400')) friendlyMsg = "请求无效 (400)";
+                    if (e.message.includes('429')) friendlyMsg = "额度耗尽 (429)";
+                    if (e.message.includes('403') || e.message.includes('401')) friendlyMsg = "API Key 无效";
+                    
+                    statusEl.innerHTML = `<span style="color:#ff4d4f">❌ ${modelName} 失败: ${friendlyMsg}</span><br>🔄 正在切换下一模型...`;
+                    
+                    // Wait 2 seconds before trying next model
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                 }
             }
 
@@ -6161,8 +7388,11 @@
                      missingHtml = `
                          <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ffa39e;">
                              <div style="font-size: 13px; font-weight: bold; color: #cf1322; margin-bottom: 8px; display: flex; align-items: center;">
-                                 <span style="margin-right: 4px;">⚠️</span> 缺货预警 (${summary.shortages.length} 色)
-                             </div>
+                                <span style="margin-right: 4px;">⚠️</span> 缺货预警 (${summary.shortages.length} 色)
+                                <span onclick="copyMissingSummary()" style="cursor: pointer; color: #cf1322; font-size: 16px; display: flex; align-items: center; padding: 4px; margin-left: 8px;" title="复制缺货清单">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </span>
+                            </div>
                              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px;">
                                  ${missingItems}
                              </div>
@@ -6918,7 +8148,7 @@
 
             
         } else {
-            statusBanner.innerHTML = `<div style="font-weight:bold; font-size:16px;">📅 计划中 - 尚未扣减库存</div>`;
+            statusBanner.innerHTML = `<div style="font-weight:bold; font-size:16px;">计划中 - 尚未扣减库存</div>`;
             statusBanner.style.background = '#fffbe6';
             statusBanner.style.color = '#fa8c16';
             if(actionButtons) actionButtons.style.display = 'flex';
@@ -7334,6 +8564,33 @@
         plan.items = newItems;
     }
 
+    function playSuccessSound() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            
+            const ctx = new AudioContext();
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            // "Ding" sound: Sine wave, high pitch, quick decay
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, ctx.currentTime); // A5
+            oscillator.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1); // Slide up to A6
+            
+            gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            
+            oscillator.start();
+            oscillator.stop(ctx.currentTime + 0.5);
+        } catch(e) {
+            console.error("Audio play failed", e);
+        }
+    }
+
     function deductPlanInventory(id) {
         // Load plans so we can update status and save
         let plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
@@ -7388,6 +8645,7 @@
             localStorage.setItem('bead_plans', JSON.stringify(plans));
             
             showToast(count > 0 ? '库存扣减成功！计划已标记为“已完成”。' : '计划已标记为“已完成”。');
+            playSuccessSound();
             renderPlans();
             
             // Refresh detail view if open
@@ -7647,8 +8905,25 @@
     
 
     // --- Pull to Refresh Feature (Removed) ---
-
-
+    function copyMissingSummary() {
+        const plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
+        const summary = aggregateActivePlanRequirements(plans);
+        if (!summary || summary.shortages.length === 0) {
+            showToast("当前没有缺货色号");
+            return;
+        }
+        
+        // Format: "缺货预警：\nC11 缺9.66g\nC13 缺4.52g"
+        summary.shortages.sort((a, b) => b.missingQty - a.missingQty);
+        const text = "缺货预警：\n" + summary.shortages.map(item => `${item.code} 缺${item.missingQty}g`).join('\n');
+        
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("已复制缺货清单");
+        }).catch(err => {
+            showToast("复制失败");
+            console.error(err);
+        });
+    }
 </script>
 <!-- Floating Add Button -->
 <div id="floatingHomeBtn" class="floating-home-btn" onclick="navTo('home')">
@@ -7924,6 +9199,104 @@ function confirmBatchAdd() {
     closeBatchAdd();
     showToast("库存添加成功！");
 }
+    // --- Pull to Refresh Logic ---
+    let ptrStartY = 0;
+    let ptrCurrentY = 0;
+    let ptrDistance = 0;
+    let isPtrActive = false;
+    let isPtrLoading = false;
+    const PTR_THRESHOLD = 80;
+    
+    // Main scrollable element is body/window
+    window.addEventListener('touchstart', (e) => {
+        // Only enable on specific pages
+        const activePage = ['page-beads', 'page-stats', 'page-plan', 'page-fabric'].find(id => document.getElementById(id).style.display !== 'none');
+        if (!activePage) return;
+        
+        if (window.scrollY === 0 && !isPtrLoading) {
+            ptrStartY = e.touches[0].clientY;
+            isPtrActive = true;
+        }
+    }, {passive: true});
+    
+    window.addEventListener('touchmove', (e) => {
+        if (!isPtrActive || isPtrLoading) return;
+        
+        ptrCurrentY = e.touches[0].clientY;
+        const diff = ptrCurrentY - ptrStartY;
+        
+        // Only track pull down
+        if (diff > 0 && window.scrollY === 0) {
+            // Resistance effect
+            ptrDistance = Math.pow(diff, 0.8);
+            
+            // Limit max pull
+            if (ptrDistance > 150) ptrDistance = 150;
+            
+            updatePtrVisuals(ptrDistance);
+        } else {
+            isPtrActive = false;
+            resetPtr();
+        }
+    }, {passive: true});
+    
+    window.addEventListener('touchend', () => {
+        if (!isPtrActive || isPtrLoading) return;
+        
+        if (ptrDistance > PTR_THRESHOLD) {
+            startPtrLoading();
+        } else {
+            resetPtr();
+        }
+        isPtrActive = false;
+    });
+    
+    function updatePtrVisuals(dist) {
+        const indicator = document.getElementById('ptr-indicator');
+        const icon = document.getElementById('ptr-icon');
+        const text = document.getElementById('ptr-text');
+        
+        indicator.style.transform = `translateY(${dist}px)`;
+        
+        if (dist > PTR_THRESHOLD) {
+            text.textContent = "释放刷新";
+            icon.style.transform = "rotate(180deg)";
+        } else {
+            text.textContent = "下拉刷新";
+            icon.style.transform = "rotate(0deg)";
+        }
+    }
+    
+    function startPtrLoading() {
+        isPtrLoading = true;
+        const indicator = document.getElementById('ptr-indicator');
+        const icon = document.getElementById('ptr-icon');
+        const spinner = document.getElementById('ptr-spinner');
+        const text = document.getElementById('ptr-text');
+        
+        indicator.style.transform = `translateY(50px)`;
+        icon.style.display = 'none';
+        spinner.style.display = 'block';
+        text.textContent = "加载中...";
+        
+        // Simulate refresh delay
+        setTimeout(() => {
+            window.location.reload();
+        }, 800);
+    }
+    
+    function resetPtr() {
+        const indicator = document.getElementById('ptr-indicator');
+        const icon = document.getElementById('ptr-icon');
+        const spinner = document.getElementById('ptr-spinner');
+        
+        indicator.style.transform = `translateY(0)`;
+        icon.style.display = 'inline';
+        icon.style.transform = "rotate(0deg)";
+        spinner.style.display = 'none';
+        ptrDistance = 0;
+    }
+
 </script>
 </body>
 </html>
