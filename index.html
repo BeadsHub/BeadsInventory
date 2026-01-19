@@ -115,6 +115,15 @@
             0% { transform: translate(-50%, -40%) scale(0.95); opacity: 0; }
             100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
+
+        /* 修复裁剪和预览窗口的动画问题：改为淡入效果，避免从左上角弹出的突兀感 */
+        #cropEditModal, #cropPreviewModal {
+            animation: fullScreenFadeIn 0.25s ease-out !important;
+        }
+        @keyframes fullScreenFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
         .modal h3 { margin: 0 0 8px 0; text-align: center; font-size: 18px; color: #1f2937; }
         .modal-desc { text-align: center; color: #6b7280; font-size: 13px; margin-bottom: 24px; }
         
@@ -508,9 +517,9 @@
         /* New Color Block Style */
         .card-color-block {
             width: 100%;
-            height: 32px;
-            border-radius: 6px;
-            margin: 6px 0;
+            height: 50px;
+            border-radius: 4px;
+            margin: 3px 0;
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
             cursor: pointer;
         }
@@ -1313,13 +1322,13 @@
             <!-- 4. Result Header -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 2px; white-space: nowrap;">
                 <div style="display:flex; align-items:center; gap:5px; flex-shrink: 1; overflow: hidden;">
-                    <h4 style="margin: 0; font-size: 16px; font-weight: bold; color: #333;">识别结果</h4>
+                    <h4 style="margin: 0; font-size: 12px; font-weight: bold; color: #333;">识别结果</h4>
                     <span id="scanTotalCount" style="font-size: 12px; color: #999;">...</span>
                 </div>
                 <div style="display: flex; gap: 4px; flex-shrink: 0;">
-                     <button onclick="toggleScanMissingPriority()" id="btn-scan-missing" style="font-size: 12px; padding: 2px 6px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">优先缺货</button>
-                     <button onclick="toggleScanSort('code')" id="btn-sort-code" style="font-size: 12px; padding: 2px 6px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">色号排序</button>
-                     <button onclick="toggleScanSort('qty')" id="btn-sort-qty" style="font-size: 12px; padding: 2px 6px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">用量排序</button>
+                     <button onclick="toggleScanMissingPriority()" id="btn-scan-missing" style="font-size: 12px; padding: 2px 6px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">缺货</button>
+                     <button onclick="toggleScanSort('code')" id="btn-sort-code" style="font-size: 12px; padding: 2px 6px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">色号</button>
+                     <button onclick="toggleScanSort('qty')" id="btn-sort-qty" style="font-size: 12px; padding: 2px 6px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">用量</button>
                 </div>
             </div>
             
@@ -1580,7 +1589,12 @@
 
     <!-- Bottom Action Bar -->
     <div style="padding:20px; background:rgba(0,0,0,0.8); display:flex; gap:15px; flex-shrink:0; z-index: 20;">
-        <button class="m-btn m-btn-ghost" onclick="closeCropPreview()" style="flex:1; color:white; border-color:rgba(255,255,255,0.3); background: rgba(255,255,255,0.1);">重新裁切</button>
+        <button class="m-btn m-btn-ghost" onclick="closeCropPreview()" style="flex:1; color:white; border-color:rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M17 15h2V7c0-1.1-.9-2-2-2H9v2h8v8zM7 17V1H5v4H1v2h4v10c0 1.1.9 2 2 2h10v4h2v-4h4v-2H7z"/>
+            </svg>
+            重新裁切
+        </button>
         <button class="m-btn m-btn-primary" onclick="confirmScanFromPreview()" style="flex:2; background:#6c5ce7; border-color:#6c5ce7;">确认并识别</button>
     </div>
 </div>
@@ -1759,6 +1773,18 @@
     <div class="modal-btn-group">
         <button class="m-btn m-btn-ghost" onclick="resetActiveAIUsage()" style="color: #ff4d4f; border-color: #ff4d4f;">重置当前 Key 额度</button>
         <button class="m-btn m-btn-primary" onclick="closeAllModals()">完成</button>
+    </div>
+</div>
+
+<!-- Rename Plan Modal -->
+<div id="renamePlanModal" class="modal" style="width: 85%; max-width: 320px; border-radius: 16px; padding: 24px;">
+    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center;">重命名</h3>
+    <div style="margin-bottom: 25px;">
+        <input type="text" id="renamePlanInput" placeholder="请输入新的计划名称" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; text-align: center;" onfocus="this.select()" onkeypress="if(event.key === 'Enter') submitRenamePlan()">
+    </div>
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" onclick="submitRenamePlan()">确定</button>
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()">取消</button>
     </div>
 </div>
 
@@ -1990,7 +2016,7 @@
     const ModelUsageManager = {
         limit: 20,
         storageKey: 'ai_usage_data',
-        defaultKey: "AIzaSyAuELkvPSuuQgnJZLd9zDuOw_uS6LdJw7w",
+        defaultKey: "",
         
         getData() {
             let data = null;
@@ -2515,7 +2541,7 @@
         {id:'A1',hex:'#faf5cd'},{id:'A2',hex:'#fcfed6'},{id:'A3',hex:'#fcff92'},{id:'A4',hex:'#f7ec5c'},{id:'A5',hex:'#f0d83a'},{id:'A6',hex:'#fda951'},{id:'A7',hex:'#fa8c4f'},{id:'A8',hex:'#fbda4d'},{id:'A9',hex:'#f79d5f'},{id:'A10',hex:'#f47e38'},{id:'A11',hex:'#fedb99'},{id:'A12',hex:'#fda276'},{id:'A13',hex:'#fec667'},{id:'A14',hex:'#f75842'},{id:'A15',hex:'#fbf65e'},{id:'A16',hex:'#feff97'},{id:'A17',hex:'#fde173'},{id:'A18',hex:'#fcbf80'},{id:'A19',hex:'#fd7e77'},{id:'A20',hex:'#f9d66e'},{id:'A21',hex:'#fae393'},{id:'A22',hex:'#edf878'},{id:'A23',hex:'#e4c8ba'},{id:'A24',hex:'#f3f6a9'},{id:'A25',hex:'#ffd785'},{id:'A26',hex:'#ffc734'},
         {id:'B1',hex:'#dff13b'},{id:'B2',hex:'#64f343'},{id:'B3',hex:'#a1f586'},{id:'B4',hex:'#5fdf34'},{id:'B5',hex:'#39e158'},{id:'B6',hex:'#64e0a4'},{id:'B7',hex:'#3eae7c'},{id:'B8',hex:'#1d9b54'},{id:'B9',hex:'#2a5037'},{id:'B10',hex:'#9ad1ba'},{id:'B11',hex:'#627032'},{id:'B12',hex:'#1a6e3d'},{id:'B13',hex:'#c8e87d'},{id:'B14',hex:'#abe84f'},{id:'B15',hex:'#305335'},{id:'B16',hex:'#c0ed9c'},{id:'B17',hex:'#9eb33e'},{id:'B18',hex:'#e6ed4f'},{id:'B19',hex:'#26b78e'},{id:'B20',hex:'#cbeccf'},{id:'B21',hex:'#18616a'},{id:'B22',hex:'#0a4241'},{id:'B23',hex:'#343b1a'},{id:'B24',hex:'#e8faa6'},{id:'B25',hex:'#4e846d'},{id:'B26',hex:'#907c35'},{id:'B27',hex:'#d0e0af'},{id:'B28',hex:'#9ee5bb'},{id:'B29',hex:'#c6df5f'},{id:'B30',hex:'#e3fbb1'},{id:'B31',hex:'#b4e691'},{id:'B32',hex:'#92ad60'},
         {id:'C1',hex:'#f0fee4'},{id:'C2',hex:'#abf8fe'},{id:'C3',hex:'#a2e0f7'},{id:'C4',hex:'#44cdfb'},{id:'C5',hex:'#06aadf'},{id:'C6',hex:'#54a7e9'},{id:'C7',hex:'#3977ca'},{id:'C8',hex:'#0f52bd'},{id:'C9',hex:'#3349c3'},{id:'C10',hex:'#3cbce3'},{id:'C11',hex:'#2aded3'},{id:'C12',hex:'#1e334e'},{id:'C13',hex:'#cde7fe'},{id:'C14',hex:'#d5fcf7'},{id:'C15',hex:'#21c5c4'},{id:'C16',hex:'#1858a2'},{id:'C17',hex:'#02d1f3'},{id:'C18',hex:'#213244'},{id:'C19',hex:'#18869d'},{id:'C20',hex:'#1a70a9'},{id:'C21',hex:'#bcddfc'},{id:'C22',hex:'#6bb1bb'},{id:'C23',hex:'#c8e2fd'},{id:'C24',hex:'#7ec5f9'},{id:'C25',hex:'#a9e8e0'},{id:'C26',hex:'#42adcf'},{id:'C27',hex:'#d0def9'},{id:'C28',hex:'#bdcee8'},{id:'C29',hex:'#364a89'},
-        {id:'D1',hex:'#acb7ef'},{id:'D2',hex:'#868dd3'},{id:'D3',hex:'#3554af'},{id:'D4',hex:'#162d7b'},{id:'D5',hex:'#b34ec6'},{id:'D6',hex:'#b37bdc'},{id:'D7',hex:'#8758a9'},{id:'D8',hex:'#e3d2fe'},{id:'D9',hex:'#d5b9f4'},{id:'D10',hex:'#301a49'},{id:'D11',hex:'#beb9e2'},{id:'D12',hex:'#dc99ce'},{id:'D13',hex:'#b5038d'},{id:'D14',hex:'#862993'},{id:'D15',hex:'#2f1f8c'},{id:'D16',hex:'#e2e4f0'},{id:'D17',hex:'#c7d3f9'},{id:'D18',hex:'#9a64b8'},{id:'D19',hex:'#d8c2d9'},{id:'D20',hex:'#9a35ad'},{id:'D21',hex:'#940595'},{id:'D22',sweet:'#38389a'},{id:'D23',hex:'#eadbf8'},{id:'D24',hex:'#768ae1'},{id:'D25',hex:'#4950c2'},{id:'D26',hex:'#d6c6eb'},
+        {id:'D1',hex:'#acb7ef'},{id:'D2',hex:'#868dd3'},{id:'D3',hex:'#3554af'},{id:'D4',hex:'#162d7b'},{id:'D5',hex:'#b34ec6'},{id:'D6',hex:'#b37bdc'},{id:'D7',hex:'#8758a9'},{id:'D8',hex:'#e3d2fe'},{id:'D9',hex:'#d5b9f4'},{id:'D10',hex:'#301a49'},{id:'D11',hex:'#beb9e2'},{id:'D12',hex:'#dc99ce'},{id:'D13',hex:'#b5038d'},{id:'D14',hex:'#862993'},{id:'D15',hex:'#2f1f8c'},{id:'D16',hex:'#e2e4f0'},{id:'D17',hex:'#c7d3f9'},{id:'D18',hex:'#9a64b8'},{id:'D19',hex:'#d8c2d9'},{id:'D20',hex:'#9a35ad'},{id:'D21',hex:'#940595'},{id:'D22',hex:'#333a95'},{id:'D23',hex:'#eadbf8'},{id:'D24',hex:'#768ae1'},{id:'D25',hex:'#4950c2'},{id:'D26',hex:'#d6c6eb'},
         {id:'E1',hex:'#f6d4cb'},{id:'E2',hex:'#fcc1dd'},{id:'E3',hex:'#f6bde8'},{id:'E4',hex:'#e8649e'},{id:'E5',hex:'#f0569f'},{id:'E6',hex:'#eb4172'},{id:'E7',hex:'#c53674'},{id:'E8',hex:'#fddbe9'},{id:'E9',hex:'#e376c7'},{id:'E10',hex:'#d13b95'},{id:'E11',hex:'#f7dad4'},{id:'E12',hex:'#f693bf'},{id:'E13',hex:'#b5026a'},{id:'E14',hex:'#fad4bf'},{id:'E15',hex:'#f5c9ca'},{id:'E16',hex:'#fbf4ec'},{id:'E17',hex:'#f7e3ec'},{id:'E18',hex:'#f9c8db'},{id:'E19',hex:'#f6bbd1'},{id:'E20',hex:'#d7c6ce'},{id:'E21',hex:'#c09da4'},{id:'E22',hex:'#b38c9f'},{id:'E23',hex:'#937d8a'},{id:'E24',hex:'#debee5'},
         {id:'F1',hex:'#fe9381'},{id:'F2',hex:'#f63d4b'},{id:'F3',hex:'#ee4e3e'},{id:'F4',hex:'#fb2a40'},{id:'F5',hex:'#e10328'},{id:'F6',hex:'#913635'},{id:'F7',hex:'#911932'},{id:'F8',hex:'#bb0126'},{id:'F9',hex:'#e0677a'},{id:'F10',hex:'#874628'},{id:'F11',hex:'#592323'},{id:'F12',hex:'#f3536b'},{id:'F13',hex:'#f45c45'},{id:'F14',hex:'#fcadb2'},{id:'F15',hex:'#d50527'},{id:'F16',hex:'#f8c0a9'},{id:'F17',hex:'#e89b7d'},{id:'F18',hex:'#d07f4a'},{id:'F19',hex:'#be454a'},{id:'F20',hex:'#c69495'},{id:'F21',hex:'#f2b8c6'},{id:'F22',hex:'#f7c3d0'},{id:'F23',hex:'#ed806c'},{id:'F24',hex:'#e09daf'},{id:'F25',hex:'#e84854'},
         {id:'G1',hex:'#ffe4d3'},{id:'G2',hex:'#fcc6ac'},{id:'G3',hex:'#f1c4a5'},{id:'G4',hex:'#dcb387'},{id:'G5',hex:'#e7b34e'},{id:'G6',hex:'#e3a014'},{id:'G7',hex:'#985c3a'},{id:'G8',hex:'#713d2f'},{id:'G9',hex:'#e4b685'},{id:'G10',hex:'#da8c42'},{id:'G11',hex:'#dac898'},{id:'G12',hex:'#fec993'},{id:'G13',hex:'#b2714b'},{id:'G14',hex:'#8b684c'},{id:'G15',hex:'#f6f8e3'},{id:'G16',hex:'#f2d8c1'},{id:'G17',hex:'#77544e'},{id:'G18',hex:'#ffe3d5'},{id:'G19',hex:'#dd7d41'},{id:'G20',hex:'#a5452f'},{id:'G21',hex:'#b38561'},
@@ -2543,6 +2569,8 @@
         if (!existing) {
             data.push({...dbItem, w: 0, totalUsed: 0, logs: [], monitor: true});
         } else {
+            // 修复：强制更新色值，解决旧数据颜色错误问题
+            if(dbItem.hex) existing.hex = dbItem.hex;
             // 确保旧数据也有 monitor 字段
             if(existing.monitor === undefined) existing.monitor = true;
         }
@@ -2666,9 +2694,17 @@
             <div class="card-color-block" style="background:${item.hex};" onclick="if(sel.size===0) { event.stopPropagation(); manualEdit('${item.id}'); }"></div>
 
             <div class="card-info-section" style="padding: 0 2px;">
-                 <!-- Color Code Line -->
-                 <div class="card-id-line" style="font-weight: bold; font-size: 14px; margin-bottom: 2px; color: #333; text-align: center;">
-                     ${item.id} ${monitorIcon}
+                 <!-- Color Code Line & Detail Icon -->
+                 <div class="card-id-line" style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px;">
+                     <span style="font-weight: bold; font-size: 14px; color: #333;">${item.id} ${monitorIcon}</span>
+                     <button onclick="event.stopPropagation(); openHistory('${item.id}')" style="background:none; border:none; padding:2px; color:#888; cursor:pointer; display:flex; align-items:center; line-height: 0;">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <circle cx="10" cy="14" r="3"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                     </button>
                  </div>
 
                  <!-- Weight & Grain -->
@@ -2676,22 +2712,6 @@
                      <div class="card-weight" style="${lowStyle}; font-size: 14px; font-weight: bold;">${item.w}<span class="card-unit" style="font-size:10px;">g</span></div>
                      <div class="card-grain" style="font-size: 10px; color: #999; margin-left: 4px;">≈${grainCount}粒</div>
                  </div>
-            </div>
-
-            <div class="card-footer" style="padding-top: 2px; margin-top: 2px; border-top: none;">
-                <div class="card-actions" style="width: 100%; justify-content: flex-end;">
-                    <button class="btn-card-action btn-info" onclick="event.stopPropagation(); openHistory('${item.id}')">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <circle cx="10" cy="14" r="3"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </button>
-                    <button class="btn-card-action btn-add" onclick="event.stopPropagation(); quickAdd('${item.id}')" style="font-size: 10px; font-weight: bold; width: auto; padding: 0 4px;">
-                        +10
-                    </button>
-                </div>
             </div>
         `;
         return row;
@@ -5348,7 +5368,9 @@
         // Update header count
         const countEl = document.getElementById('scanTotalCount');
         if (countEl) {
-            countEl.innerHTML = `<span style="background:#e6f7ff; color:#1890ff; padding:2px 8px; border-radius:10px; font-weight:bold;">${codeMap.size} 色</span>`;
+            let totalQty = 0;
+            codeMap.forEach(qty => totalQty += qty);
+            countEl.innerHTML = `<span style="background:#e6f7ff; color:#1890ff; padding:2px 8px; border-radius:10px; font-weight:bold;">${codeMap.size} 色 / ${totalQty} 粒</span>`;
         }
 
         // --- Debug Details Section ---
@@ -5961,13 +5983,43 @@
         const plan = findPlanById(currentPlanId, plans);
         if (!plan) return;
 
-        const newName = prompt('请输入新的计划名称:', plan.name);
-        if (newName && newName.trim() !== '') {
-            plan.name = newName.trim();
-            localStorage.setItem('bead_plans', JSON.stringify(plans));
-            document.getElementById('planDetailTitle').innerText = plan.name;
-            renderPlans();
+        openRenamePlanModal(plan.name);
+    }
+
+    function openRenamePlanModal(currentName) {
+        const modal = document.getElementById('renamePlanModal');
+        const input = document.getElementById('renamePlanInput');
+        if (modal && input) {
+            input.value = currentName;
+            showModal('renamePlanModal');
+            // Delay focus slightly to ensure modal is visible
+            setTimeout(() => input.focus(), 100);
         }
+    }
+
+    function submitRenamePlan() {
+        if (!currentPlanId) return;
+        
+        const input = document.getElementById('renamePlanInput');
+        const newName = input.value.trim();
+        
+        if (newName) {
+            let plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
+            const plan = findPlanById(currentPlanId, plans);
+            
+            if (plan) {
+                plan.name = newName;
+                localStorage.setItem('bead_plans', JSON.stringify(plans));
+                
+                // Update UI if we are viewing this plan
+                const titleEl = document.getElementById('planDetailTitle');
+                if (titleEl) titleEl.innerText = plan.name;
+                
+                renderPlans();
+                showToast(`计划重命名为 "${newName}"`);
+            }
+        }
+        closeAllModals();
     }
 
     function findPlanById(id, list) {
