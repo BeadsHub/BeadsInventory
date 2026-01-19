@@ -44,3 +44,18 @@
   - 电脑端：自动多列网格显示，利用屏幕空间。
 - **暗黑模式**：自动跟随系统切换深色/浅色主题。
 - **数据兼容**：保留了原有的数据结构，旧数据会自动加载。
+
+## 4. APK 权限与配置指南 (HBuilderX)
+为了确保**数据备份导出**与**微信分享**功能正常使用，请在 `manifest.json` 中添加以下配置：
+
+1. **模块配置 (Modules)**
+   - 勾选 `Share` (分享模块)
+   - 勾选 `File` (文件系统模块)
+
+2. **权限配置 (Permissions)**
+   - `android.permission.WRITE_EXTERNAL_STORAGE` (写入外部存储)
+   - `android.permission.READ_EXTERNAL_STORAGE` (读取外部存储)
+
+3. **微信分享设置**
+   - 若需直接调用微信分享，建议在 `SDK配置` -> `Share` 中配置微信 AppID。
+   - 若未配置，系统将尝试使用通用分享接口 (System Share Sheet)。
