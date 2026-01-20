@@ -1270,6 +1270,7 @@
 
 
 
+
 </div> <!-- End page-beads -->
 
     <div id="footer-dock" class="bottom-dock">
@@ -1394,37 +1395,6 @@
 
     <div class="container" style="padding: 15px;">
         <div id="stats-usage-view">
-            <!-- Plan Stats Card (Moved to Top) -->
-            <div class="stats-summary-card" style="padding: 20px 20px; align-items: stretch;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h4 style="margin: 0; font-size: 15px; color: #333; font-weight: 600; display:flex; align-items:center; flex: 1;">
-                        <span style="margin-right:6px;">📅</span> 计划概览
-                        <span id="btn-toggle-plan-chart" onclick="togglePlanChartVisibility()" style="margin-left: auto; cursor: pointer; color: #999; padding: 4px; display: flex; align-items: center; transition: transform 0.3s;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                        </span>
-                    </h4>
-                </div>
-                
-                <!-- Plan Filter Removed -->
-                
-                <div class="stats-metrics" style="border-top: 1px solid #f0f0f0; padding-top: 15px;">
-                    <div class="metric-item">
-                        <div id="stats-plan-total" class="metric-val" style="font-size: 20px;">0</div>
-                        <div class="metric-label">总计划</div>
-                    </div>
-                    <div class="metric-item">
-                        <div id="stats-plan-completed" class="metric-val" style="color: #52c41a; font-size: 20px;">0</div>
-                        <div class="metric-label">已完成</div>
-                    </div>
-                    <div class="metric-item">
-                        <div id="stats-plan-pending" class="metric-val" style="color: #faad14; font-size: 20px;">0</div>
-                        <div class="metric-label">计划中</div>
-                    </div>
-                </div>
-
-                <div id="stats-plan-chart" style="display: none; margin-top: 15px; border-top: 1px solid #f0f0f0; padding-top: 15px;"></div>
-            </div>
-
             <div class="stats-summary-card stats-card-horizontal">
                 <div class="metric-item" style="flex:1;">
                     <div id="stats-total-stock" class="metric-val" style="font-size:20px;">0g</div>
@@ -1474,7 +1444,12 @@
 <div id="page-plan" style="display:none; padding-bottom: 80px;">
     <div class="container" style="padding: 20px;">
         <div style="position: sticky; top: 0; z-index: 99; background: #fff; margin: -20px -20px 15px -20px; padding: 20px 20px 10px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-            <h3 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; text-align: center; color: #333; margin-top: 0;">拼豆计划</h3>
+            <h3 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; text-align: center; color: #333; margin-top: 0;">
+                拼豆计划
+                <span onclick="togglePlanOverviewContainer()" style="cursor: pointer; color: #4a90e2; font-size: 18px; margin-left: 8px; vertical-align: middle; display: inline-flex; align-items: center;" title="显示计划概览">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                </span>
+            </h3>
             
             <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
                 <div style="position: relative; flex: 1;">
@@ -1489,6 +1464,33 @@
                 <div id="filter-active" onclick="setPlanFilter('active')" style="flex: 1; text-align: center; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; background: white; color: #4a90e2; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.2s;">计划中</div>
                 <div id="filter-completed" onclick="setPlanFilter('completed')" style="flex: 1; text-align: center; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; color: #999; transition: all 0.2s;">已完成</div>
             </div>
+        </div>
+
+        <div id="plan-overview-container" class="stats-summary-card" style="display:none; margin: 10px 20px 20px 20px; padding: 20px; border-radius: 12px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <h4 style="margin: 0 0 15px 0; font-size: 15px; color: #333; font-weight: 600; display:flex; align-items:center;">
+                <span style="margin-right:6px;">📅</span> 计划概览
+            </h4>
+            
+            <div class="stats-metrics" style="border-top: 1px solid #f0f0f0; padding-top: 15px; display: flex; justify-content: space-around;">
+                <div id="metric-total" class="metric-item" onclick="togglePlanChartFilter('total')" style="cursor: pointer; padding: 5px; border-radius: 8px; transition: all 0.2s;">
+                    <div id="stats-plan-total" class="metric-val" style="font-size: 20px;">0</div>
+                    <div class="metric-label" style="color: #666; font-size: 12px;">总计划</div>
+                </div>
+                <div id="metric-completed" class="metric-item" onclick="togglePlanChartFilter('completed')" style="cursor: pointer; padding: 5px; border-radius: 8px; transition: all 0.2s;">
+                    <div id="stats-plan-completed" class="metric-val" style="color: #52c41a; font-size: 20px;">0</div>
+                    <div class="metric-label" style="color: #666; font-size: 12px;">已完成</div>
+                </div>
+                <div id="metric-pending" class="metric-item" onclick="togglePlanChartFilter('pending')" style="cursor: pointer; padding: 5px; border-radius: 8px; transition: all 0.2s;">
+                    <div id="stats-plan-pending" class="metric-val" style="color: #faad14; font-size: 20px;">0</div>
+                    <div class="metric-label" style="color: #666; font-size: 12px;">计划中</div>
+                </div>
+                <div id="metric-time" class="metric-item" onclick="togglePlanChartFilter('time')" style="cursor: pointer; padding: 5px; border-radius: 8px; transition: all 0.2s;">
+                    <div id="stats-plan-time" class="metric-val" style="color: #722ed1; font-size: 20px;">0</div>
+                    <div class="metric-label" style="color: #666; font-size: 12px;">耗时(h)</div>
+                </div>
+            </div>
+
+            <div id="stats-plan-chart" style="margin-top: 15px; border-top: 1px solid #f0f0f0; padding-top: 15px;"></div>
         </div>
 
         <div id="planList" style="display: flex; flex-direction: column; gap: 12px;">
@@ -1545,9 +1547,7 @@
     <div id="planDetailImageContainer" style="padding: 0 20px; margin-bottom: 15px; display: none;">
          <div onclick="openPlanImageViewer()" style="position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; height: 180px;">
              <img id="planDetailImage" src="" style="width: 100%; height: 100%; object-fit: cover; display: block; background: #f0f0f0;">
-             <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.5); color: white; padding: 6px; font-size: 12px; text-align: center;">
-                 🔍 点击查看大图 (支持缩放)
-             </div>
+
          </div>
     </div>
 
@@ -1695,6 +1695,7 @@
     <!-- 弹窗部分 -->
 
 <div class="overlay" id="mask" onclick="closeAllModals()"></div>
+<div class="overlay" id="mask2" onclick="closeAllModals()" style="z-index: 1015; display: none;"></div>
 <div id="consumeModal" class="modal" style="width: 85%; max-width: 340px; padding: 20px;">
     <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #333;">消耗录入 (粒数)</h3>
     <div id="modalList" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #f0f0f0; border-radius: 12px; padding: 5px;"></div>
@@ -1820,7 +1821,7 @@
     </div>
 </div>
 
-<div id="stockCheckSheet" class="modal" style="width: 100%; max-width: 100%; bottom: 0; top: auto; border-radius: 20px 20px 0 0; padding: 0; margin: 0; left: 0; transform: none; max-height: 80vh; display: none; flex-direction: column; animation: slideUpModal 0.3s ease-out;">
+<div id="stockCheckSheet" class="modal" style="width: 100%; max-width: 100%; bottom: 0; top: auto; border-radius: 20px 20px 0 0; padding: 0; margin: 0; left: 0; transform: none; max-height: 80vh; display: none; flex-direction: column; animation: slideUpModal 0.3s ease-out; z-index: 99999;">
     <div style="padding: 20px; border-bottom: 1px solid #f0f0f0;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="margin: 0; font-size: 18px; font-weight: bold;">库存确认</h3>
@@ -1856,19 +1857,27 @@
     
     <div id="viewBackup">
         <div style="padding: 20px 0; text-align: center;">
-            <div style="margin-bottom: 20px; color: #666; font-size: 13px; line-height: 1.5;">
-                将当前所有色号库存及操作记录<br>导出为 TXT 文本文件。
+            <div style="margin-bottom: 20px; color: #666; font-size: 13px; line-height: 1.6;">
+                <p>将当前所有库存及记录导出为文件。</p>
+                <p style="margin-top:8px; font-weight:bold; color:#333;">📂 导出位置说明</p>
+                <p style="font-size:12px; color:#888;">
+                    电脑端：下载到浏览器的默认下载目录<br>
+                    手机端：保存到公共 <span style="color:#4a90e2; font-weight:bold;">Download</span> 文件夹
+                </p>
             </div>
         </div>
     </div>
 
     <div id="viewRestore" style="display:none;">
         <div style="padding: 20px 0; text-align: center;">
-            <div style="margin-bottom: 20px; color: #666; font-size: 13px; line-height: 1.5;">
-                选择之前导出的TXT备份文件<br>以恢复库存数据。
+            <div style="margin-bottom: 20px; color: #666; font-size: 13px; line-height: 1.6;">
+                <p>选择备份文件以恢复数据。</p>
+                <p style="font-size:12px; color:#888; margin-top:5px;">
+                    支持从 手机文件管理 / 微信 / WPS 等途径选择<br>
+                    (请选择 .txt 格式的备份文件)
+                </p>
             </div>
-            <input type="file" id="restoreFile" style="display:none" accept=".txt,.csv,.json,.xls,.xlsx,application/json,text/plain,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/*" onchange="loadBackupFile(this)">
-            <p style="font-size:12px; color:#888; margin-top:5px; text-align:center;">支持 .txt 备份文件<br>若文件在WPS中，请先将其“另存为”或“发送”到手机内部存储的 Download 目录。</p>
+            <input type="file" id="restoreFile" style="display:none" accept=".txt,text/plain" onchange="loadBackupFile(this)">
             <textarea id="restoreInput" style="display:none;"></textarea>
             <input type="number" id="threshold" style="display:none;" value="0">
         </div>
@@ -2211,11 +2220,24 @@
                 <label style="font-size: 14px; font-weight: 600; color: #374151;">耗时记录</label>
                 <span style="font-size: 12px; color: #9ca3af;">(选填)</span>
             </div>
-            <input type="text" id="deductTimeInput" placeholder="例如: 2小时" 
-                style="width: 100%; padding: 12px; background: #f3f4f6; border: 1px solid transparent; border-radius: 12px; font-size: 15px; outline: none; box-sizing: border-box; transition: all 0.2s;"
-                onfocus="this.style.background='white'; this.style.borderColor='var(--primary)';"
-                onblur="this.style.background='#f3f4f6'; this.style.borderColor='transparent';"
-            >
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="flex: 1; position: relative;">
+                    <input type="number" id="deductTimeHours" min="0" placeholder="0" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        style="width: 100%; padding: 12px; padding-right: 30px; background: #f3f4f6; border: 1px solid transparent; border-radius: 12px; font-size: 15px; outline: none; box-sizing: border-box; transition: all 0.2s; text-align: center;"
+                        onfocus="this.style.background='white'; this.style.borderColor='var(--primary)';"
+                        onblur="this.style.background='#f3f4f6'; this.style.borderColor='transparent';"
+                    >
+                    <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 12px; pointer-events: none;">小时</span>
+                </div>
+                <div style="flex: 1; position: relative;">
+                    <input type="number" id="deductTimeMinutes" min="0" max="59" placeholder="0" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        style="width: 100%; padding: 12px; padding-right: 30px; background: #f3f4f6; border: 1px solid transparent; border-radius: 12px; font-size: 15px; outline: none; box-sizing: border-box; transition: all 0.2s; text-align: center;"
+                        onfocus="this.style.background='white'; this.style.borderColor='var(--primary)';"
+                        onblur="this.style.background='#f3f4f6'; this.style.borderColor='transparent';"
+                    >
+                    <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 12px; pointer-events: none;">分钟</span>
+                </div>
+            </div>
         </div>
 
         <div style="display: flex; gap: 12px;">
@@ -2308,7 +2330,7 @@
     <p id="modelDeleteMsg" style="text-align: center; color: #666; font-size: 14px; margin-bottom: 24px; line-height: 1.5;"></p>
     <div style="display: flex; gap: 12px;">
         <button onclick="closeModelDeleteModal()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
-        <button onclick="confirmDeleteModel()" style="flex: 1; padding: 10px; border: none; background: #ff4d4f; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">删除</button>
+        <button id="btnConfirmDeleteModel" onclick="confirmDeleteModel()" style="flex: 1; padding: 10px; border: none; background: #ff4d4f; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">删除</button>
     </div>
 </div>
 
@@ -3227,6 +3249,18 @@
 
     function closeModelEditModal() {
         document.getElementById('modelEditModal').style.display = 'none';
+        const mask2 = document.getElementById('mask2');
+        // If mask2 is visible, hide it (nested case)
+        if (mask2 && mask2.style.display === 'block') {
+            mask2.style.display = 'none';
+        } else {
+            // Otherwise, we might be the only modal, check if any others are open
+            // If no other modals are open, hide the main mask
+            const openModals = Array.from(document.querySelectorAll('.modal')).filter(el => el.style.display === 'block');
+            if (openModals.length === 0) {
+                document.getElementById('mask').style.display = 'none';
+            }
+        }
     }
 
     function submitModelEdit() {
@@ -3271,22 +3305,35 @@
     }
 
     function deleteModelFromUI(modelName) {
-        currentModelToDelete = modelName;
+        // currentModelToDelete = modelName; // Deprecated global var usage
+        const btn = document.getElementById('btnConfirmDeleteModel');
+        if(btn) btn.setAttribute('data-model', modelName);
+        
         document.getElementById('modelDeleteMsg').innerText = `确定要删除模型 "${modelName}" 吗？\n删除后将不再调用该模型。`;
         showModal('modelDeleteModal');
     }
 
     function closeModelDeleteModal() {
         document.getElementById('modelDeleteModal').style.display = 'none';
+        const mask2 = document.getElementById('mask2');
+        if (mask2) mask2.style.display = 'none';
     }
 
     function confirmDeleteModel() {
-        if (currentModelToDelete) {
-            ModelUsageManager.deleteModel(currentModelToDelete);
-            renderModelCollectionTab();
-            renderQuotaTab();
-            closeModelDeleteModal();
-            currentModelToDelete = null;
+        const btn = document.getElementById('btnConfirmDeleteModel');
+        const modelName = btn ? btn.getAttribute('data-model') : null;
+        
+        if (modelName) {
+            try {
+                ModelUsageManager.deleteModel(modelName);
+                renderModelCollectionTab();
+                renderQuotaTab();
+                closeModelDeleteModal();
+                showToast(`模型 "${modelName}" 已删除`);
+            } catch (e) {
+                console.error("Delete failed", e);
+                alert("删除失败: " + e.message);
+            }
         }
     }
 
@@ -4238,13 +4285,40 @@
     }
 
     function showModal(id) {
-        document.getElementById('mask').style.display = 'block';
+        // Check if any other modal is already open
+        const openModals = Array.from(document.querySelectorAll('.modal')).filter(el => el.style.display === 'block' && el.id !== id);
+        
+        if (openModals.length > 0) {
+            // Nested modal
+            const mask2 = document.getElementById('mask2');
+            if (mask2) {
+                mask2.style.display = 'block';
+                // Enforce blur style
+                mask2.style.backdropFilter = 'blur(8px)';
+                mask2.style.webkitBackdropFilter = 'blur(8px)';
+            }
+            document.getElementById(id).style.zIndex = '1020';
+        } else {
+            // First modal
+            const mask = document.getElementById('mask');
+            mask.style.display = 'block';
+            // Enforce blur style
+            mask.style.backdropFilter = 'blur(8px)';
+            mask.style.webkitBackdropFilter = 'blur(8px)';
+            document.getElementById(id).style.zIndex = '1010';
+        }
         document.getElementById(id).style.display = 'block';
     }
 
     function closeAllModals() {
-        document.querySelectorAll('.modal').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.modal').forEach(el => {
+            el.style.display = 'none';
+            // Reset z-index
+            el.style.zIndex = ''; 
+        });
         document.getElementById('mask').style.display = 'none';
+        const mask2 = document.getElementById('mask2');
+        if (mask2) mask2.style.display = 'none';
     }
 
     // 兼容旧函数调用，防止遗漏
@@ -5038,45 +5112,7 @@
         }
 
         // 3.1 更新计划统计
-        let plans = [];
-        try {
-            plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
-        } catch (e) {
-            console.error('Error loading plans for stats:', e);
-        }
-
-        // Use All Plans for Global Summary
-        // Helper to count real plans (leaves) - Logic from renderPlans to ensure consistency
-        const getRealCount = (list) => {
-            let count = 0;
-            list.forEach(p => {
-                if (p.subPlans && p.subPlans.length > 0) {
-                    count += getRealCount(p.subPlans);
-                } else {
-                    count++;
-                }
-            });
-            return count;
-        };
-
-        const activeList = plans.filter(p => (p.status || 'active') === 'active');
-        const completedList = plans.filter(p => (p.status || 'active') === 'completed');
-
-        const planPending = getRealCount(activeList);
-        const planCompleted = getRealCount(completedList);
-        const planTotal = planPending + planCompleted;
-
-        const elPlanTotal = document.getElementById('stats-plan-total');
-        if(elPlanTotal) elPlanTotal.textContent = planTotal;
-        
-        const elPlanCompleted = document.getElementById('stats-plan-completed');
-        if(elPlanCompleted) elPlanCompleted.textContent = planCompleted;
-        
-        const elPlanPending = document.getElementById('stats-plan-pending');
-        if(elPlanPending) elPlanPending.textContent = planPending;
-
-        // Render Plan Chart
-        renderPlanChart(plans);
+        updatePlanOverviewStats();
 
         // 4. 更新排行榜 (Stats Rank List)
         const rankListEl = document.getElementById('stats-rank-list');
@@ -5165,16 +5201,37 @@
     let planChartConfig = {
         total: true,
         completed: true,
-        pending: true
+        pending: true,
+        time: true
     };
 
     function togglePlanChartFilter(type) {
         if (planChartConfig.hasOwnProperty(type)) {
             planChartConfig[type] = !planChartConfig[type];
-            // Re-render only the chart part by calling renderStats() 
-            // Note: renderStats() is efficient enough for this small DOM update
-            renderStats();
+            updatePlanOverviewStats(); 
         }
+    }
+
+    function parseTimeSpentToHours(str) {
+        if (!str) return 0;
+        str = str.toString().toLowerCase().trim()
+                 .replace(/小时/g, 'h')
+                 .replace(/分钟/g, 'm')
+                 .replace(/分/g, 'm');
+        
+        let hours = 0;
+        const hMatch = str.match(/([\d\.]+)\s*h/);
+        if (hMatch) hours += parseFloat(hMatch[1]);
+        
+        const mMatch = str.match(/([\d\.]+)\s*m/);
+        if (mMatch) hours += parseFloat(mMatch[1]) / 60;
+        
+        // If no unit found but looks like number, assume minutes
+        if (!hMatch && !mMatch) {
+             const val = parseFloat(str);
+             if (!isNaN(val)) hours += val / 60;
+        }
+        return hours;
     }
 
     function togglePlanChartVisibility() {
@@ -5201,7 +5258,7 @@
         chartEl.style.overflowX = 'auto';
 
         // 1. Group data by Month (YYYY-MM)
-        const monthMap = new Map(); // "2025-01" -> { total: 0, completed: 0, pending: 0 }
+        const monthMap = new Map(); // "2025-01" -> { total: 0, completed: 0, pending: 0, time: 0 }
         
         // Sort plans by date
         plans.sort((a, b) => (a.created || 0) - (b.created || 0));
@@ -5217,11 +5274,14 @@
             const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             
             if (!monthMap.has(key)) {
-                monthMap.set(key, { total: 0, completed: 0, pending: 0 });
+                monthMap.set(key, { total: 0, completed: 0, pending: 0, time: 0 });
             }
             const entry = monthMap.get(key);
             entry.total++;
-            if (p.status === 'completed') entry.completed++;
+            if (p.status === 'completed') {
+                entry.completed++;
+                entry.time += parseTimeSpentToHours(p.timeSpent);
+            }
             else entry.pending++; 
         });
 
@@ -5234,7 +5294,9 @@
         // Find Max Value for scaling
         let maxVal = 0;
         data.forEach(d => {
-            maxVal = Math.max(maxVal, d.total); // Total is usually the highest
+            let localMax = d.total;
+            if (planChartConfig.time) localMax = Math.max(localMax, d.time);
+            maxVal = Math.max(maxVal, localMax);
         });
         if (maxVal === 0) maxVal = 1;
 
@@ -5245,6 +5307,7 @@
             const hTotal = (item.total / maxVal) * 100;
             const hComp = (item.completed / maxVal) * 100;
             const hPend = (item.pending / maxVal) * 100;
+            const hTime = (item.time / maxVal) * 100;
             
             // Parse date for label (e.g. "2026-01" -> "2026年1月")
             const [y, m] = item.key.split('-');
@@ -5254,6 +5317,7 @@
             const styleTotal = planChartConfig.total ? `height:${hTotal}%; background:#4a90e2;` : `display:none;`;
             const styleComp = planChartConfig.completed ? `height:${hComp}%; background:#52c41a;` : `display:none;`;
             const stylePend = planChartConfig.pending ? `height:${hPend}%; background:#faad14;` : `display:none;`;
+            const styleTime = planChartConfig.time ? `height:${hTime}%; background:#722ed1;` : `display:none;`;
 
             html += `
                 <div class="chart-col">
@@ -5261,6 +5325,7 @@
                         <div class="chart-bar" style="${styleTotal}" title="总计: ${item.total}" onclick="toggleChartBar(this)"></div>
                         <div class="chart-bar" style="${styleComp}" title="完成: ${item.completed}" onclick="toggleChartBar(this)"></div>
                         <div class="chart-bar" style="${stylePend}" title="计划: ${item.pending}" onclick="toggleChartBar(this)"></div>
+                        <div class="chart-bar" style="${styleTime}" title="耗时: ${item.time.toFixed(1)}h" onclick="toggleChartBar(this)"></div>
                     </div>
                     <div class="chart-label">${label}</div>
                 </div>
@@ -5269,21 +5334,8 @@
 
         html += `</div>`;
         
-        // Add Interactive Legend at Bottom
-        html += `
-            <div class="chart-legend">
-                <div class="legend-item ${planChartConfig.total ? 'active' : ''}" onclick="togglePlanChartFilter('total')">
-                    <div class="legend-dot" style="background:#4a90e2;"></div>总计划
-                </div>
-                <div class="legend-item ${planChartConfig.completed ? 'active' : ''}" onclick="togglePlanChartFilter('completed')">
-                    <div class="legend-dot" style="background:#52c41a;"></div>已完成
-                </div>
-                <div class="legend-item ${planChartConfig.pending ? 'active' : ''}" onclick="togglePlanChartFilter('pending')">
-                    <div class="legend-dot" style="background:#faad14;"></div>计划中
-                </div>
-            </div>
-        `;
-
+        // Add Interactive Legend at Bottom (Removed)
+        
         chartEl.innerHTML = html;
     }
 
@@ -7537,7 +7589,7 @@
     function findPlanById(id, list) {
         if (!list) list = JSON.parse(localStorage.getItem('bead_plans') || '[]');
         for (let p of list) {
-            if (p.id === id) return p;
+            if (p.id == id) return p;
             if (p.subPlans) {
                 const found = findPlanById(id, p.subPlans);
                 if (found) return found;
@@ -7600,6 +7652,15 @@
     function renderPlans() {
         const container = document.getElementById('planList');
         if (!container) return;
+
+        // Update Overview Stats if visible
+        const overviewEl = document.getElementById('plan-overview-container');
+        if (overviewEl && overviewEl.style.display !== 'none') {
+            // Use debounce or just call it? calling it directly for now.
+            // But we should avoid re-reading LS if possible. 
+            // For now, simple implementation.
+            updatePlanOverviewStats();
+        }
 
         let plans = [];
         try {
@@ -8621,16 +8682,60 @@
         if(existingDupBtn) existingDupBtn.remove();
 
         if (plan.status === 'completed') {
-            let timeStr = '';
-            if(plan.completedAt) {
-                timeStr = `<div style="font-size:13px; margin-top:6px; opacity:0.8;">完成于: ${formatTime(new Date(plan.completedAt))}</div>`;
-            }
-            if(plan.timeSpent) {
-                timeStr += `<div style="font-size:13px; margin-top:4px; opacity:0.8;">⌛ 耗时: ${plan.timeSpent}</div>`;
-            }
-            statusBanner.innerHTML = `<div style="font-weight:bold; font-size:16px;">✅ 已完成 - 库存已扣减</div>${timeStr}`;
+            // Clear status banner first
+            statusBanner.innerHTML = '';
             statusBanner.style.background = '#f6ffed';
             statusBanner.style.color = '#52c41a';
+
+            // 1. Status Text
+            const statusText = document.createElement('div');
+            statusText.style.fontWeight = 'bold';
+            statusText.style.fontSize = '16px';
+            statusText.innerText = '✅ 已完成 - 库存已扣减';
+            statusBanner.appendChild(statusText);
+
+            // 2. Completed Time
+            if (plan.completedAt) {
+                const timeDiv = document.createElement('div');
+                timeDiv.style.fontSize = '13px';
+                timeDiv.style.marginTop = '6px';
+                timeDiv.style.opacity = '0.8';
+                timeDiv.innerText = '完成于: ' + formatTime(new Date(plan.completedAt));
+                statusBanner.appendChild(timeDiv);
+            }
+            
+            // 3. Edit Time Button (Created via DOM to ensure events work)
+            const editBtn = document.createElement('button');
+            // High z-index to ensure it's on top
+            editBtn.style.cssText = "display:flex; align-items:center; gap:5px; margin-top:8px; padding:6px 10px; border:none; border-radius:6px; width:fit-content; cursor:pointer; user-select:none; position: relative; z-index: 2000; pointer-events: auto; font-family: inherit;";
+            
+            if (plan.timeSpent) {
+                 editBtn.style.background = "rgba(82, 196, 26, 0.1)";
+                 editBtn.innerHTML = `
+                    <span style="font-size:14px;">⌛</span>
+                    <span style="font-weight:500; color: #000;">${plan.timeSpent}</span>
+                    <span style="font-size:12px; color:#52c41a; margin-left:4px; opacity: 0.8;">✏️</span>`;
+            } else {
+                 editBtn.style.background = "rgba(24, 144, 255, 0.1)";
+                 editBtn.innerHTML = `
+                    <span style="font-size:14px;">⌛</span>
+                    <span style="color:#1890ff; font-weight:500; font-size:13px;">添加耗时</span>
+                    <span style="font-size:12px; color:#1890ff; margin-left:4px; opacity: 0.8;">✏️</span>`;
+            }
+
+            // Robust Event Binding: Use setAttribute 'onclick' to guarantee global scope access
+            // This bypasses potential closure/scope issues with addEventListener in some contexts
+            editBtn.setAttribute('onclick', `event.stopPropagation(); console.log('Edit clicked for ${plan.id}'); if(window.showEditTimeModal) { window.showEditTimeModal('${plan.id}'); } else { alert('Function not found'); }`);
+
+            // Add touchend for better mobile response (fast tap)
+            editBtn.addEventListener('touchend', function(e) {
+                e.preventDefault(); 
+                e.stopPropagation();
+                if(window.showEditTimeModal) window.showEditTimeModal(plan.id);
+            }, { passive: false });
+
+            statusBanner.appendChild(editBtn);
+
             if(actionButtons) actionButtons.style.display = 'none';
             
 
@@ -8935,6 +9040,7 @@
         newPlan.createdAt = Date.now();
         newPlan.status = 'active';
         delete newPlan.completedAt;
+        delete newPlan.timeSpent;
         // delete newPlan.subPlans; // Keep subPlans structure if it's a folder
         
         // If it's a folder (has subPlans), we need to update IDs of subPlans too
@@ -8945,6 +9051,7 @@
                      p.createdAt = Date.now();
                      p.status = 'active';
                      delete p.completedAt;
+                     delete p.timeSpent;
                      if(p.subPlans) updateIds(p.subPlans);
                  });
              };
@@ -9117,7 +9224,9 @@
         if(!plan) return;
 
         document.getElementById('deductPlanName').textContent = `计划: ${plan.name}`;
-        document.getElementById('deductTimeInput').value = ''; // Reset input
+        // Reset inputs
+        document.getElementById('deductTimeHours').value = '';
+        document.getElementById('deductTimeMinutes').value = '';
         showModal('deductModal');
     }
 
@@ -9138,8 +9247,38 @@
         const BEAD_WEIGHT_PER_100 = 1;
         let count = 0;
         
-        // Get time spent
-        const timeSpent = document.getElementById('deductTimeInput').value.trim();
+        // Get time spent from new inputs
+        const hVal = document.getElementById('deductTimeHours').value.trim();
+        const mVal = document.getElementById('deductTimeMinutes').value.trim();
+        let timeSpent = '';
+
+        if (hVal !== '' || mVal !== '') {
+            const h = parseInt(hVal) || 0;
+            const m = parseInt(mVal) || 0;
+            
+            if (h < 0 || m < 0) {
+                alert('耗时记录不能为负数');
+                return;
+            }
+            if (h === 0 && m === 0) {
+                 // User entered 0 and 0.
+                 // Request: "允许都填0" (Allow both to be 0)
+                 // This means explicit 0h 0m is a valid record, likely meaning "negligible time" or just explicitly recorded as 0.
+                 // If both are empty, we treat as no record.
+                 // If at least one is "0" and the other is empty or "0", we treat as 0 time.
+                 
+                 if (hVal !== '' || mVal !== '') {
+                      timeSpent = '0分钟'; // Or "0小时0分钟"
+                 }
+                 // If both empty, fall through (timeSpent stays '')
+            } else {
+                 // Format: X小时Y分钟 or just X小时 or Y分钟
+                 // To be consistent with parser: "Xh Ym" or "X小时Y分钟"
+                 if (h > 0 && m > 0) timeSpent = `${h}小时${m}分钟`;
+                 else if (h > 0) timeSpent = `${h}小时`;
+                 else if (m > 0) timeSpent = `${m}分钟`;
+            }
+        }
 
         plan.items.forEach(pItem => {
              const item = data.find(d => d.id === pItem.code);
@@ -9179,6 +9318,8 @@
             plan.completedAt = Date.now();
             if (timeSpent) {
                 plan.timeSpent = timeSpent;
+            } else {
+                delete plan.timeSpent;
             }
             
             // Check if parent collection is now fully completed
@@ -9260,6 +9401,117 @@
         selectedPlanIds.clear();
         document.getElementById('planSelectionBar').style.display = 'none';
         renderPlans();
+    }
+
+    function showEditTimeModal(planId) {
+        console.log('showEditTimeModal called with:', planId);
+        try {
+            const plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
+            const plan = findPlanById(planId, plans);
+            
+            if (!plan) {
+                console.error('Plan not found:', planId);
+                alert('未找到该计划，无法编辑耗时 (ID: ' + planId + ')');
+                return;
+            }
+
+            document.getElementById('editTimePlanId').value = planId;
+            
+            let h = '';
+            let m = '';
+            if (plan.timeSpent) {
+                // Support both "2h 30m" and "2小时30分钟" formats
+                let hMatch = plan.timeSpent.match(/(\d+)h/);
+                let mMatch = plan.timeSpent.match(/(\d+)m/);
+                
+                if (!hMatch) hMatch = plan.timeSpent.match(/(\d+)小时/);
+                if (!mMatch) mMatch = plan.timeSpent.match(/(\d+)分钟/);
+                
+                if (hMatch) h = hMatch[1];
+                if (mMatch) m = mMatch[1];
+            }
+            
+            const elHours = document.getElementById('editTimeHours');
+            const elMinutes = document.getElementById('editTimeMinutes');
+
+            if (elHours) elHours.value = h;
+            if (elMinutes) elMinutes.value = m;
+            
+            // Force show mask and modal with explicit z-index handling
+            const modal = document.getElementById('editTimeModal');
+            const mask = document.getElementById('mask');
+            
+            // 1. Show Mask (High Z-Index)
+            mask.style.display = 'block';
+            mask.style.zIndex = '9999'; 
+            
+            // 2. Show Modal (Higher Z-Index)
+            modal.style.display = 'block';
+            modal.style.zIndex = '10001';
+            
+            // 3. Reset Animation to ensure it plays
+             modal.style.animation = 'none';
+             modal.offsetHeight; // trigger reflow
+             modal.style.animation = 'modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+             
+             // Ensure position is correct
+             modal.style.position = 'fixed';
+             modal.style.top = '50%';
+             modal.style.left = '50%';
+             modal.style.transform = 'translate(-50%, -50%)';
+             
+         } catch (e) {
+             console.error('Error in showEditTimeModal:', e);
+            alert('打开编辑弹窗出错: ' + e.message);
+        }
+    }
+    window.showEditTimeModal = showEditTimeModal;
+
+    function savePlanTime() {
+        const planId = document.getElementById('editTimePlanId').value;
+        const hVal = document.getElementById('editTimeHours').value.trim();
+        const mVal = document.getElementById('editTimeMinutes').value.trim();
+        
+        const h = hVal ? parseInt(hVal, 10) : 0;
+        const m = mVal ? parseInt(mVal, 10) : 0;
+        
+        let timeStr = '';
+        if (h > 0) timeStr += `${h}h `;
+        if (m > 0) timeStr += `${m}m`;
+        timeStr = timeStr.trim();
+        
+        let plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
+        
+        const update = (list) => {
+            for (let p of list) {
+                if (p.id === planId) {
+                    if (timeStr) {
+                        p.timeSpent = timeStr;
+                    } else {
+                        delete p.timeSpent;
+                    }
+                    return true;
+                }
+                if (p.subPlans && p.subPlans.length > 0) {
+                    if (update(p.subPlans)) return true;
+                }
+            }
+            return false;
+        };
+        
+        if (update(plans)) {
+            localStorage.setItem('bead_plans', JSON.stringify(plans));
+            closeAllModals();
+            renderPlans();
+            
+            // If we are on the detail page for this plan, refresh it
+            if (document.getElementById('page-plan-detail').style.display === 'block' && currentPlanId === planId) {
+                 viewPlanDetail(planId);
+            }
+            
+            showToast('耗时已更新');
+            if (typeof updatePlanOverviewStats === 'function') updatePlanOverviewStats();
+        }
     }
 
     function togglePlanSelection(id) {
@@ -9466,6 +9718,7 @@
             console.error(err);
         });
     }
+
 </script>
 <!-- Floating Add Button -->
 <div id="floatingHomeBtn" class="floating-home-btn" onclick="navTo('home')">
@@ -10099,6 +10352,93 @@ function confirmBatchAdd() {
         updateImageTransform();
     }, {passive: false});
 
+    function togglePlanOverviewContainer() {
+        const el = document.getElementById('plan-overview-container');
+        if (el) {
+            if (el.style.display === 'none') {
+                el.style.display = 'block';
+                updatePlanOverviewStats();
+            } else {
+                el.style.display = 'none';
+            }
+        }
+    }
+
+    function updatePlanOverviewStats() {
+        let plans = [];
+        try {
+            plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
+        } catch (e) {
+            console.error('Error loading plans for stats:', e);
+        }
+        
+        const getRealCount = (list) => {
+            let count = 0;
+            list.forEach(p => {
+                if (p.subPlans && p.subPlans.length > 0) {
+                    count += getRealCount(p.subPlans);
+                } else {
+                    count++;
+                }
+            });
+            return count;
+        };
+
+        const getRealTime = (list) => {
+            let t = 0;
+            list.forEach(p => {
+                if (p.subPlans && p.subPlans.length > 0) {
+                    t += getRealTime(p.subPlans);
+                } else {
+                    if(p.status === 'completed') {
+                        t += parseTimeSpentToHours(p.timeSpent);
+                    }
+                }
+            });
+            return t;
+        };
+
+        const activeList = plans.filter(p => (p.status || 'active') === 'active');
+        const completedList = plans.filter(p => (p.status || 'active') === 'completed');
+
+        const planPending = getRealCount(activeList);
+        const planCompleted = getRealCount(completedList);
+        const planTotal = planPending + planCompleted;
+        const planTime = getRealTime(plans);
+
+        const elPlanTotal = document.getElementById('stats-plan-total');
+        if(elPlanTotal) elPlanTotal.textContent = planTotal;
+        
+        const elPlanCompleted = document.getElementById('stats-plan-completed');
+        if(elPlanCompleted) elPlanCompleted.textContent = planCompleted;
+        
+        const elPlanPending = document.getElementById('stats-plan-pending');
+        if(elPlanPending) elPlanPending.textContent = planPending;
+
+        const elPlanTime = document.getElementById('stats-plan-time');
+        if(elPlanTime) elPlanTime.textContent = planTime.toFixed(1);
+
+        // Update UI state based on planChartConfig
+        const setMetricActive = (id, active, color) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (active) {
+                el.style.border = `2px solid ${color}`;
+                el.style.background = '#f9f9f9';
+            } else {
+                el.style.border = '2px solid transparent';
+                el.style.background = 'transparent';
+            }
+        };
+
+        setMetricActive('metric-total', planChartConfig.total, '#4a90e2');
+        setMetricActive('metric-completed', planChartConfig.completed, '#52c41a');
+        setMetricActive('metric-pending', planChartConfig.pending, '#faad14');
+        setMetricActive('metric-time', planChartConfig.time, '#722ed1');
+
+        renderPlanChart(plans);
+    }
+
 </script>
     <!-- Image Viewer Modal -->
     <div id="planImageViewer" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; overflow: hidden; touch-action: none;">
@@ -10115,9 +10455,49 @@ function confirmBatchAdd() {
              <img id="planFullImage" src="" style="max-width: 100%; max-height: 100%; transition: transform 0.1s linear; transform-origin: center center;">
          </div>
          
-         <div style="position: absolute; bottom: 30px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.6); font-size: 13px; pointer-events: none;">
-             双指缩放 · 单指拖动
-         </div>
+
     </div>
+
+<!-- Moved editTimeModal to body root to ensure proper z-index and positioning -->
+<div id="editTimeModal" class="modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width: 85%; max-width: 320px; padding: 0; border-radius: 20px; z-index: 10001; overflow: hidden; background: #fff;">
+    <div style="background: linear-gradient(135deg, #e6f7ff 0%, #ffffff 100%); padding: 24px 20px 10px 20px; text-align: center;">
+        <div style="font-size: 32px; margin-bottom: 8px;">⏳</div>
+        <h3 style="margin: 0; font-size: 18px; color: #333; font-weight: 600;">记录制作耗时</h3>
+        <p style="margin: 4px 0 0 0; font-size: 13px; color: #666;">记录下你的心血与时间</p>
+    </div>
+    
+    <div style="padding: 20px;">
+        <input type="hidden" id="editTimePlanId">
+        
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 24px;">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                <div style="position: relative; width: 100%;">
+                    <input type="number" id="editTimeHours" min="0" placeholder="0" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        style="width: 100%; padding: 12px; padding-right: 30px; background: #f9fafb; border: 2px solid #f0f0f0; border-radius: 12px; font-size: 20px; outline: none; box-sizing: border-box; transition: all 0.2s; text-align: center; font-weight: bold; color: #333;"
+                        onfocus="this.style.background='white'; this.style.borderColor='var(--primary)';"
+                        onblur="this.style.background='#f9fafb'; this.style.borderColor='#f0f0f0';"
+                    >
+                    <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 12px; pointer-events: none;">小时</span>
+                </div>
+            </div>
+            <div style="font-weight: bold; color: #ccc;">:</div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                <div style="position: relative; width: 100%;">
+                    <input type="number" id="editTimeMinutes" min="0" max="59" placeholder="0" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        style="width: 100%; padding: 12px; padding-right: 30px; background: #f9fafb; border: 2px solid #f0f0f0; border-radius: 12px; font-size: 20px; outline: none; box-sizing: border-box; transition: all 0.2s; text-align: center; font-weight: bold; color: #333;"
+                        onfocus="this.style.background='white'; this.style.borderColor='var(--primary)';"
+                        onblur="this.style.background='#f9fafb'; this.style.borderColor='#f0f0f0';"
+                    >
+                    <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 12px; pointer-events: none;">分钟</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px;">
+            <button onclick="closeAllModals()" style="flex: 1; padding: 12px; border: 1px solid #eee; background: white; color: #666; border-radius: 12px; font-size: 15px; font-weight: 500;">取消</button>
+            <button onclick="savePlanTime()" style="flex: 1; padding: 12px; border: none; background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%); color: white; border-radius: 12px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);">保存</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
