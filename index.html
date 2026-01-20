@@ -1320,6 +1320,16 @@
                      </div>
                      <div style="color: #ccc;">›</div>
                  </div>
+
+                 <!-- Cost Settings -->
+                 <div onclick="openCostModal()" style="display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #f6ffed; color: #52c41a; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 20px;">💰</div>
+                    <div style="flex: 1;">
+                         <div style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px;">成本设置</div>
+                         <div style="font-size: 12px; color: #999;">设置豆子单价，自动计算成本</div>
+                     </div>
+                     <div style="color: #ccc;">›</div>
+                 </div>
                  
                  <!-- Ignored List -->
                  <div onclick="openIgnoredModal(true)" style="display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer;">
@@ -4498,59 +4508,46 @@
         const jsonStr = JSON.stringify(backupObj, null, 2);
         const fileName = `Mard_Inventory_Backup_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.txt`;
         
+        // 强制使用最简单的 Blob 下载，放弃 HBuilderX/HTML5+ 的文件系统 API
+        // 因为在高版本 Android 上，直接文件写入权限非常严格，容易失败
+        // Web 触发下载是最兼容的方式，它会自动唤起系统的下载管理器
         
-        // Strategy 1: HTML5+ (App) - File System Download (Prioritize Public Downloads)
-        if (window.plus && window.plus.io) {
-             // 尝试直接访问手机公共下载目录 /storage/emulated/0/Download/
-             // 这能解决部分 Android 机型 PUBLIC_DOWNLOADS 指向私有目录导致文件无法在文件管理器中找到的问题
-             const publicDownloadPath = "file:///storage/emulated/0/Download/";
-             
-             plus.io.resolveLocalFileSystemURL(publicDownloadPath, function(entry) {
-                entry.getFile(fileName, {create: true, exclusive: false}, function(fileEntry) {
-                    fileEntry.createWriter(function(writer) {
-                        writer.onwrite = function() {
-                            showToast(`备份已导出！\n路径: Download/${fileName}`);
-                            alert(`备份成功！\n\n文件已保存至手机公共【Download】文件夹。\n\n文件名: ${fileName}\n\n(导入时请在“下载”或“Download”分类中查找)`);
-                        };
-                        writer.onerror = function(e) {
-                             console.error("写入公共目录失败", e);
-                             triggerWebDownload(); // 写入失败尝试使用 Web 下载
-                        };
-                        writer.write(jsonStr);
-                    }, function(e){ 
-                        console.error("创建写入器失败", e);
-                        triggerWebDownload();
-                    });
-                }, function(e){ 
-                    console.error("创建文件失败", e);
-                    triggerWebDownload();
-                });
-             }, function(e) {
-                 console.log("无法直接访问 Download 目录，尝试使用系统 API", e);
-                 triggerWebDownload();
-             });
-             return;
-        }
-
-        // Strategy 2: Web Standard (Also used as fallback for App)
         triggerWebDownload();
 
         function triggerWebDownload() {
             try {
+                // 1. Create Blob
                 const blob = new Blob([jsonStr], {type: "text/plain;charset=utf-8"});
+                
+                // 2. Create URL
                 const url = URL.createObjectURL(blob);
+                
+                // 3. Create Link
                 const a = document.createElement('a');
+                a.style.display = 'none';
                 a.href = url;
                 a.download = fileName;
+                
+                // 4. Trigger Click
                 document.body.appendChild(a);
                 a.click();
-                setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
                 
+                // 5. Cleanup
+                setTimeout(() => { 
+                    document.body.removeChild(a); 
+                    URL.revokeObjectURL(url); 
+                }, 2000);
+                
+                // 6. User Feedback
                 if (window.plus) {
-                    showToast("已调起系统下载，请查看通知栏或系统【下载】文件夹");
+                    // 对于 APP 环境，提示更明确
+                    showToast("已请求系统下载，请查看通知栏");
+                } else {
+                    showToast("已开始下载");
                 }
             } catch(e) {
-                alert("导出失败: " + e.message);
+                console.error("Web download failed:", e);
+                alert("导出失败，请截图保存以下数据:\n" + e.message);
             }
         }
     }
@@ -8107,7 +8104,54 @@
                     <div style="font-size: 11px; color: #999; white-space: nowrap; margin-bottom: 8px; text-align: right;">
                         <div>${dateStr}</div>
                         ${completedDateStr ? `<div style="margin-bottom: 2px;">${completedDateStr}</div>` : ''}
-                        ${(plan.status === 'completed' && plan.timeSpent) ? `<div style="margin-bottom: 2px; color: #8c8c8c;">⌛ ${plan.timeSpent}</div>` : ''}
+                        ${(plan.status === 'completed' && (plan.timeSpent || isFolder)) ? (() => {
+                             // Correct logic for displaying time on CARD:
+                             // If folder, calculate sum of subplans recursively
+                             // If normal plan, use timeSpent directly
+                             let displayTime = plan.timeSpent;
+                             
+                             if (isFolder && plan.subPlans && plan.subPlans.length > 0) {
+                                let totalMin = 0;
+                                const sumTime = (p) => {
+                                    if (p.timeSpent) {
+                                        let h = 0, m = 0;
+                                        let hMatch = p.timeSpent.match(/(\d+)h/);
+                                        let mMatch = p.timeSpent.match(/(\d+)m/);
+                                        if (!hMatch) hMatch = p.timeSpent.match(/(\d+)小时/);
+                                        if (!mMatch) mMatch = p.timeSpent.match(/(\d+)分钟/);
+                                        if (hMatch) h = parseInt(hMatch[1]);
+                                        if (mMatch) m = parseInt(mMatch[1]);
+                                        totalMin += h * 60 + m;
+                                    }
+                                    if (p.subPlans) p.subPlans.forEach(sumTime);
+                                };
+                                
+                                // FIX: Don't sum the folder itself recursively if it's already included in the initial call
+                                // sumTime(plan) calls p.subPlans.forEach(sumTime), which is correct.
+                                // BUT, 'plan' itself might have 'timeSpent' (residue from before it was a folder, or set incorrectly).
+                                // We should ignore the folder's OWN timeSpent if we are aggregating subplans, 
+                                // OR we should treat the folder as just a container.
+                                // The issue "8h vs 16h" suggests double counting or partial counting.
+                                // If "ces" has timeSpent="8h" AND has subplans with 6h+2h=8h.
+                                // sumTime(plan) -> adds plan.timeSpent(8h) -> recurses subplans(6h+2h) -> total 16h.
+                                // FIX: Pass subPlans to sumTime, don't pass 'plan' itself to avoid counting the container's residue time.
+                                
+                                plan.subPlans.forEach(sumTime);
+                                
+                                if (totalMin > 0) {
+                                    const h = Math.floor(totalMin / 60);
+                                    const m = totalMin % 60;
+                                    displayTime = '';
+                                    if (h > 0) displayTime += `${h}h `;
+                                    if (m > 0) displayTime += `${m}m`;
+                                    displayTime = displayTime.trim();
+                                } else {
+                                    displayTime = null;
+                                }
+                             }
+                             
+                             return displayTime ? `<div style="margin-bottom: 2px; color: #8c8c8c;">⌛ ${displayTime}</div>` : '';
+                        })() : ''}
                     </div>
 
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -8709,30 +8753,95 @@
             // High z-index to ensure it's on top
             editBtn.style.cssText = "display:flex; align-items:center; gap:5px; margin-top:8px; padding:6px 10px; border:none; border-radius:6px; width:fit-content; cursor:pointer; user-select:none; position: relative; z-index: 2000; pointer-events: auto; font-family: inherit;";
             
-            if (plan.timeSpent) {
-                 editBtn.style.background = "rgba(82, 196, 26, 0.1)";
-                 editBtn.innerHTML = `
-                    <span style="font-size:14px;">⌛</span>
-                    <span style="font-weight:500; color: #000;">${plan.timeSpent}</span>
-                    <span style="font-size:12px; color:#52c41a; margin-left:4px; opacity: 0.8;">✏️</span>`;
-            } else {
-                 editBtn.style.background = "rgba(24, 144, 255, 0.1)";
-                 editBtn.innerHTML = `
-                    <span style="font-size:14px;">⌛</span>
-                    <span style="color:#1890ff; font-weight:500; font-size:13px;">添加耗时</span>
-                    <span style="font-size:12px; color:#1890ff; margin-left:4px; opacity: 0.8;">✏️</span>`;
+            // Calculate aggregated time spent for display if not set directly
+            // If plan has no timeSpent but has subPlans, sum them up
+            let displayTime = plan.timeSpent;
+            let isAggregated = false;
+            
+            // Determine if it is an aggregated plan (Collection)
+            // It is aggregated if it has subPlans AND (it has no direct timeSpent OR we want to force aggregation for collections)
+            // Requirement: "Completed collection plan time is sum of subplans, cannot be modified."
+            // So if subPlans exist, we treat it as aggregated for time calculation purposes, ignoring any potential direct timeSpent residue.
+            if (plan.subPlans && plan.subPlans.length > 0) {
+                let totalMin = 0;
+                const sumTime = (p) => {
+                    if (p.timeSpent) {
+                        let h = 0, m = 0;
+                        let hMatch = p.timeSpent.match(/(\d+)h/);
+                        let mMatch = p.timeSpent.match(/(\d+)m/);
+                        if (!hMatch) hMatch = p.timeSpent.match(/(\d+)小时/);
+                        if (!mMatch) mMatch = p.timeSpent.match(/(\d+)分钟/);
+                        if (hMatch) h = parseInt(hMatch[1]);
+                        if (mMatch) m = parseInt(mMatch[1]);
+                        totalMin += h * 60 + m;
+                    }
+                    if (p.subPlans) p.subPlans.forEach(sumTime);
+                };
+                sumTime(plan); // Keep original logic but modify sumTime internal if needed OR fix recursion
+                // Current logic: sumTime(plan) adds plan.timeSpent THEN recurses subPlans.
+                // For a collection, we ONLY want subPlans.
+                // FIX:
+                totalMin = 0; // Reset
+                if (plan.subPlans) plan.subPlans.forEach(sumTime); // Only recurse children, ignore parent's own timeSpent field which might be stale or duplicate
+                
+                if (totalMin > 0) {
+                    const h = Math.floor(totalMin / 60);
+                    const m = totalMin % 60;
+                    displayTime = '';
+                    if (h > 0) displayTime += `${h}h `;
+                    if (m > 0) displayTime += `${m}m`;
+                    displayTime = displayTime.trim();
+                } else {
+                    displayTime = '0m'; // Aggregated but 0
+                }
+                isAggregated = true;
             }
 
-            // Robust Event Binding: Use setAttribute 'onclick' to guarantee global scope access
-            // This bypasses potential closure/scope issues with addEventListener in some contexts
-            editBtn.setAttribute('onclick', `event.stopPropagation(); console.log('Edit clicked for ${plan.id}'); if(window.showEditTimeModal) { window.showEditTimeModal('${plan.id}'); } else { alert('Function not found'); }`);
+            if (displayTime) {
+                 editBtn.style.background = "rgba(82, 196, 26, 0.1)";
+                 // If aggregated, show lock icon instead of pencil
+                 const icon = isAggregated ? '🔒' : '✏️';
+                 editBtn.innerHTML = `
+                    <span style="font-size:14px;">⌛</span>
+                    <span style="font-weight:500; color: #000;">${displayTime}</span>
+                    <span style="font-size:12px; color:#52c41a; margin-left:4px; opacity: 0.8;">${icon}</span>`;
+            } else {
+                 if (isAggregated) {
+                     // Aggregated but no time (0m)
+                     editBtn.style.background = "rgba(82, 196, 26, 0.1)";
+                     editBtn.innerHTML = `
+                        <span style="font-size:14px;">⌛</span>
+                        <span style="font-weight:500; color: #000;">0m</span>
+                        <span style="font-size:12px; color:#52c41a; margin-left:4px; opacity: 0.8;">🔒</span>`;
+                 } else {
+                     editBtn.style.background = "rgba(24, 144, 255, 0.1)";
+                     editBtn.innerHTML = `
+                        <span style="font-size:14px;">⌛</span>
+                        <span style="color:#1890ff; font-weight:500; font-size:13px;">添加耗时</span>
+                        <span style="font-size:12px; color:#1890ff; margin-left:4px; opacity: 0.8;">✏️</span>`;
+                 }
+            }
 
-            // Add touchend for better mobile response (fast tap)
-            editBtn.addEventListener('touchend', function(e) {
-                e.preventDefault(); 
-                e.stopPropagation();
-                if(window.showEditTimeModal) window.showEditTimeModal(plan.id);
-            }, { passive: false });
+            // Robust Event Binding
+            if (isAggregated) {
+                // If aggregated, click shows explanation toast instead of edit modal
+                editBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    showToast('这是合集计划，耗时由子计划自动累加');
+                };
+                editBtn.ontouchstart = function(e) { e.stopPropagation(); }; // Prevent ghost clicks
+            } else {
+                // Normal editable plan
+                editBtn.setAttribute('onclick', `event.stopPropagation(); console.log('Edit clicked for ${plan.id}'); if(window.showEditTimeModal) { window.showEditTimeModal('${plan.id}'); } else { alert('Function not found'); }`);
+                
+                // Add touchend for better mobile response (fast tap)
+                editBtn.addEventListener('touchend', function(e) {
+                    e.preventDefault(); 
+                    e.stopPropagation();
+                    if(window.showEditTimeModal) window.showEditTimeModal(plan.id);
+                }, { passive: false });
+            }
 
             statusBanner.appendChild(editBtn);
 
@@ -8750,6 +8859,52 @@
         const totalQty = plan.items.reduce((sum, item) => sum + item.qty, 0);
         document.getElementById('planDetailColorCount').innerText = plan.items.length;
         document.getElementById('planDetailBeadCount').innerText = totalQty.toLocaleString();
+        
+        // Calculate and display cost
+        const storedCost = localStorage.getItem('bead_unit_cost');
+        const unitCost = storedCost ? parseFloat(storedCost) : 0.1;
+        const totalWeight = totalQty / 100; // 100 beads approx 1g (based on BEAD_WEIGHT_PER_100 logic usually 1g=100)
+        // Actually code uses BEAD_WEIGHT_PER_100 = 1 (1g per 100 beads).
+        // So total weight is totalQty / 100.
+        const totalCost = totalWeight * unitCost;
+        
+        // Create or update cost element
+        // FIX: Remove duplicates first to prevent multiple cost cards stacking up
+        const existingCostContainers = document.querySelectorAll('[id^="planDetailCostContainer"]');
+        existingCostContainers.forEach(el => el.remove());
+        
+        let costEl = document.getElementById('planDetailCost');
+        // Always recreate or re-find after cleanup
+        if (true) { // Logic simplified: cleanup and recreate is safer than "if (!costEl)" which failed
+            // Insert after the counts row
+            const countsRow = document.querySelector('.detail-stats'); 
+            
+            const statsContainer = document.getElementById('planDetailBeadCount').parentNode.parentNode;
+            
+            const costContainer = document.createElement('div');
+            costContainer.id = 'planDetailCostContainer';
+            costContainer.style.cssText = "background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;";
+            
+            costContainer.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: #fff7e6; color: #fa8c16; display: flex; align-items: center; justify-content: center; font-size: 16px;">💰</div>
+                    <div>
+                        <div style="font-size: 11px; color: #999;">预计成本</div>
+                        <div style="font-size: 15px; font-weight: bold; color: #333;">¥ <span id="planDetailCostValue">0.00</span></div>
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: #ccc;">(基于 ${unitCost}元/g)</div>
+            `;
+            
+            statsContainer.parentNode.insertBefore(costContainer, statsContainer.nextSibling);
+            costEl = document.getElementById('planDetailCostValue');
+        }
+        
+        // Update value
+        if(costEl) {
+             costEl.innerText = totalCost.toFixed(2);
+        }
+
 
         // Render List using the current sort mode (reset to default or keep?)
         // Let's reset to default 'qty' when opening a plan, or keep previous if we want.
@@ -8905,6 +9060,7 @@
                  rightContent = `
                     <div style="text-align: right;">
                         <div style="color: #ff4d4f; font-weight: bold; font-size: 16px;">-${missingBeads.toLocaleString()}</div>
+                        <button onclick="showSubstituteModal('${item.code}', ${neededWeight}, ${missingBeads})" style="margin-top:4px; font-size:10px; padding:2px 6px; background:#fff1f0; border:1px solid #ffa39e; color:#cf1322; border-radius:4px; cursor:pointer;">🔍找替补</button>
                     </div>
                  `;
              } else {
@@ -8996,6 +9152,191 @@
         if (plan.subPlans && plan.subPlans.length > 0) {
             plan.subPlans.forEach(sub => rollbackPlanInventory(sub));
         }
+    }
+
+    // --- Cost Settings Logic ---
+    function openCostModal() {
+        const storedCost = localStorage.getItem('bead_unit_cost');
+        const cost = storedCost ? parseFloat(storedCost) : 0.1; // Default 0.1 per gram
+        
+        // We reuse the batchInputModal style or create a new small modal for settings
+        // Since we want to keep it simple, let's create a specific modal for this
+        const modalId = 'costSettingModal';
+        let modal = document.getElementById(modalId);
+        
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = modalId;
+            modal.className = 'modal';
+            modal.style.width = '85%';
+            modal.style.maxWidth = '300px';
+            modal.innerHTML = `
+                <h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; text-align:center;">成本设置</h3>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; margin-bottom:8px; font-size:14px; color:#666;">单克成本 (元/g)</label>
+                    <input type="number" id="costInput" step="0.01" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:16px; box-sizing:border-box;">
+                    <p style="margin-top:5px; font-size:12px; color:#999;">例如：一包50g卖5元，则单克成本为0.1</p>
+                </div>
+                <div class="modal-btn-group">
+                    <button class="m-btn m-btn-primary" onclick="saveCostSettings()">保存</button>
+                    <button class="m-btn m-btn-ghost" onclick="closeAllModals()">取消</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        document.getElementById('costInput').value = cost;
+        showModal(modalId);
+    }
+
+    function saveCostSettings() {
+        const val = parseFloat(document.getElementById('costInput').value);
+        if (isNaN(val) || val < 0) {
+            alert('请输入有效的金额');
+            return;
+        }
+        localStorage.setItem('bead_unit_cost', val);
+        showToast('成本设置已保存');
+        closeAllModals();
+        
+        // Refresh detail page if open
+        if (currentPlanId && document.getElementById('page-plan-detail').style.display === 'block') {
+            viewPlanDetail(currentPlanId);
+        }
+    }
+
+    // --- Color Substitution Logic ---
+    function hexToRgb(hex) {
+        // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+        var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+        hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+            return r + r + g + g + b + b;
+        });
+      
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    function getColorDistance(color1, color2) {
+        // Euclidean distance in RGB space
+        // Could be improved with Lab or weighted RGB, but this is sufficient for basic finding
+        return Math.sqrt(
+            Math.pow(color1.r - color2.r, 2) +
+            Math.pow(color1.g - color2.g, 2) +
+            Math.pow(color1.b - color2.b, 2)
+        );
+    }
+
+    function findSubstituteBead(targetBeadId, requiredWeight) {
+        const targetBead = data.find(d => d.id === targetBeadId);
+        if (!targetBead || !targetBead.hex) return [];
+
+        const targetRgb = hexToRgb(targetBead.hex);
+        if (!targetRgb) return [];
+
+        // Candidates: 
+        // 1. Have hex
+        // 2. Have enough stock (w >= requiredWeight)
+        // 3. Not the target itself
+        const candidates = data.filter(d => 
+            d.id !== targetBeadId && 
+            d.hex && 
+            (d.w || 0) >= requiredWeight
+        );
+
+        const results = candidates.map(d => {
+            const rgb = hexToRgb(d.hex);
+            if (!rgb) return null;
+            return {
+                bead: d,
+                dist: getColorDistance(targetRgb, rgb)
+            };
+        }).filter(r => r !== null);
+
+        // Sort by distance (smaller is better)
+        results.sort((a, b) => a.dist - b.dist);
+
+        // Return top 3
+        return results.slice(0, 3);
+    }
+
+    function showSubstituteModal(targetBeadId, requiredWeight, missingBeadsCount) {
+        const substitutes = findSubstituteBead(targetBeadId, requiredWeight);
+        
+        const modalId = 'substituteModal';
+        let modal = document.getElementById(modalId);
+        
+        // Always recreate content to ensure freshness
+        if (modal) modal.remove();
+        
+        modal = document.createElement('div');
+        modal.id = modalId;
+        modal.className = 'modal';
+        modal.style.width = '85%';
+        modal.style.maxWidth = '320px';
+        modal.style.zIndex = '100000'; // Higher than stock check
+        
+        const targetBead = data.find(d => d.id === targetBeadId);
+        
+        let html = `
+            <h3 style="font-size:18px; font-weight:bold; margin-bottom:15px; text-align:center;">寻找替补色</h3>
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#fff1f0; border-radius:8px; border:1px solid #ffa39e;">
+                    <div style="width:24px; height:24px; background:${targetBead.hex}; border-radius:4px; border:1px solid rgba(0,0,0,0.1);"></div>
+                    <span style="font-weight:bold; color:#cf1322;">${targetBeadId}</span>
+                    <span style="color:#666; font-size:12px;">缺 ${missingBeadsCount} 粒</span>
+                </div>
+            </div>
+        `;
+        
+        if (substitutes.length === 0) {
+            html += `<div style="text-align:center; color:#999; padding:20px;">没有找到库存充足的近似色</div>`;
+        } else {
+            html += `<div style="display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto;">`;
+            substitutes.forEach(sub => {
+                const d = sub.bead;
+                // Calculate match percentage roughly: max dist is sqrt(255^2*3) ≈ 441. 
+                // 100 - (dist / 441 * 100)
+                const match = Math.max(0, Math.round(100 - (sub.dist / 4.41)));
+                
+                html += `
+                    <div style="display:flex; align-items:center; padding:10px; border:1px solid #eee; border-radius:8px;">
+                        <div style="width:30px; height:30px; background:${d.hex}; border-radius:6px; border:1px solid rgba(0,0,0,0.1); margin-right:10px;"></div>
+                        <div style="flex:1;">
+                            <div style="font-weight:bold; color:#333;">${d.id}</div>
+                            <div style="font-size:12px; color:#666;">库存: ${Math.floor(d.w * 100)} 粒</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:12px; color:#52c41a; font-weight:bold;">相似度 ${match}%</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+        
+        html += `
+            <div class="modal-btn-group" style="margin-top:20px;">
+                <button class="m-btn m-btn-primary" onclick="document.getElementById('${modalId}').style.display='none';">关闭</button>
+            </div>
+        `;
+        
+        modal.innerHTML = html;
+        document.body.appendChild(modal);
+        
+        // Show logic (manual because we need high z-index and it's a second modal)
+        modal.style.display = 'block';
+        // Ensure backdrop is handled if needed, but since we are over another modal, we might just overlay.
+        // Or we can use showModal if we manage z-index carefully.
+        // Let's manually set it to be safe on top of 99999
+        modal.style.position = 'fixed';
+        modal.style.top = '50%';
+        modal.style.left = '50%';
+        modal.style.transform = 'translate(-50%, -50%)';
     }
 
     function revertPlanToActive(id) {
@@ -9698,7 +10039,7 @@
     }
     
 
-    // --- Pull to Refresh Feature (Removed) ---
+    // --- Copy Aggregated Shopping List ---
     function copyMissingSummary() {
         const plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
         const summary = aggregateActivePlanRequirements(plans);
@@ -9709,15 +10050,50 @@
         
         // Format: "缺货预警：\nC11 缺9.66g\nC13 缺4.52g"
         summary.shortages.sort((a, b) => b.missingQty - a.missingQty);
-        const text = "缺货预警：\n" + summary.shortages.map(item => `${item.code} 缺${item.missingQty}g`).join('\n');
         
-        navigator.clipboard.writeText(text).then(() => {
-            showToast("已复制缺货清单");
-        }).catch(err => {
-            showToast("复制失败");
-            console.error(err);
-        });
+        // Calculate beads count: missingQty * 100 (since 1g=100beads approx in this system's logic or using BEAD_WEIGHT_PER_100=1)
+        // Let's use standard unit "包" or "粒" if preferred. 
+        // User asked for "A1: 需补2包". Let's assume 1 bag = 500 or 1000? 
+        // Or just output grams/count. Let's output grams and estimated count.
+        
+        const text = "【补货清单】\n" + summary.shortages.map(item => {
+            // item.missingQty is in 'g' (based on currentStock vs neededWeight logic)
+            // 1 unit in system usually 10g (1000 beads)
+            // Let's just output "Need X g"
+            const bags = Math.ceil(item.missingQty / 50); // Assume 1 bag = 50g
+            return `${item.code}: 缺${Math.ceil(item.missingQty)}g (约${bags}包)`;
+        }).join('\n');
+        
+        // Web Clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+             navigator.clipboard.writeText(text).then(() => {
+                showToast("已复制补货清单");
+             }).catch(err => {
+                fallbackCopyText(text);
+             });
+        } else {
+             fallbackCopyText(text);
+        }
     }
+
+    function fallbackCopyText(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed"; 
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showToast("已复制补货清单");
+        } catch (err) {
+            console.error('Fallback copy failed', err);
+            showToast("复制失败");
+        }
+        document.body.removeChild(textArea);
+    }
+
 
 </script>
 <!-- Floating Add Button -->
