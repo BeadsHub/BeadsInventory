@@ -465,14 +465,15 @@
         }
     }
     let specs = [];
-    const specColors = ['#f5dce0', '#dcedc8', '#fdf6c6', '#adc6ff', '#d3adf7']; // Pink, Green, Yellow, Blue, Purple
+    const specColors = ['#f5dce0', '#dcedc8', '#fdf6c6', '#adc6ff', '#d3adf7', '#ffccbc']; // Pink, Green, Yellow, Blue, Purple, Orange
 
     function addSpec() {
-        if (specs.length >= 5) {
-            alert("最多添加 5 种规格");
+        if (specs.length >= 6) {
+            showToast("最多添加 6 种规格");
             return;
         }
-        specs.push({ w: '', h: '', color: specColors[specs.length] });
+        // Set default min to 1
+        specs.push({ w: '', h: '', min: 1, color: specColors[specs.length] });
         saveFabricState();
         renderSpecs();
     }
@@ -502,16 +503,20 @@
             const div = document.createElement('div');
             div.className = 'spec-item';
             div.innerHTML = `
-                <div class="spec-color" style="background:${s.color}"></div>
-                <div style="font-size:12px; font-weight:bold; color:#666;">#${i+1}</div>
-                <div style="position:relative; flex:1;">
-                    <input type="number" value="${s.w}" placeholder="长" onchange="updateSpec(${i}, 'w', this.value)" style="width:100%; padding:4px; padding-right:20px; border:1px solid #ddd; border-radius:4px; box-sizing:border-box;">
+                <div class="spec-color" style="background:${s.color}; margin-right: 2px;"></div>
+                <div style="font-size:12px; font-weight:bold; color:#666; width: 14px; text-align: center; margin-right: 4px;">${i+1}</div>
+                <div style="position:relative; flex:2;">
+                    <input type="number" value="${s.w}" onchange="updateSpec(${i}, 'w', this.value)" style="width:100%; padding:6px 20px 6px 6px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
                     <span style="position:absolute; right:4px; top:50%; transform:translateY(-50%); font-size:10px; color:#999; pointer-events:none;">cm</span>
                 </div>
-                <span style="font-size:12px; color:#999;">x</span>
-                <div style="position:relative; flex:1;">
-                    <input type="number" value="${s.h}" placeholder="宽" onchange="updateSpec(${i}, 'h', this.value)" style="width:100%; padding:4px; padding-right:20px; border:1px solid #ddd; border-radius:4px; box-sizing:border-box;">
+                <span style="font-size:12px; color:#999; margin: 0 4px;">x</span>
+                <div style="position:relative; flex:2;">
+                    <input type="number" value="${s.h}" onchange="updateSpec(${i}, 'h', this.value)" style="width:100%; padding:6px 20px 6px 6px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
                     <span style="position:absolute; right:4px; top:50%; transform:translateY(-50%); font-size:10px; color:#999; pointer-events:none;">cm</span>
+                </div>
+                <!-- Min Count Input -->
+                <div style="position:relative; width: 36px; margin-left: 6px;">
+                    <input type="number" value="${s.min || ''}" onchange="updateSpec(${i}, 'min', this.value)" style="width:100%; padding:6px 4px; text-align:center; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
                 </div>
                 <button class="btn-del" onclick="removeSpec(${i})">×</button>
             `;
@@ -583,6 +588,20 @@
             alert("请完善尺寸信息");
             return;
         }
+
+        // Check for duplicate specs
+        const seenSpecs = new Set();
+        for (let i = 0; i < specs.length; i++) {
+            const s = specs[i];
+            if (!s.w || !s.h) continue; 
+            
+            const key = `${s.w}x${s.h}`;
+            if (seenSpecs.has(key)) {
+                showToast(`规格 #${i+1} (${s.w}x${s.h}cm) 重复，请合并或修改`);
+                return;
+            }
+            seenSpecs.add(key);
+        }
         
         statusEl.innerText = "计算中...";
         listEl.innerHTML = ''; 
@@ -625,11 +644,17 @@
             if (targetSpecIndex !== -1 && index < targetSpecIndex) {
                 useDescending = false;
             }
+
+            // Constraint Check: Minimum quantity required
+            const minRequired = s.min || 0;
+            // If the max possible count we can fit (maxCnt) is less than the minimum required,
+            // then this branch is invalid.
+            if (maxCnt < minRequired) return;
             
             if (useDescending) {
-                start = maxCnt; end = 0; step = -1;
+                start = maxCnt; end = minRequired; step = -1; // Stop at minRequired
             } else {
-                start = 0; end = maxCnt; step = 1;
+                start = minRequired; end = maxCnt; step = 1; // Start at minRequired
             }
 
             for (let c = start; (step > 0 ? c <= end : c >= end); c += step) {
@@ -814,6 +839,18 @@
         validSolutions.forEach((sol, idx) => {
             renderSolution(sol, idx + 1, W, H);
         });
+        
+        // Completion Feedback
+        showToast("计算完成！");
+        
+        // Auto-scroll to the first solution
+        // Using a small timeout to ensure DOM is ready
+        setTimeout(() => {
+            const firstCard = listEl.querySelector('.solution-card');
+            if (firstCard) {
+                firstCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 100);
     }
 
     function openZoom(idx) {
@@ -1142,6 +1179,176 @@
         } finally {
             if (btn) {
                 btn.innerText = originalText;
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            }
+        }
+    }
+
+    async function exportAllSolutionsToPDF() {
+        if (!window.jspdf) {
+            alert("PDF 库加载失败，请检查网络连接");
+            return;
+        }
+        
+        if (!currentRenderedSolutions || currentRenderedSolutions.length === 0) {
+            showToast("请先计算方案");
+            return;
+        }
+
+        const btn = document.querySelector('.btn-export-pdf');
+        const originalText = btn ? btn.innerHTML : "导出所有方案 (PDF)";
+        if (btn) {
+            btn.innerHTML = '<span style="font-size:16px;">⏳</span> 生成中...';
+            btn.disabled = true;
+            btn.style.opacity = "0.7";
+        }
+
+        // Force UI update
+        await new Promise(r => setTimeout(r, 50));
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            // const pageHeight = doc.internal.pageSize.getHeight();
+            
+            for (let i = 0; i < currentRenderedSolutions.length; i++) {
+                const sol = currentRenderedSolutions[i];
+                if (i > 0) doc.addPage();
+                
+                const W = currentFabricW;
+                const H = currentFabricH;
+                const scale = 5; // Good quality for PDF
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = W * scale;
+                // Add header height
+                const textHeight = 80; 
+                canvas.height = H * scale + textHeight; 
+                const ctx = canvas.getContext('2d');
+                
+                // White bg
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw Header
+                ctx.fillStyle = '#333';
+                ctx.font = "bold 28px Arial";
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText(`方案 #${i+1} - 利用率 ${(sol.utilization * 100).toFixed(1)}%`, 20, 20);
+                
+                // Draw Layout
+                ctx.save();
+                ctx.translate(0, textHeight);
+                ctx.scale(scale, scale);
+                
+                // Placements
+                sol.placements.forEach(p => {
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                    ctx.lineWidth = 1/scale;
+                    ctx.strokeRect(p.x, p.y, p.w, p.h);
+                    
+                    if (p.w > 5 && p.h > 5) {
+                        ctx.fillStyle = '#000';
+                        ctx.font = `${14/scale}px Arial`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(`${p.w}x${p.h}`, p.x + p.w/2, p.y + p.h/2);
+                    }
+                });
+                
+                // Leftovers
+                if (sol.leftovers) {
+                    sol.leftovers.forEach(l => {
+                        if (l.w > 0.5 && l.h > 0.5) {
+                            ctx.strokeStyle = '#999';
+                            ctx.setLineDash([5/scale, 5/scale]);
+                            ctx.lineWidth = 2/scale;
+                            ctx.strokeRect(l.x, l.y, l.w, l.h);
+                            ctx.setLineDash([]);
+                        }
+                    });
+                }
+                ctx.restore();
+                
+                // Add to PDF
+                const imgData = canvas.toDataURL('image/jpeg', 0.85);
+                const margin = 10;
+                const imgProps = doc.getImageProperties(imgData);
+                const pdfImgWidth = pageWidth - (margin * 2);
+                const pdfImgHeight = (imgProps.height * pdfImgWidth) / imgProps.width;
+                
+                doc.addImage(imgData, 'JPEG', margin, margin, pdfImgWidth, pdfImgHeight);
+                
+                // Add Summary Text below image
+                doc.setFontSize(10);
+                let textY = margin + pdfImgHeight + 10;
+                doc.text(`原布尺寸: ${W} x ${H} cm`, margin, textY);
+                textY += 6;
+                
+                let statsStr = "包含规格: ";
+                sol.counts.forEach((c, idx) => {
+                    if(c > 0) statsStr += `${specs[idx].w}x${specs[idx].h}cm [${c}个]  `;
+                });
+                // Split text if too long
+                const splitText = doc.splitTextToSize(statsStr, pdfImgWidth);
+                doc.text(splitText, margin, textY);
+            }
+            
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
+            
+            // "原布长*原布宽，x规格y种方案-时间戳"
+            const specCount = specs.filter(s => s.w > 0 && s.h > 0).length;
+            const fileName = `${currentFabricW}x${currentFabricH}_${specCount}规格${currentRenderedSolutions.length}方案-${timestamp}.pdf`;
+            
+            // Save logic
+            if (window.plus && window.plus.io) {
+                const pdfBlob = doc.output('blob');
+                const specificPath = "file:///storage/emulated/0/Android/data/plus.H5F9023DE/downloads/";
+                
+                const writeToFile = (entry) => {
+                    entry.getFile(fileName, {create: true, exclusive: false}, function(fileEntry) {
+                        fileEntry.createWriter(function(writer) {
+                            writer.onwrite = function() {
+                                showToast("PDF 已导出！");
+                                alert(`导出成功！\n\n文件路径:\n${specificPath}${fileName}\n\n请使用文件管理器查看。`);
+                            };
+                            writer.onerror = function(e) {
+                                console.error("写入失败", e);
+                                alert("写入文件失败，尝试普通下载...");
+                                doc.save(fileName);
+                            };
+                            writer.write(pdfBlob);
+                        }, function(e){
+                            doc.save(fileName);
+                        });
+                    }, function(e){
+                        doc.save(fileName);
+                    });
+                };
+                
+                plus.io.resolveLocalFileSystemURL(specificPath, function(entry) {
+                    writeToFile(entry);
+                }, function(e) {
+                    console.log("无法访问指定目录，尝试普通下载", e);
+                    doc.save(fileName);
+                });
+            } else {
+                doc.save(fileName);
+                showToast("已开始下载 PDF");
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert("导出 PDF 失败: " + e.message);
+        } finally {
+            if (btn) {
+                btn.innerHTML = originalText;
                 btn.disabled = false;
                 btn.style.opacity = "1";
             }
