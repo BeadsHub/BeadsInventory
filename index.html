@@ -1872,7 +1872,7 @@
                 <p style="margin-top:8px; font-weight:bold; color:#333;">📂 导出位置说明</p>
                 <p style="font-size:12px; color:#888;">
                     电脑端：下载到浏览器的默认下载目录<br>
-                    手机端：保存到公共 <span style="color:#4a90e2; font-weight:bold;">Download</span> 文件夹
+                    手机端：保存到Android/data/plus.H5F9023D <span style="color:#4a90e2; font-weight:bold;">Download</span> 文件夹
                 </p>
             </div>
         </div>
@@ -1883,7 +1883,7 @@
             <div style="margin-bottom: 20px; color: #666; font-size: 13px; line-height: 1.6;">
                 <p>选择备份文件以恢复数据。</p>
                 <p style="font-size:12px; color:#888; margin-top:5px;">
-                    支持从 手机文件管理 / 微信 / WPS 等途径选择<br>
+                    支持从 手机文件管理 / WPS 等途径选择<br>
                     (请选择 .txt 格式的备份文件)
                 </p>
             </div>
@@ -4508,9 +4508,47 @@
         const jsonStr = JSON.stringify(backupObj, null, 2);
         const fileName = `Mard_Inventory_Backup_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.txt`;
         
-        // 强制使用最简单的 Blob 下载，放弃 HBuilderX/HTML5+ 的文件系统 API
-        // 因为在高版本 Android 上，直接文件写入权限非常严格，容易失败
-        // Web 触发下载是最兼容的方式，它会自动唤起系统的下载管理器
+        // 尝试使用 HTML5+ API 保存到指定私有目录 (Android/data/...)
+        if (window.plus && window.plus.io) {
+            const specificPath = "file:///storage/emulated/0/Android/data/plus.H5F9023DE/downloads/";
+            
+            // Helper to write file
+            const writeToFile = (entry) => {
+                entry.getFile(fileName, {create: true, exclusive: false}, function(fileEntry) {
+                    fileEntry.createWriter(function(writer) {
+                        writer.onwrite = function() {
+                            showToast(`备份已导出！`);
+                            alert(`备份成功！\n\n文件路径:\n${specificPath}${fileName}\n\n请使用文件管理器查看。`);
+                        };
+                        writer.onerror = function(e) {
+                             console.error("写入失败", e);
+                             alert("写入文件失败: " + e.message + "\n尝试使用普通下载...");
+                             triggerWebDownload();
+                        };
+                        writer.write(jsonStr);
+                    }, function(e){
+                        console.error("创建写入器失败", e);
+                        triggerWebDownload();
+                    });
+                }, function(e){
+                    console.error("创建文件失败", e);
+                    triggerWebDownload();
+                });
+            };
+
+            // Try resolving the specific path directly
+            plus.io.resolveLocalFileSystemURL(specificPath, function(entry) {
+                writeToFile(entry);
+            }, function(e) {
+                console.log("无法直接访问指定目录，尝试创建或使用默认下载目录", e);
+                
+                // Fallback: try standard downloads if specific path fails (though user insisted on specific path, 
+                // if it doesn't exist we can't write to it easily without resolving root first. 
+                // Let's try to just use triggerWebDownload as fallback if the specific path is invalid on this device)
+                triggerWebDownload();
+            });
+            return;
+        }
         
         triggerWebDownload();
 
@@ -4540,7 +4578,6 @@
                 
                 // 6. User Feedback
                 if (window.plus) {
-                    // 对于 APP 环境，提示更明确
                     showToast("已请求系统下载，请查看通知栏");
                 } else {
                     showToast("已开始下载");
