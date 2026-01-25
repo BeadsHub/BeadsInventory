@@ -1225,7 +1225,9 @@
                 canvas.width = W * scale;
                 // Add header height
                 const textHeight = 80; 
-                canvas.height = H * scale + textHeight; 
+                // Add footer height for Chinese text
+                const footerHeight = 150; 
+                canvas.height = H * scale + textHeight + footerHeight; 
                 const ctx = canvas.getContext('2d');
                 
                 // White bg
@@ -1275,6 +1277,41 @@
                 }
                 ctx.restore();
                 
+                // Draw Footer Text on Canvas directly to avoid PDF font issues
+                const footerY = textHeight + H * scale + 20;
+                ctx.fillStyle = '#333';
+                ctx.font = "bold 24px Arial"; 
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText(`原布尺寸: ${W} x ${H} cm`, 20, footerY);
+                
+                let statsStr = "包含规格: ";
+                sol.counts.forEach((c, idx) => {
+                    if(c > 0) statsStr += `${specs[idx].w}x${specs[idx].h}cm [${c}个]  `;
+                });
+
+                // Auto wrap text
+                ctx.font = "20px Arial";
+                const maxWidth = canvas.width - 40;
+                const lineHeight = 30;
+                let currentLine = '';
+                let y = footerY + 40;
+                
+                const words = statsStr.split(' ');
+                for(let n = 0; n < words.length; n++) {
+                    const testLine = currentLine + words[n] + ' ';
+                    const metrics = ctx.measureText(testLine);
+                    const testWidth = metrics.width;
+                    if (testWidth > maxWidth && n > 0) {
+                        ctx.fillText(currentLine, 20, y);
+                        currentLine = words[n] + ' ';
+                        y += lineHeight;
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+                ctx.fillText(currentLine, 20, y);
+                
                 // Add to PDF
                 const imgData = canvas.toDataURL('image/jpeg', 0.85);
                 const margin = 10;
@@ -1283,20 +1320,6 @@
                 const pdfImgHeight = (imgProps.height * pdfImgWidth) / imgProps.width;
                 
                 doc.addImage(imgData, 'JPEG', margin, margin, pdfImgWidth, pdfImgHeight);
-                
-                // Add Summary Text below image
-                doc.setFontSize(10);
-                let textY = margin + pdfImgHeight + 10;
-                doc.text(`原布尺寸: ${W} x ${H} cm`, margin, textY);
-                textY += 6;
-                
-                let statsStr = "包含规格: ";
-                sol.counts.forEach((c, idx) => {
-                    if(c > 0) statsStr += `${specs[idx].w}x${specs[idx].h}cm [${c}个]  `;
-                });
-                // Split text if too long
-                const splitText = doc.splitTextToSize(statsStr, pdfImgWidth);
-                doc.text(splitText, margin, textY);
             }
             
             const now = new Date();
