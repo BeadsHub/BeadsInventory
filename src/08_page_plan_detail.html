@@ -1,60 +1,86 @@
 <div id="page-plan-detail" style="display:none; padding-bottom: 80px; background: #f7f8fa; min-height: 100vh;">
-    <!-- Detail Header -->
-    <div style="background: white; padding: 20px 20px 10px 20px; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; z-index: 10;">
-        <div style="display: flex; align-items: center; margin-bottom: 15px;">
-             <button onclick="closePlanDetail()" style="background:none; border:none; font-size: 20px; color: #333; padding: 0 10px 0 0;">←</button>
-             <div style="flex: 1; text-align: center; padding-right: 30px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <span id="planDetailTitle" style="font-size: 18px; font-weight: bold;">计划详情</span>
-                <span onclick="renameCurrentPlan()" style="cursor: pointer; font-size: 14px; opacity: 0.6;">✏️</span>
-             </div>
-        </div>
-        
-        <!-- Status Banner -->
-        <div id="planDetailStatus" style="background: #fffbe6; color: #fa8c16; padding: 15px; border-radius: 8px; font-size: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; text-align: center;">
-             <span></span> 计划中 - 尚未扣减库存
+    <div class="container" style="padding: 0;">
+        <!-- 1. 顶部导航 (Sticky) -->
+        <div style="background: white; padding: 12px 16px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100;">
+            <button onclick="closePlanDetail()" class="btn-back">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <h2 class="page-title-sm" style="flex:1;">计划详情</h2>
         </div>
 
-        <!-- Key Stats -->
-        <div style="display: flex; justify-content: space-around; margin-bottom: 15px;">
-             <div style="text-align: center;">
-                 <div id="planDetailColorCount" style="font-size: 24px; font-weight: bold; color: #722ed1;">0</div>
-                 <div style="font-size: 13px; color: #999;">颜色数</div>
-             </div>
-             <div style="text-align: center;">
-                 <div id="planDetailBeadCount" style="font-size: 24px; font-weight: bold; color: #fa8c16;">0</div>
-                 <div style="font-size: 13px; color: #999;">总粒数</div>
-             </div>
-        </div>
-    </div>
+        <div style="padding: 20px;">
+            <!-- 2. 核心信息卡片 (Name, Tags, Status) -->
+            <div style="background: white; border-radius: 20px; padding: 24px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 20px; text-align: center; border: 1px solid rgba(0,0,0,0.02);">
+                <!-- Name -->
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px;">
+                    <h1 id="planDetailName" style="margin: 0; font-size: 20px; font-weight: 800; color: #111827; line-height: 1.3;">Plan Name</h1>
+                    <div onclick="renameCurrentPlan()" style="color: #9ca3af; cursor: pointer; padding: 4px; border-radius: 50%; display: flex; align-items: center; transition: all 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </div>
+                </div>
+                
+                <!-- Tags -->
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 20px; align-items: center;">
+                    <div id="planDetailTags" style="display:contents;">
+                        <!-- Tags will be injected here -->
+                    </div>
+                    <span onclick="openTagManageModal()" style="font-size: 11px; color: #6b7280; cursor: pointer; background: #f3f4f6; padding: 4px 10px; border-radius: 12px; border: 1px dashed #d1d5db; font-weight: 500; transition: all 0.2s;">+ 标签</span>
+                </div>
 
+                <!-- Status Badge Area -->
+                <div id="planDetailStatusContainer">
+                    <!-- Dynamic Status Content -->
+                </div>
+            </div>
 
+            <!-- 3. 数据统计 (Colors, Beads, Cost) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                 <div class="bead-card" style="padding: 15px 10px; align-items: center; gap: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                     <div id="planDetailColorCount" style="font-size: 22px; font-weight: 800; color: #722ed1;">0</div>
+                     <div style="font-size: 11px; color: #9ca3af; font-weight: 500;">颜色数</div>
+                 </div>
+                 <div class="bead-card" style="padding: 15px 10px; align-items: center; gap: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                     <div id="planDetailBeadCount" style="font-size: 22px; font-weight: 800; color: #fa8c16;">0</div>
+                     <div style="font-size: 11px; color: #9ca3af; font-weight: 500;">总粒数</div>
+                 </div>
+                 <div class="bead-card" style="padding: 15px 10px; align-items: center; gap: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                     <div id="planDetailCost" style="font-size: 22px; font-weight: 800; color: #ff4d4f;">¥0</div>
+                     <div style="font-size: 11px; color: #9ca3af; font-weight: 500;">预计成本</div>
+                 </div>
+            </div>
 
-    <!-- Action Buttons -->
-    <div id="planDetailActions" style="padding: 15px 20px; background: white; margin-bottom: 10px; display: flex; gap: 10px;">
-         <button class="m-btn m-btn-primary" onclick="checkPlanStock()" style="flex: 1; background: #1890ff; border-color: #1890ff; display: flex; align-items: center; justify-content: center; gap: 5px;">
-             🔍 库存确认
-         </button>
-         <button class="m-btn m-btn-primary" onclick="executePlanDeduction()" style="flex: 1; background: #52c41a; border-color: #52c41a; display: flex; align-items: center; justify-content: center; gap: 5px;">
-             ▶ 执行扣减
-         </button>
-    </div>
+            <!-- 4. 主要操作区 (仅计划中显示) -->
+            <div id="planActiveActions" style="display: flex; gap: 12px; margin-bottom: 25px;">
+                 <button class="m-btn m-btn-primary" onclick="checkPlanStock()" style="flex: 1; background: #e6f7ff; color: #0099ff; border: none; box-shadow: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                     库存确认
+                 </button>
+                 <button class="m-btn m-btn-primary" onclick="executePlanDeduction()" style="flex: 1; background: #52c41a; border: none; box-shadow: 0 4px 15px rgba(82, 196, 26, 0.25); display: flex; align-items: center; justify-content: center; gap: 6px;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+                     执行扣减
+                 </button>
+            </div>
 
-    <!-- Image Preview (Restored) -->
-    <div id="planDetailImageContainer" style="padding: 0 20px; margin-bottom: 15px; display: none;">
-         <div onclick="openPlanImageViewer()" style="position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; height: 180px;">
-             <img id="planDetailImage" src="" style="width: 100%; height: 100%; object-fit: cover; display: block; background: #f0f0f0;">
+            <!-- 5. 图片预览 -->
+            <div id="planDetailImageContainer" style="margin-bottom: 25px; display: none;">
+                 <div onclick="openPlanImageViewer()" style="position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); cursor: pointer; height: 200px; background: #fff;">
+                     <img id="planDetailImage" src="" style="width: 100%; height: 100%; object-fit: contain; display: block; background: #f9fafb;">
+                 </div>
+            </div>
 
-         </div>
-    </div>
-
-    <!-- Color List Header -->
-    <div style="padding: 0 20px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;">
-             <h4 style="margin: 0; font-size: 14px; color: #666;">颜色用量</h4>
-             <span id="planDetailSortBtn" onclick="togglePlanDetailSort()" style="font-size: 12px; color: #1890ff; cursor: pointer; background: #e6f7ff; padding: 2px 8px; border-radius: 4px;">按用量 ↓</span>
-        </div>
-        <div id="planDetailList" style="display: flex; flex-direction: column; gap: 10px;">
-             <!-- Items -->
+            <!-- 6. 列表区域 -->
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center;">
+                     <h4 style="margin: 0; font-size: 15px; color: #374151; font-weight: 700;">颜色用量</h4>
+                     <div onclick="togglePlanDetailSort()" style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #4b5563; cursor: pointer; background: white; padding: 6px 12px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                        <span id="planDetailSortText">按用量</span>
+                     </div>
+                </div>
+                <div id="planDetailList" style="display: flex; flex-direction: column; gap: 10px;">
+                     <!-- Items -->
+                </div>
+            </div>
         </div>
     </div>
 </div>

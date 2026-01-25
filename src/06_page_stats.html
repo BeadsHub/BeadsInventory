@@ -3,7 +3,7 @@
     <div class="header-sticky" style="background: #f8f9fa; z-index: 101; border-bottom: 1px solid #eee; padding: 0;">
         <div style="max-width: 600px; margin: 0 auto; padding: 15px 15px 10px 15px;">
             <div style="display:flex; align-items:center; justify-content: space-between;">
-                <h2 class="stats-title" style="margin: 0;">统计</h2>
+                <h2 class="page-title" style="margin: 0; text-align: left;">统计</h2>
                 <div style="display:flex; align-items:center; gap: 10px;">
                     <button id="btn-toggle-stats-filter" onclick="toggleStatsFilterVisibility()" style="
                         border: 1px solid #ddd;
@@ -53,9 +53,24 @@
                     </div>
                 </div>
 
+                <div class="metric-item" style="flex:1;">
+                    <div id="stats-plan-rate" class="metric-val" style="color: #52c41a; font-size:20px;">0%</div>
+                    <div class="metric-label">计划完成</div>
+                </div>
+            </div>
+
+            <div class="stats-summary-card stats-card-horizontal" style="margin-top: 10px;">
                 <div class="metric-item" onclick="enableStatsLowStock()" style="cursor: pointer; flex:1;">
                     <div id="stats-low-count" class="metric-val" style="color: #ff4d4f; font-size:20px;">0</div>
                     <div class="metric-label">缺货</div>
+                </div>
+                <div class="metric-item" style="flex:1;">
+                    <div id="stats-zero-count" class="metric-val" style="color: #cf1322; font-size:20px;">0</div>
+                    <div class="metric-label">断货 (0g)</div>
+                </div>
+                <div class="metric-item" style="flex:1;">
+                    <div id="stats-pending-bags" class="metric-val" style="color: #1890ff; font-size:20px;">0</div>
+                    <div class="metric-label">在途 (包)</div>
                 </div>
             </div>
 

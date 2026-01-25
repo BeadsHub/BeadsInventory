@@ -1,4 +1,4 @@
-﻿    let currentPlanId = null;
+    let currentPlanId = null;
     let isPlanSelectionMode = false;
     let selectedPlanIds = new Set();
     let expandedPlanIds = new Set();
@@ -66,8 +66,8 @@
                 localStorage.setItem('bead_plans', JSON.stringify(plans));
                 
                 // Update UI if we are viewing this plan
-                const titleEl = document.getElementById('planDetailTitle');
-                if (titleEl) titleEl.innerText = plan.name;
+                const nameEl = document.getElementById('planDetailName');
+                if (nameEl) nameEl.innerText = plan.name;
                 
                 renderPlans();
                 showToast(`计划重命名为 "${newName}"`);
@@ -93,6 +93,11 @@
         const BEAD_WEIGHT_PER_100 = 1; // 1g per 100 beads
 
         function processPlan(plan) {
+            // Ignore if tagged as '待定'
+            if (plan.tags && plan.tags.includes('待定')) {
+                return;
+            }
+
             // If it's a folder, process its sub-plans
             if (plan.subPlans && plan.subPlans.length > 0) {
                 // For collections, we check each sub-plan's status independently
@@ -225,23 +230,39 @@
                  let missingHtml = '';
                  if (summary.shortages.length > 0) {
                      summary.shortages.sort((a, b) => b.missingQty - a.missingQty);
-                     const missingItems = summary.shortages.map(item => `
-                        <div onclick="searchPlanByColor('${item.code}')" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 6px; border: 1px solid #ffccc7; margin-bottom: 4px; transition: transform 0.1s, background 0.1s;" onmousedown="this.style.transform='scale(0.98)'; this.style.background='rgba(255,242,240,0.8)'" onmouseup="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.8)'" onmouseleave="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.8)'">
-                            <span style="font-weight: bold; color: #cf1322;">${item.code}</span>
-                            <span style="font-size: 12px; color: #666;">缺 ${item.missingQty}g</span>
+                     const missingItems = summary.shortages.map(item => {
+                        const bead = data.find(d => d.id === item.code);
+                        const bags = Math.ceil(item.missingQty / 10);
+                        // Consistent with shopping list: consider pending only if we bought enough or more
+                        const isPending = bead && bead.pendingBags > 0 && bead.pendingBags >= bags;
+                        
+                        const bg = isPending ? '#f6ffed' : 'rgba(255,255,255,0.8)';
+                        const border = isPending ? '#b7eb8f' : '#ffccc7';
+                        const textColor = isPending ? '#333' : '#cf1322';
+                        const infoText = isPending ? '<span style="color:#52c41a">已购</span>' : `缺 ${item.missingQty}g`;
+
+                        return `
+                        <div onclick="searchPlanByColor('${item.code}')" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: ${bg}; padding: 4px 8px; border-radius: 6px; border: 1px solid ${border}; margin-bottom: 4px; transition: transform 0.1s, background 0.1s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
+                            <span style="font-weight: bold; color: ${textColor};">${item.code} ${isPending ? '<span style="font-size:10px; color:#52c41a; font-weight:normal; margin-left:2px;">(在途)</span>' : ''}</span>
+                            <span style="font-size: 12px; color: #666;">${infoText}</span>
                         </div>
-                    `).join('');
+                    `}).join('');
                      
                      missingHtml = `
                          <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ffa39e;">
-                             <div style="font-size: 13px; font-weight: bold; color: #cf1322; margin-bottom: 8px; display: flex; align-items: center;">
-                                <span style="margin-right: 4px;">⚠️</span> 缺货预警 (${summary.shortages.length} 色)
-                                <span onclick="copyMissingSummary()" style="cursor: pointer; color: #cf1322; font-size: 16px; display: flex; align-items: center; padding: 4px; margin-left: 8px;" title="复制缺货清单">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                </span>
-                            </div>
+                             <div style="font-size: 13px; font-weight: bold; color: #cf1322; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                               <div style="display:flex; align-items:center;">
+                                   <span style="margin-right: 4px;">⚠️</span> 缺货预警 (${summary.shortages.length} 色)
+                               </div>
+                               <button id="generateShoppingListBtn" style="background: white; border: 1px solid #ffadd2; color: #eb2f96; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                   <span>🛒</span> 补货单
+                               </button>
+                           </div>
                              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px;">
                                  ${missingItems}
+                             </div>
+                             <div style="font-size:10px; color:#999; margin-top:8px; text-align:right;">
+                                * 已自动忽略标签为“待定”的计划
                              </div>
                          </div>
                      `;
@@ -249,6 +270,9 @@
                      missingHtml = `
                          <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #bae7ff; color: #52c41a; font-size: 13px; font-weight: bold;">
                              ✅ 库存充足，无缺货色号
+                         </div>
+                         <div style="font-size:10px; color:#999; margin-top:4px; text-align:right;">
+                            * 已自动忽略标签为“待定”的计划
                          </div>
                      `;
                  }
@@ -261,6 +285,12 @@
                      ${missingHtml}
                  `;
                  container.appendChild(summaryCard);
+                 
+                 // Bind click event listener after adding to DOM to avoid quote escaping issues
+                 const btn = document.getElementById('generateShoppingListBtn');
+                 if (btn) {
+                     btn.onclick = () => generateShoppingList(summary.shortages);
+                 }
              }
         }
         renderPlanList(filtered, container, isSearchMode);
@@ -271,6 +301,12 @@
         list.forEach(p => {
             // Match Name
             const matchName = p.name && p.name.toLowerCase().includes(query);
+            
+            // Match Tags
+            let matchTags = false;
+            if (p.tags && p.tags.length > 0) {
+                matchTags = p.tags.some(tag => tag.toLowerCase().includes(query));
+            }
             
             // Match Color Code (in items)
             let matchColor = false;
@@ -292,7 +328,7 @@
                  const newPlan = {...p};
                  newPlan.subPlans = filteredSubPlans;
                  result.push(newPlan);
-            } else if (matchName || matchColor) {
+            } else if (matchName || matchColor || matchTags) {
                  const newPlan = {...p};
                  newPlan.subPlans = p.subPlans; // Keep original structure if parent matches
                  result.push(newPlan);
@@ -577,18 +613,28 @@
             </div>
         `;
 
+        let tagsHtml = '';
+        if (plan.tags && plan.tags.length > 0) {
+            tagsHtml = `
+                <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:6px;">
+                    ${plan.tags.map(tag => `<span style="font-size:10px; background:#f0f5ff; color:#4a90e2; padding:1px 6px; border-radius:8px; border:1px solid #d6e4ff;">${tag}</span>`).join('')}
+                </div>
+            `;
+        }
+
         innerEl.innerHTML = `
             <div style="display: flex; align-items: stretch; width: 100%;">
                 ${folderExpandHtml}
                 ${checkboxHtml}
                 
                 <div style="flex: 1; overflow: hidden; padding-right: 8px;">
-                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 4px;">
                         ${iconContainerHtml}
                         <div style="font-weight: bold; font-size: 16px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             ${plan.name}
                         </div>
                     </div>
+                    ${tagsHtml}
 
                     <div style="margin-bottom: ${!isFolder && visibleItems.length > 0 ? '8px' : '0'};">
                         ${statsHtml}
@@ -951,9 +997,9 @@
         if (!plan) return;
 
         // Update Sort Button Text
-        const sortBtn = document.getElementById('planDetailSortBtn');
-        if (sortBtn) {
-            sortBtn.innerText = currentPlanDetailSort === 'qty' ? '按用量 ↓' : '按色号 ↑';
+        const sortText = document.getElementById('planDetailSortText');
+        if (sortText) {
+            sortText.innerText = currentPlanDetailSort === 'qty' ? '按用量' : '按色号';
         }
 
         const listContainer = document.getElementById('planDetailList');
@@ -1089,6 +1135,14 @@
                 // Update stats
                 const totalQty = plan.items.reduce((sum, item) => sum + item.qty, 0);
                 document.getElementById('planDetailBeadCount').innerText = totalQty.toLocaleString();
+                
+                // Update Cost
+                const totalWeight = totalQty / 100;
+                const totalCost = totalWeight * 0.1;
+                const costEl = document.getElementById('planDetailCost');
+                if (costEl) {
+                    costEl.innerText = '¥' + totalCost.toFixed(2);
+                }
             } else {
                 showToast("请输入有效的数量");
             }
@@ -1196,8 +1250,13 @@
 
         currentPlanId = id;
 
-        const titleEl = document.getElementById('planDetailTitle');
-        titleEl.innerText = plan.name;
+        const nameEl = document.getElementById('planDetailName');
+        if (nameEl) nameEl.innerText = plan.name;
+
+        // Render Tags (Hook)
+        if (typeof updatePlanDetailTagsUI === 'function') {
+            updatePlanDetailTagsUI(plan);
+        }
         
         // Setup Image Preview
         const imgContainer = document.getElementById('planDetailImageContainer');
@@ -1214,8 +1273,8 @@
         const parentPlan = findParent(id, plans, null);
         
         // Update Status Banner
-        const statusBanner = document.getElementById('planDetailStatus');
-        const actionButtons = document.getElementById('planDetailActions');
+        const statusBanner = document.getElementById('planDetailStatusContainer');
+        const actionButtons = document.getElementById('planActiveActions');
         
         // Clear previous buttons
         const revertBtnId = 'btn-revert-active';
@@ -1231,28 +1290,41 @@
             statusBanner.innerHTML = '';
             statusBanner.style.background = '#f6ffed';
             statusBanner.style.color = '#52c41a';
+            statusBanner.style.padding = '12px 16px';
+            statusBanner.style.borderRadius = '12px';
 
-            // 1. Status Text
-            const statusText = document.createElement('div');
-            statusText.style.fontWeight = 'bold';
-            statusText.style.fontSize = '16px';
-            statusText.innerText = '✅ 已完成 - 库存已扣减';
-            statusBanner.appendChild(statusText);
+            // Container for layout
+            const row = document.createElement('div');
+            row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px;';
 
-            // 2. Completed Time
-            if (plan.completedAt) {
-                const timeDiv = document.createElement('div');
-                timeDiv.style.fontSize = '13px';
-                timeDiv.style.marginTop = '6px';
-                timeDiv.style.opacity = '0.8';
-                timeDiv.innerText = '完成于: ' + formatTime(new Date(plan.completedAt));
-                statusBanner.appendChild(timeDiv);
-            }
+            // 1. Completed Time (Left)
+            const timeDiv = document.createElement('div');
+            // Use flex-start to align left
+            timeDiv.style.cssText = 'display: flex; flex-direction: column; justify-content: center; align-items: flex-start;';
             
-            // 3. Edit Time Button (Created via DOM to ensure events work)
+            if (plan.completedAt) {
+                const dateObj = new Date(plan.completedAt);
+                const y = dateObj.getFullYear();
+                const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const d = String(dateObj.getDate()).padStart(2, '0');
+                const h = String(dateObj.getHours()).padStart(2, '0');
+                const min = String(dateObj.getMinutes()).padStart(2, '0');
+                // Removed seconds for cleaner display
+                const timeStr = `${y}/${m}/${d} ${h}:${min}`;
+                
+                timeDiv.innerHTML = `
+                    <div style="font-size: 11px; opacity: 0.8; line-height: 1.2;">完成于</div>
+                    <div style="font-size: 15px; font-weight: 600; line-height: 1.3; font-family: monospace, sans-serif; white-space: nowrap;">${timeStr}</div>
+                `;
+            } else {
+                timeDiv.innerHTML = `<div style="font-size: 15px; font-weight: bold;">已完成</div>`;
+            }
+            row.appendChild(timeDiv);
+            
+            // 2. Edit Time Button (Right)
             const editBtn = document.createElement('button');
-            // High z-index to ensure it's on top
-            editBtn.style.cssText = "display:flex; align-items:center; gap:5px; margin-top:8px; padding:6px 10px; border:none; border-radius:6px; width:fit-content; cursor:pointer; user-select:none; position: relative; z-index: 2000; pointer-events: auto; font-family: inherit;";
+            // High z-index to ensure it's on top. Added white-space: nowrap to prevent text breaking
+            editBtn.style.cssText = "display:flex; align-items:center; gap:5px; padding:8px 12px; border:none; border-radius:8px; width:fit-content; cursor:pointer; user-select:none; position: relative; z-index: 2000; pointer-events: auto; font-family: inherit; margin: 0; white-space: nowrap; flex-shrink: 0;";
             
             // Calculate aggregated time spent for display if not set directly
             // If plan has no timeSpent but has subPlans, sum them up
@@ -1344,7 +1416,8 @@
                 }, { passive: false });
             }
 
-            statusBanner.appendChild(editBtn);
+            row.appendChild(editBtn);
+            statusBanner.appendChild(row);
 
             if(actionButtons) actionButtons.style.display = 'none';
             
@@ -1364,52 +1437,15 @@
         // Calculate and display cost
         const storedCost = localStorage.getItem('bead_unit_cost');
         const unitCost = storedCost ? parseFloat(storedCost) : 0.1;
-        const totalWeight = totalQty / 100; // 100 beads approx 1g (based on BEAD_WEIGHT_PER_100 logic usually 1g=100)
-        // Actually code uses BEAD_WEIGHT_PER_100 = 1 (1g per 100 beads).
-        // So total weight is totalQty / 100.
+        const totalWeight = totalQty / 100; // 100 beads approx 1g
         const totalCost = totalWeight * unitCost;
         
-        // Create or update cost element
-        // FIX: Remove duplicates first to prevent multiple cost cards stacking up
-        const existingCostContainers = document.querySelectorAll('[id^="planDetailCostContainer"]');
-        existingCostContainers.forEach(el => el.remove());
-        
-        let costEl = document.getElementById('planDetailCost');
-        // Always recreate or re-find after cleanup
-        if (true) { // Logic simplified: cleanup and recreate is safer than "if (!costEl)" which failed
-            // Insert after the counts row
-            const countsRow = document.querySelector('.detail-stats'); 
-            
-            const statsContainer = document.getElementById('planDetailBeadCount').parentNode.parentNode;
-            
-            const costContainer = document.createElement('div');
-            costContainer.id = 'planDetailCostContainer';
-            costContainer.style.cssText = "background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;";
-            
-            costContainer.innerHTML = `
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width: 32px; height: 32px; border-radius: 50%; background: #fff7e6; color: #fa8c16; display: flex; align-items: center; justify-content: center; font-size: 16px;">💰</div>
-                    <div>
-                        <div style="font-size: 11px; color: #999;">预计成本</div>
-                        <div style="font-size: 15px; font-weight: bold; color: #333;">¥ <span id="planDetailCostValue">0.00</span></div>
-                    </div>
-                </div>
-                <div style="font-size: 11px; color: #ccc;">(基于 ${unitCost}元/g)</div>
-            `;
-            
-            statsContainer.parentNode.insertBefore(costContainer, statsContainer.nextSibling);
-            costEl = document.getElementById('planDetailCostValue');
-        }
-        
-        // Update value
-        if(costEl) {
-             costEl.innerText = totalCost.toFixed(2);
+        const costEl = document.getElementById('planDetailCost');
+        if (costEl) {
+            costEl.innerText = '¥' + totalCost.toFixed(2);
         }
 
-
-        // Render List using the current sort mode (reset to default or keep?)
-        // Let's reset to default 'qty' when opening a plan, or keep previous if we want.
-        // User didn't specify, but resetting is safer for "default is by usage".
+        // Render List using the current sort mode
         currentPlanDetailSort = 'qty'; 
         renderPlanDetailList();
 

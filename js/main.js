@@ -754,7 +754,10 @@
         };
         
         showModal('customConfirmModal');
-    }
+    
+    // Ensure it is on top of other modals (must set after showModal which resets z-index)
+    document.getElementById('customConfirmModal').style.zIndex = '1100';
+}
 
     function showModal(id) {
         // Check if any other modal is already open
@@ -796,7 +799,16 @@
     // 兼容旧函数调用，防止遗漏
     function closeModal() { closeAllModals(); }
 
-    function save() { localStorage.setItem('bead_v_sort', JSON.stringify(data)); }
+    function save() { 
+        try {
+            localStorage.setItem('bead_v_sort', JSON.stringify(data)); 
+        } catch (e) {
+            console.error("Critical: Failed to save inventory data", e);
+            if (e.name === 'QuotaExceededError' || e.code === 22 || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                alert("严重警告：存储空间已满，库存变动无法保存！\n请立即删除一些旧的计划或清理空间。");
+            }
+        }
+    }
 
     // --- 数据管理功能 ---
     function openDataModal(tab) {

@@ -100,12 +100,12 @@
         sol.counts.forEach((c, i) => {
             if(c > 0) {
                 statsHtml += `
-                    <div class="sol-stat-row">
+                    <div class="sol-stat-row" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px dashed #f0f0f0;">
                         <span style="display:flex; align-items:center; gap:5px;">
                             <div style="width:10px; height:10px; background:${specs[i].color}; border-radius:2px;"></div>
-                            ${specs[i].w}x${specs[i].h}cm
+                            <span style="font-size: 14px; color: #333;">${specs[i].w}x${specs[i].h}cm</span>
                         </span>
-                        <b>x${c}</b>
+                        <b style="font-size: 14px; color: #1f2937;">x${c}</b>
                     </div>
                 `;
             }
@@ -125,10 +125,10 @@
                 });
                 
                 wasteHtml = `<div style="margin-top:10px; font-size:12px; color:#999; border-top:1px dashed #eee; padding-top:5px;">
-                    <div style="margin-bottom:2px;">剩余布料:</div>`;
+                    <div style="margin-bottom:6px; font-weight: 600;">剩余布料:</div>`;
                 
                 for (let [size, count] of Object.entries(wasteGroups)) {
-                    wasteHtml += `<div style="display:flex; justify-content:space-between;">
+                    wasteHtml += `<div style="display:flex; justify-content:space-between; align-items: center; padding: 2px 0;">
                         <span>${size}cm</span>
                         <span>x${count}</span>
                     </div>`;
@@ -138,8 +138,10 @@
         }
         
         return `<div class="sol-info" style="margin-top:15px; width:100%; border-top:1px solid #eee; padding-top:10px;">
-                    <div style="margin-bottom:10px; font-weight:bold; font-size:13px; color:#333;">数量统计</div>
-                    ${statsHtml}
+                    <div style="margin-bottom:10px; font-weight:bold; font-size:15px; color:#111;">数量统计</div>
+                    <div style="background: #f9fafb; padding: 10px; border-radius: 8px;">
+                        ${statsHtml}
+                    </div>
                     ${wasteHtml}
                 </div>`;
     }

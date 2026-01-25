@@ -49,7 +49,7 @@
 
 <div id="page-beads" style="display:none; padding-bottom: 80px;">
     <div class="container">
-        <h3 style="font-size: 20px; font-weight: bold; margin: 0 0 20px 0; padding-top: 40px; text-align: center; color: #333;">库存</h3>
+        <h2 class="page-title">库存</h2>
         <div class="header-sticky">
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; margin-top: 6px;">
             <input type="text" id="search" placeholder="输入色号搜索..." oninput="render()" style="flex:1; margin-bottom:0;">
@@ -212,7 +212,7 @@
     
 <div id="page-more" style="display:none; padding-bottom: 80px; background: #f7f8fa; min-height: 100vh;">
         <div class="container" style="padding: 20px;">
-            <h3 style="font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #333;">更多</h3>
+            <h2 class="page-title" style="margin-bottom: 20px;">更多</h2>
             
             <div style="background: white; border-radius: 16px; padding: 0 20px; margin-bottom: 20px;">
                  <!-- Threshold -->
@@ -276,7 +276,7 @@
     <div class="header-sticky" style="background: #f8f9fa; z-index: 101; border-bottom: 1px solid #eee; padding: 0;">
         <div style="max-width: 600px; margin: 0 auto; padding: 15px 15px 10px 15px;">
             <div style="display:flex; align-items:center; justify-content: space-between;">
-                <h2 class="stats-title" style="margin: 0;">统计</h2>
+                <h2 class="page-title" style="margin: 0; text-align: left;">统计</h2>
                 <div style="display:flex; align-items:center; gap: 10px;">
                     <button id="btn-toggle-stats-filter" onclick="toggleStatsFilterVisibility()" style="
                         border: 1px solid #ddd;
@@ -326,9 +326,24 @@
                     </div>
                 </div>
 
+                <div class="metric-item" style="flex:1;">
+                    <div id="stats-plan-rate" class="metric-val" style="color: #52c41a; font-size:20px;">0%</div>
+                    <div class="metric-label">计划完成</div>
+                </div>
+            </div>
+
+            <div class="stats-summary-card stats-card-horizontal" style="margin-top: 10px;">
                 <div class="metric-item" onclick="enableStatsLowStock()" style="cursor: pointer; flex:1;">
                     <div id="stats-low-count" class="metric-val" style="color: #ff4d4f; font-size:20px;">0</div>
                     <div class="metric-label">缺货</div>
+                </div>
+                <div class="metric-item" style="flex:1;">
+                    <div id="stats-zero-count" class="metric-val" style="color: #cf1322; font-size:20px;">0</div>
+                    <div class="metric-label">断货 (0g)</div>
+                </div>
+                <div class="metric-item" style="flex:1;">
+                    <div id="stats-pending-bags" class="metric-val" style="color: #1890ff; font-size:20px;">0</div>
+                    <div class="metric-label">在途 (包)</div>
                 </div>
             </div>
 
@@ -360,16 +375,16 @@
 <div id="page-plan" style="display:none; padding-bottom: 80px;">
     <div class="container" style="padding: 20px;">
         <div style="position: sticky; top: 0; z-index: 99; background: #fff; margin: -20px -20px 15px -20px; padding: 20px 20px 10px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-            <h3 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; text-align: center; color: #333; margin-top: 0;">
+            <h2 class="page-title" style="margin-top: 0; margin-bottom: 15px;">
                 拼豆计划
                 <span onclick="togglePlanOverviewContainer()" style="cursor: pointer; color: #4a90e2; font-size: 18px; margin-left: 8px; vertical-align: middle; display: inline-flex; align-items: center;" title="显示计划概览">
                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                 </span>
-            </h3>
+            </h2>
             
             <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
                 <div style="position: relative; flex: 1;">
-                    <input type="text" id="planSearch" placeholder="输入计划名称或色号搜索..." oninput="renderPlans()" style="width: 100%; border: 1px solid #ddd; padding: 10px 40px 10px 10px; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; background: #f9f9f9; box-sizing: border-box;">
+                    <input type="text" id="planSearch" placeholder="搜索计划名称、标签、色号..." oninput="renderPlans()" style="width: 100%; border: 1px solid #ddd; padding: 10px 40px 10px 10px; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; background: #f9f9f9; box-sizing: border-box;">
                     <div onclick="document.getElementById('planSearch').focus()" style="position: absolute; right: 0; top: 0; bottom: 0; width: 40px; display: flex; align-items: center; justify-content: center; color: #999; cursor: pointer;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     </div>
@@ -420,62 +435,88 @@
 
 
 <div id="page-plan-detail" style="display:none; padding-bottom: 80px; background: #f7f8fa; min-height: 100vh;">
-    <!-- Detail Header -->
-    <div style="background: white; padding: 20px 20px 10px 20px; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; z-index: 10;">
-        <div style="display: flex; align-items: center; margin-bottom: 15px;">
-             <button onclick="closePlanDetail()" style="background:none; border:none; font-size: 20px; color: #333; padding: 0 10px 0 0;">←</button>
-             <div style="flex: 1; text-align: center; padding-right: 30px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <span id="planDetailTitle" style="font-size: 18px; font-weight: bold;">计划详情</span>
-                <span onclick="renameCurrentPlan()" style="cursor: pointer; font-size: 14px; opacity: 0.6;">✏️</span>
-             </div>
-        </div>
-        
-        <!-- Status Banner -->
-        <div id="planDetailStatus" style="background: #fffbe6; color: #fa8c16; padding: 15px; border-radius: 8px; font-size: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; text-align: center;">
-             <span></span> 计划中 - 尚未扣减库存
+    <div class="container" style="padding: 0;">
+        <!-- 1. 顶部导航 (Sticky) -->
+        <div style="background: white; padding: 12px 16px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100;">
+            <button onclick="closePlanDetail()" class="btn-back">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <h2 class="page-title-sm" style="flex:1;">计划详情</h2>
         </div>
 
-        <!-- Key Stats -->
-        <div style="display: flex; justify-content: space-around; margin-bottom: 15px;">
-             <div style="text-align: center;">
-                 <div id="planDetailColorCount" style="font-size: 24px; font-weight: bold; color: #722ed1;">0</div>
-                 <div style="font-size: 13px; color: #999;">颜色数</div>
-             </div>
-             <div style="text-align: center;">
-                 <div id="planDetailBeadCount" style="font-size: 24px; font-weight: bold; color: #fa8c16;">0</div>
-                 <div style="font-size: 13px; color: #999;">总粒数</div>
-             </div>
-        </div>
-    </div>
+        <div style="padding: 20px;">
+            <!-- 2. 核心信息卡片 (Name, Tags, Status) -->
+            <div style="background: white; border-radius: 20px; padding: 24px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 20px; text-align: center; border: 1px solid rgba(0,0,0,0.02);">
+                <!-- Name -->
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px;">
+                    <h1 id="planDetailName" style="margin: 0; font-size: 20px; font-weight: 800; color: #111827; line-height: 1.3;">Plan Name</h1>
+                    <div onclick="renameCurrentPlan()" style="color: #9ca3af; cursor: pointer; padding: 4px; border-radius: 50%; display: flex; align-items: center; transition: all 0.2s;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </div>
+                </div>
+                
+                <!-- Tags -->
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 20px; align-items: center;">
+                    <div id="planDetailTags" style="display:contents;">
+                        <!-- Tags will be injected here -->
+                    </div>
+                    <span onclick="openTagManageModal()" style="font-size: 11px; color: #6b7280; cursor: pointer; background: #f3f4f6; padding: 4px 10px; border-radius: 12px; border: 1px dashed #d1d5db; font-weight: 500; transition: all 0.2s;">+ 标签</span>
+                </div>
 
+                <!-- Status Badge Area -->
+                <div id="planDetailStatusContainer">
+                    <!-- Dynamic Status Content -->
+                </div>
+            </div>
 
+            <!-- 3. 数据统计 (Colors, Beads, Cost) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                 <div class="bead-card" style="padding: 15px 10px; align-items: center; gap: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                     <div id="planDetailColorCount" style="font-size: 22px; font-weight: 800; color: #722ed1;">0</div>
+                     <div style="font-size: 11px; color: #9ca3af; font-weight: 500;">颜色数</div>
+                 </div>
+                 <div class="bead-card" style="padding: 15px 10px; align-items: center; gap: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                     <div id="planDetailBeadCount" style="font-size: 22px; font-weight: 800; color: #fa8c16;">0</div>
+                     <div style="font-size: 11px; color: #9ca3af; font-weight: 500;">总粒数</div>
+                 </div>
+                 <div class="bead-card" style="padding: 15px 10px; align-items: center; gap: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                     <div id="planDetailCost" style="font-size: 22px; font-weight: 800; color: #ff4d4f;">¥0</div>
+                     <div style="font-size: 11px; color: #9ca3af; font-weight: 500;">预计成本</div>
+                 </div>
+            </div>
 
-    <!-- Action Buttons -->
-    <div id="planDetailActions" style="padding: 15px 20px; background: white; margin-bottom: 10px; display: flex; gap: 10px;">
-         <button class="m-btn m-btn-primary" onclick="checkPlanStock()" style="flex: 1; background: #1890ff; border-color: #1890ff; display: flex; align-items: center; justify-content: center; gap: 5px;">
-             🔍 库存确认
-         </button>
-         <button class="m-btn m-btn-primary" onclick="executePlanDeduction()" style="flex: 1; background: #52c41a; border-color: #52c41a; display: flex; align-items: center; justify-content: center; gap: 5px;">
-             ▶ 执行扣减
-         </button>
-    </div>
+            <!-- 4. 主要操作区 (仅计划中显示) -->
+            <div id="planActiveActions" style="display: flex; gap: 12px; margin-bottom: 25px;">
+                 <button class="m-btn m-btn-primary" onclick="checkPlanStock()" style="flex: 1; background: #e6f7ff; color: #0099ff; border: none; box-shadow: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                     库存确认
+                 </button>
+                 <button class="m-btn m-btn-primary" onclick="executePlanDeduction()" style="flex: 1; background: #52c41a; border: none; box-shadow: 0 4px 15px rgba(82, 196, 26, 0.25); display: flex; align-items: center; justify-content: center; gap: 6px;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5v14l11-7z"/></svg>
+                     执行扣减
+                 </button>
+            </div>
 
-    <!-- Image Preview (Restored) -->
-    <div id="planDetailImageContainer" style="padding: 0 20px; margin-bottom: 15px; display: none;">
-         <div onclick="openPlanImageViewer()" style="position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; height: 180px;">
-             <img id="planDetailImage" src="" style="width: 100%; height: 100%; object-fit: cover; display: block; background: #f0f0f0;">
+            <!-- 5. 图片预览 -->
+            <div id="planDetailImageContainer" style="margin-bottom: 25px; display: none;">
+                 <div onclick="openPlanImageViewer()" style="position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); cursor: pointer; height: 200px; background: #fff;">
+                     <img id="planDetailImage" src="" style="width: 100%; height: 100%; object-fit: contain; display: block; background: #f9fafb;">
+                 </div>
+            </div>
 
-         </div>
-    </div>
-
-    <!-- Color List Header -->
-    <div style="padding: 0 20px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center;">
-             <h4 style="margin: 0; font-size: 14px; color: #666;">颜色用量</h4>
-             <span id="planDetailSortBtn" onclick="togglePlanDetailSort()" style="font-size: 12px; color: #1890ff; cursor: pointer; background: #e6f7ff; padding: 2px 8px; border-radius: 4px;">按用量 ↓</span>
-        </div>
-        <div id="planDetailList" style="display: flex; flex-direction: column; gap: 10px;">
-             <!-- Items -->
+            <!-- 6. 列表区域 -->
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center;">
+                     <h4 style="margin: 0; font-size: 15px; color: #374151; font-weight: 700;">颜色用量</h4>
+                     <div onclick="togglePlanDetailSort()" style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #4b5563; cursor: pointer; background: white; padding: 6px 12px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                        <span id="planDetailSortText">按用量</span>
+                     </div>
+                </div>
+                <div id="planDetailList" style="display: flex; flex-direction: column; gap: 10px;">
+                     <!-- Items -->
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -483,7 +524,7 @@
 
 <div id="page-scan" style="display:none; padding-bottom: 80px;">
     <div class="container" style="padding: 20px;">
-        <h3 style="font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #333;">图纸扫描分析</h3>
+        <h2 class="page-title" style="margin-bottom: 20px;">图纸扫描分析</h2>
         
         <div id="scan-uploader" class="scan-uploader" style="border: 2px dashed #4a90e2; border-radius: 12px; padding: 10px; text-align: center; background: #f0f5ff; margin-bottom: 20px; transition: all 0.2s; overflow: hidden;">
             <div id="scanPreview" onclick="document.getElementById('scanInput').click()" style="padding: 20px; cursor: pointer; color: #4a90e2;">
@@ -613,7 +654,7 @@
     <!-- 弹窗部分 -->
 
 <div class="overlay" id="mask" onclick="closeAllModals()"></div>
-<div class="overlay" id="mask2" onclick="closeAllModals()" style="z-index: 1015; display: none;"></div>
+<div class="overlay" id="mask2" onclick="closeAllModals()" style="z-index: 1090; display: none;"></div>
 
 <div id="consumeModal" class="modal" style="width: 85%; max-width: 340px; padding: 20px;">
     <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #333;">消耗录入 (粒数)</h3>
@@ -628,7 +669,7 @@
     <h3 style="font-size: 18px; color: #333; margin-bottom: 10px; text-align: center;">设置预警阈值</h3>
     <div style="font-size: 13px; color: #999; margin-bottom: 25px; text-align: center;">当库存重量低于此值时，<br>色号将标记为红色预警状态。</div>
     
-    <div class="input-group" style="margin-bottom: 25px;">
+    <div class="big-input-group" style="margin-bottom: 25px;">
         <input type="number" id="thresholdInput" placeholder="0.00" step="0.01" 
                style="font-size: 32px; padding: 15px; border-radius: 12px; background: #f7f8fa; border: 2px solid transparent; width: 100%; box-sizing: border-box; text-align: center; color: #333; font-weight: bold; transition: all 0.2s;">
     </div>
@@ -642,7 +683,7 @@
 <div id="editWeightModal" class="modal" style="width: 80%; max-width: 300px; padding: 25px; border-radius: 20px;">
     <h3 id="editWeightModalTitle" style="font-size: 18px; color: #333; margin-bottom: 25px;">修改库存重量</h3>
     
-    <div class="input-group" style="margin-bottom: 25px;">
+    <div class="big-input-group" style="margin-bottom: 25px;">
         <input type="number" id="editWeightInput" placeholder="0.00" step="0.01" 
                style="font-size: 32px; padding: 15px; border-radius: 12px; background: #f7f8fa; border: 2px solid transparent; width: 100%; box-sizing: border-box; text-align: center; color: #333; font-weight: bold; transition: all 0.2s;">
         <span class="input-suffix" style="right: 30px; font-size: 16px; color: #999;">g</span>
@@ -657,7 +698,7 @@
 <div id="restockModal" class="modal">
     <h3>新增补货</h3>
     <div class="modal-desc" id="restockTitle"></div>
-    <div class="input-group">
+    <div class="big-input-group">
         <input type="number" id="restockInput" placeholder="0" step="0.01">
         <span class="input-suffix">g</span>
     </div>
@@ -937,7 +978,7 @@
 </div>
 
 <!-- Custom Confirm Modal -->
-<div id="customConfirmModal" class="modal" style="width: 85%; max-width: 320px; border-radius: 12px; padding: 20px;">
+<div id="customConfirmModal" class="modal" style="width: 85%; max-width: 320px; border-radius: 12px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid rgba(0,0,0,0.1);">
     <h3 id="customConfirmTitle" style="font-size: 18px; font-weight: bold; margin-bottom: 12px; text-align: center; color: #333;">提示</h3>
     <div id="customConfirmMessage" style="font-size: 15px; color: #666; margin-bottom: 24px; text-align: center; line-height: 1.5;"></div>
     <div class="modal-btn-group" style="gap: 12px;">
@@ -1258,59 +1299,105 @@
 
 <!-- Fabric Tool Page -->
 
-<div id="page-fabric" style="display:none; min-height:100vh; background:#f0f2f5;">
+<div id="page-fabric" style="display:none; min-height:100vh; background:#f5f7fa; padding-bottom: 40px;">
     <!-- Fabric Tool Header -->
-    <div style="background:white; padding:12px 16px; display:flex; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,0.05); position:sticky; top:0; z-index:100;">
-        <button onclick="navTo('home')" class="btn-back">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    <div style="background:rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding:16px 20px; display:flex; align-items:center; box-shadow:0 4px 20px rgba(0,0,0,0.03); position:sticky; top:0; z-index:100; border-bottom: 1px solid rgba(0,0,0,0.05);">
+        <button onclick="navTo('home')" class="btn-back" style="background: transparent; border: none; padding: 8px; border-radius: 50%; color: #333; cursor: pointer; transition: background 0.2s;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <h2 style="margin:0; font-size:16px; flex:1;">烘焙布裁剪组合工具</h2>
+        <h2 class="page-title-sm" style="flex:1; margin: 0 0 0 10px; font-size: 18px; font-weight: 700; color: #1f2937; letter-spacing: -0.02em;">裁剪组合计算</h2>
     </div>
 
     <div class="fabric-container">
-        <!-- Sidebar -->
+        <!-- Sidebar (Input Panel) -->
         <div class="fabric-sidebar">
-            <h3 style="margin-top:0; font-size:15px; color:#333; border-bottom:1px solid #eee; padding-bottom:10px;">1. 原布尺寸 (cm)</h3>
-            <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <div class="input-group-sm">
-                    <label>长</label>
-                    <input type="number" id="canvasW" value="100" onchange="saveFabricState()">
+            <!-- 1. Canvas Size -->
+            <div class="input-section">
+                <div class="section-header">
+                    <span class="section-icon">📏</span>
+                    <h3 class="section-title">原布尺寸</h3>
                 </div>
-                <div class="input-group-sm">
-                    <label>宽</label>
-                    <input type="number" id="canvasH" value="100" onchange="saveFabricState()">
+                <div class="input-row">
+                    <div class="modern-input-group">
+                        <label>长度 (cm)</label>
+                        <input type="number" id="canvasW" value="100" onchange="saveFabricState()" placeholder="0">
+                    </div>
+                    <div class="modern-input-group">
+                        <label>宽度 (cm)</label>
+                        <input type="number" id="canvasH" value="100" onchange="saveFabricState()" placeholder="0">
+                    </div>
                 </div>
             </div>
 
-            <h3 style="font-size:15px; color:#333; border-bottom:1px solid #eee; padding-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                2. 成品规格 (最多5种)
-                <button onclick="addSpec()" style="font-size:12px; background:#e6f7ff; color:#1890ff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">+ 添加</button>
-            </h3>
-            <div style="font-size:12px; color:#999; margin-bottom:10px; line-height:1.4;">
-                规格参考：一块52钉板规格为14*14cm, 一块78钉板规格为21*21cm, 一块104钉板规格为28*28cm
-            </div>
-            <div id="specList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-                <!-- Specs will be injected here -->
+            <!-- 2. Specs -->
+            <div class="input-section">
+                <div class="section-header">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="section-icon">✂️</span>
+                        <h3 class="section-title">成品规格</h3>
+                    </div>
+                    <button onclick="addSpec()" class="btn-icon-add">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="3" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        添加
+                    </button>
+                </div>
+                
+                <div class="specs-hint">
+                    常用：52钉板(14x14), 78钉板(21x21), 104钉板(28x28)
+                </div>
+                
+                <!-- Spec Table Header -->
+                <div style="display: flex; padding: 0 10px 6px 10px; margin-top: 10px; font-size: 12px; color: #9ca3af; font-weight: 500; align-items: center;">
+                    <div style="width: 20px; margin-right: 10px;">#</div>
+                    <div style="flex: 1; text-align: center;">长 (cm)</div>
+                    <div style="width: 15px;"></div>
+                    <div style="flex: 1; text-align: center;">宽 (cm)</div>
+                    <div style="width: 50px; margin-left: 8px; text-align: center;">至少</div>
+                    <div style="width: 20px;"></div>
+                </div>
+
+                <div id="specList" class="spec-list-container">
+                    <!-- Specs injected here -->
+                </div>
             </div>
 
-            <h3 style="font-size:15px; color:#333; border-bottom:1px solid #eee; padding-bottom:10px;">3. 排序偏好</h3>
-            <select id="sortPref" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px; margin-bottom:20px; box-sizing:border-box;" onchange="saveFabricState()">
-                <!-- Options will be dynamic -->
-            </select>
+            <!-- 3. Preferences -->
+            <div class="input-section">
+                <div class="section-header">
+                    <span class="section-icon">⚙️</span>
+                    <h3 class="section-title">计算偏好</h3>
+                </div>
+                <div class="modern-select-wrapper">
+                    <select id="sortPref" onchange="saveFabricState()">
+                        <!-- Options injected -->
+                    </select>
+                    <div class="select-arrow">▼</div>
+                </div>
+            </div>
 
-            <button onclick="calculateLayout()" style="width:100%; padding:12px; background:linear-gradient(135deg, #eb2f96, #c41d7f); color:white; border:none; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer; box-shadow:0 4px 10px rgba(235, 47, 150, 0.3); box-sizing:border-box;">
-                开始计算（仅展示利用率≥ 90%的方案)
+            <!-- Action -->
+            <button onclick="calculateLayout()" class="btn-calculate">
+                <span class="btn-icon">🚀</span>
+                开始计算最优方案
             </button>
-            <div id="calcStatus" style="margin-top:10px; font-size:12px; color:#666; text-align:center;"></div>
+            
+            <button onclick="exportAllSolutionsToPDF()" class="btn-export-pdf" style="margin-top: 12px; width: 100%; padding: 12px; background: white; border: 1px solid #e5e7eb; border-radius: 14px; font-weight: 600; color: #4b5563; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                <span class="btn-icon">📄</span>
+                导出所有方案 (PDF)
+            </button>
+
+            <div id="calcStatus" class="calc-status-text"></div>
         </div>
 
-        <!-- Main Content -->
+        <!-- Main Content (Results) -->
         <div class="fabric-main">
-            <div id="solutionList" style="display:flex; flex-direction:column; gap:20px;">
-                <div style="text-align:center; padding:40px; color:#999;">
-                    <div style="font-size:40px; margin-bottom:10px;">✂️</div>
-                    <div class="desktop-hint">点击左侧“开始计算”生成方案</div>
-                    <div class="mobile-hint">点击上方“开始计算”生成方案</div>
+            <div id="solutionList" class="solution-grid">
+                <!-- Empty State -->
+                <div class="empty-state-card">
+                    <div class="empty-icon">📐</div>
+                    <h3>准备就绪</h3>
+                    <p class="desktop-hint">请在左侧配置参数并点击计算</p>
+                    <p class="mobile-hint">请在上方配置参数并点击计算</p>
                 </div>
             </div>
         </div>
@@ -1318,46 +1405,330 @@
 </div>
 
 <style>
-    .input-group-sm { flex:1; display:flex; flex-direction:column; gap:4px; min-width:0; }
-    .input-group-sm label { font-size:12px; color:#666; }
-    .input-group-sm input { padding:6px; border:1px solid #ddd; border-radius:4px; width:100%; box-sizing:border-box; }
-    
-    .fabric-sidebar, .fabric-main { min-width: 300px; box-sizing: border-box; }
-    @media (max-width: 600px) {
-        .fabric-sidebar, .fabric-main { min-width: 100% !important; border-radius: 0 !important; box-shadow: none !important; padding: 16px !important; }
-        .fabric-container { padding: 0 !important; gap: 10px !important; }
-        .fabric-main { padding: 16px !important; background: transparent; }
+    /* Modern Layout Variables */
+    :root {
+        --fabric-primary: #4a90e2;
+        --fabric-bg: #f5f7fa;
+        --fabric-card-bg: #ffffff;
+        --fabric-border: #e5e7eb;
+        --fabric-text: #1f2937;
+        --fabric-text-light: #6b7280;
+    }
+
+    /* Container Layout */
+    .fabric-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 24px;
+        align-items: start;
+    }
+
+    /* Sidebar Styling */
+    .fabric-sidebar {
+        background: var(--fabric-card-bg);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        position: sticky;
+        top: 80px; /* Sticky sidebar */
+        border: 1px solid rgba(255,255,255,0.5);
+    }
+
+    .input-section {
+        margin-bottom: 24px;
+        border-bottom: 1px dashed var(--fabric-border);
+        padding-bottom: 20px;
+    }
+    .input-section:last-of-type {
+        border-bottom: none;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .section-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--fabric-text);
+        margin: 0;
     }
     
-    .spec-item { display:flex; gap:8px; align-items:center; background:#f9fafb; padding:8px; border-radius:6px; }
-    .spec-color { width:16px; height:16px; border-radius:4px; }
-    .btn-del { border:none; background:none; color:#ff4d4f; cursor:pointer; font-size:16px; padding:0 4px; }
+    .section-icon {
+        font-size: 16px;
+        margin-right: 8px;
+        opacity: 0.8;
+    }
 
-    .solution-card { background:white; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
-    .sol-header { padding:12px 16px; background:#fafafa; border-bottom:1px solid #f0f0f0; display:flex; justify-content:space-between; align-items:center; }
-    .sol-badge { background:#f6ffed; color:#52c41a; border:1px solid #b7eb8f; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:bold; white-space: nowrap; }
-    .sol-body { padding:16px; display:flex; flex-wrap:wrap; gap:20px; align-items:flex-start; }
-    .sol-canvas-wrapper { border:1px solid #eee; display:inline-block; position:relative; }
-    .sol-info { flex:1; min-width:150px; }
-    .sol-stat-row { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; color:#555; border-bottom:1px dotted #eee; padding-bottom:2px; }
+    /* Input Groups */
+    .input-row {
+        display: flex;
+        gap: 12px;
+    }
 
-    /* 响应式提示文字 */
+    .modern-input-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .modern-input-group label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--fabric-text-light);
+        margin-left: 2px;
+    }
+
+    .modern-input-group input {
+        width: 100%;
+        padding: 10px 12px;
+        background: #f9fafb;
+        border: 1px solid var(--fabric-border);
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--fabric-text);
+        transition: all 0.2s;
+        box-sizing: border-box;
+    }
+
+    .modern-input-group input:focus {
+        background: #fff;
+        border-color: var(--fabric-primary);
+        box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+        outline: none;
+    }
+
+    /* Spec List */
+    .specs-hint {
+        font-size: 11px;
+        color: #9ca3af;
+        margin-bottom: 12px;
+        line-height: 1.4;
+        background: #f3f4f6;
+        padding: 8px 12px;
+        border-radius: 8px;
+    }
+
+    .spec-list-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .spec-item {
+        display: flex;
+        align-items: center;
+        background: #fff;
+        border: 1px solid var(--fabric-border);
+        padding: 10px;
+        border-radius: 10px;
+        transition: all 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    
+    .spec-item:hover {
+        border-color: #d1d5db;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+
+    .spec-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 4px;
+        margin-right: 10px;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.05);
+    }
+
+    .btn-icon-add {
+        background: #eff6ff;
+        color: var(--fabric-primary);
+        border: none;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+    }
+    .btn-icon-add:hover {
+        background: #dbeafe;
+    }
+
+    .btn-del {
+        background: transparent;
+        border: none;
+        color: #ef4444;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 6px;
+        opacity: 0.6;
+        transition: all 0.2s;
+        margin-left: auto;
+    }
+    .btn-del:hover {
+        opacity: 1;
+        background: #fef2f2;
+    }
+
+    /* Select */
+    .modern-select-wrapper {
+        position: relative;
+    }
+    .modern-select-wrapper select {
+        width: 100%;
+        padding: 12px;
+        appearance: none;
+        background: #fff;
+        border: 1px solid var(--fabric-border);
+        border-radius: 10px;
+        font-size: 14px;
+        color: var(--fabric-text);
+        cursor: pointer;
+        box-sizing: border-box;
+    }
+    .select-arrow {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 10px;
+        color: var(--fabric-text-light);
+        pointer-events: none;
+    }
+
+    /* Calculate Button */
+    .btn-calculate {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed); /* Modern Indigo-Purple gradient */
+        color: white;
+        border: none;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        transition: transform 0.1s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-sizing: border-box;
+    }
+    .btn-calculate:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+    }
+    .calc-status-text {
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--fabric-text-light);
+        text-align: center;
+        min-height: 18px;
+    }
+
+    /* Main Area */
+    .solution-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 20px;
+    }
+
+    .empty-state-card {
+        grid-column: 1 / -1;
+        background: white;
+        border-radius: 20px;
+        padding: 60px;
+        text-align: center;
+        color: var(--fabric-text-light);
+        border: 2px dashed #e5e7eb;
+    }
+    .empty-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+        filter: grayscale(1);
+    }
+
+    /* Solution Card Styling */
+    .solution-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border: 1px solid rgba(0,0,0,0.03);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .solution-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+    }
+
+    .sol-header {
+        padding: 14px 18px;
+        background: #fcfcfd;
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .sol-title {
+        font-weight: 700;
+        font-size: 15px;
+        color: #374151;
+    }
+    .sol-badge {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #d1fae5;
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .sol-body {
+        padding: 20px;
+    }
+    
+    .sol-canvas-wrapper {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border: 1px solid #eee;
+    }
+
+    /* Responsive */
     .mobile-hint { display: none; }
     .desktop-hint { display: block; }
 
-    /* Fabric Tool Layout */
-    .fabric-container { max-width:1200px; margin:0 auto; padding:16px; display:flex; flex-wrap:wrap; gap:20px; }
-    .fabric-sidebar { flex:1; min-width: 280px; background:white; padding:20px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); height:fit-content; }
-    .fabric-main { flex:2; min-width: 280px; }
-
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
+        .fabric-container {
+            grid-template-columns: 1fr; /* Stack on tablet/mobile */
+            padding: 16px;
+            gap: 16px;
+        }
+        .fabric-sidebar {
+            position: static; /* Unstick on mobile */
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .solution-grid {
+            grid-template-columns: 1fr; /* Single column results on mobile */
+        }
         .mobile-hint { display: block; }
         .desktop-hint { display: none; }
-    }
-
-    @media (max-width: 600px) {
-        .fabric-container { padding: 6px; gap: 12px; }
-        .fabric-sidebar { padding: 16px; }
     }
 </style>
 
@@ -2123,9 +2494,6 @@ function confirmBatchAdd() {
     <!-- Image Viewer Modal -->
     <div id="planImageViewer" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); z-index: 2000; overflow: hidden; touch-action: none;">
          <div style="position: absolute; top: 20px; right: 20px; z-index: 2010; display: flex; gap: 15px;">
-             <div onclick="resetPlanImageZoom()" style="background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; backdrop-filter: blur(4px);">
-                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"/></svg>
-             </div>
              <div onclick="closePlanImageViewer()" style="background: rgba(255,255,255,0.2); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; backdrop-filter: blur(4px);">
                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
              </div>
@@ -2139,6 +2507,7 @@ function confirmBatchAdd() {
     </div>
 
 <!-- Moved editTimeModal to body root to ensure proper z-index and positioning -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <div id="editTimeModal" class="modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width: 85%; max-width: 320px; padding: 0; border-radius: 20px; z-index: 10001; overflow: hidden; background: #fff;">
     <div style="background: linear-gradient(135deg, #e6f7ff 0%, #ffffff 100%); padding: 24px 20px 10px 20px; text-align: center;">
@@ -2181,6 +2550,20 @@ function confirmBatchAdd() {
     </div>
 </div>
 
+<!-- Tag Management Modal -->
+<div id="tagManageModal" class="modal" style="width: 85%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #333;">管理标签</h3>
+    
+    <div class="tag-input-container">
+        <div id="currentTagsList" style="display:flex; flex-wrap:wrap; gap:5px; width:100%;"></div>
+        <input type="text" id="newTagInput" placeholder="输入标签按回车添加" style="flex:1; min-width:80px; border:none; outline:none; font-size:13px; background:transparent; padding:4px 0;" onkeypress="if(event.key === 'Enter') addNewTag()">
+    </div>
+
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" onclick="finishTagEditing()">完成</button>
+    </div>
+</div>
+
 <script src="js/ai.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/data.js"></script>
@@ -2189,5 +2572,36 @@ function confirmBatchAdd() {
 <script src="js/fabric.js"></script>
 <script src="js/scan.js"></script>
 <script src="js/plans.js"></script>
+<script src="js/tool_color.js"></script>
+<script src="js/tool_shopping.js"></script>
+<script src="js/tool_tags.js"></script>
 </body>
 </html>
+<!-- Find Color Modal -->
+<div id="findColorModal" class="modal" style="width: 90%; max-width: 360px; height: 80vh; max-height: 600px; display: none; flex-direction: column; padding: 0; overflow: hidden; border-radius: 20px;">
+    <div style="padding: 20px; background: white; border-bottom: 1px solid #f0f0f0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+            <h3 style="margin: 0; font-size: 18px; font-weight: bold; color: #333;">🔍 反向色号查找</h3>
+            <button onclick="closeAllModals()" style="background:none; border:none; color:#999; font-size:24px; padding:0; line-height:1;">&times;</button>
+        </div>
+        
+        <div style="display:flex; gap: 15px; align-items: center;">
+            <div style="position: relative; width: 60px; height: 60px; border-radius: 12px; overflow: hidden; border: 2px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <input type="color" id="findColorInput" value="#ff0000" onchange="performColorSearch()" style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; padding: 0; margin: 0; border: none; cursor: pointer;">
+            </div>
+            <div style="flex: 1;">
+                <div style="font-size: 13px; color: #666; margin-bottom: 4px;">点击左侧色块选择颜色</div>
+                <div id="findColorHex" style="font-family: monospace; font-weight: bold; color: #333; font-size: 16px;">#FF0000</div>
+            </div>
+        </div>
+    </div>
+
+    <div style="padding: 10px 20px; background: #f9f9f9; font-size: 12px; color: #999; border-bottom: 1px solid #eee;">
+        为您找到最接近的 10 个库存色号：
+    </div>
+
+    <div id="findColorList" style="flex: 1; overflow-y: auto; padding: 10px; background: #f9f9f9;">
+        <!-- Results -->
+    </div>
+</div>
+
