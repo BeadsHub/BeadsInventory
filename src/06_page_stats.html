@@ -1,0 +1,85 @@
+<div id="page-stats" style="display:none; padding-bottom: 80px;">
+    <!-- Sticky Header -->
+    <div class="header-sticky" style="background: #f8f9fa; z-index: 101; border-bottom: 1px solid #eee; padding: 0;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 15px 15px 10px 15px;">
+            <div style="display:flex; align-items:center; justify-content: space-between;">
+                <h2 class="stats-title" style="margin: 0;">统计</h2>
+                <div style="display:flex; align-items:center; gap: 10px;">
+                    <button id="btn-toggle-stats-filter" onclick="toggleStatsFilterVisibility()" style="
+                        border: 1px solid #ddd;
+                        background: #fff;
+                        color: #666;
+                        padding: 6px 10px;
+                        border-radius: 8px;
+                        font-size: 14px;
+                        cursor: pointer;
+                        display: none; 
+                        align-items: center;
+                        justify-content: center;
+                        height: 32px;
+                    ">🎨</button>
+                    
+                    <div style="position: relative;">
+                        <select id="statsSeriesFilter" class="stats-dropdown" onchange="syncAndRenderStats()">
+                            <option value="221">Mard 221</option>
+                            <option value="all">全系列</option>
+                        </select>
+                        <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #ccc; pointer-events: none;">▼</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Stats Series Filter -->
+            <div id="statsSeriesFilterContainer" style="display:none; flex-wrap:wrap; gap:8px; margin-top: 10px; padding-bottom: 5px;">
+                <!-- Buttons injected here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="padding: 15px;">
+        <div id="stats-usage-view">
+            <div class="stats-summary-card stats-card-horizontal">
+                <div class="metric-item" style="flex:1;">
+                    <div id="stats-total-stock" class="metric-val" style="font-size:20px;">0g</div>
+                    <div class="metric-label">总库存</div>
+                </div>
+                
+                <div class="donut-chart-wrapper">
+                    <div id="stats-donut" class="donut-chart">
+                        <div class="donut-label">
+                            <span id="stats-donut-percent" class="donut-percent">0%</span>
+                            <span class="donut-text">已消耗</span>
+                            <span id="stats-donut-value" style="font-size: 11px; color: #666; font-weight: bold; margin-top: 2px;">0g</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-item" onclick="enableStatsLowStock()" style="cursor: pointer; flex:1;">
+                    <div id="stats-low-count" class="metric-val" style="color: #ff4d4f; font-size:20px;">0</div>
+                    <div class="metric-label">缺货</div>
+                </div>
+            </div>
+
+            <div class="stats-filter-row">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="switch-label">仅显示低库存</span>
+                    <span onclick="copyLowStock()" style="cursor: pointer; color: #4a90e2; font-size: 16px; display: flex; align-items: center; padding: 4px;" title="复制缺货清单">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="stats-low-filter" onchange="renderStats()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div id="stats-rank-list" class="stats-rank-list">
+                <!-- Rank items will be injected here -->
+            </div>
+        </div>
+        
+        <div id="stats-records-view" style="display:none; text-align:center; padding: 40px; color: #999;">
+            🚧 施工中...
+        </div>
+    </div>
+</div>
+
