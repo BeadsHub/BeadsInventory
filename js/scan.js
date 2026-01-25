@@ -917,7 +917,36 @@
         };
 
         plans.unshift(newPlan); // Add to top
-        localStorage.setItem('bead_plans', JSON.stringify(plans));
+
+        // --- Modified: Add Error Handling for Storage Full ---
+        try {
+            localStorage.setItem('bead_plans', JSON.stringify(plans));
+        } catch (e) {
+            console.error("Save plan failed:", e);
+            // Check for QuotaExceededError
+            if (e.name === 'QuotaExceededError' || e.code === 22 || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                // Strategy: Retry without thumbnail
+                if (newPlan.thumbnail) {
+                    console.warn("Storage full, retrying without thumbnail...");
+                    newPlan.thumbnail = null; // Remove thumbnail to free up space
+                    try {
+                        localStorage.setItem('bead_plans', JSON.stringify(plans));
+                        alert('由于存储空间不足，计划已创建但无法保存缩略图。\n建议清理旧的已完成计划以释放空间。');
+                    } catch (retryErr) {
+                         console.error("Retry failed:", retryErr);
+                         alert('存储空间严重不足，无法保存新计划！\n请删除一些旧计划后重试。');
+                         return; // Abort
+                    }
+                } else {
+                    alert('存储空间不足，无法保存新计划！\n请删除一些旧计划后重试。');
+                    return; // Abort
+                }
+            } else {
+                alert('保存计划时发生未知错误: ' + e.message);
+                return; // Abort
+            }
+        }
+        // --- End Modification ---
 
         showToast(`计划 "${planName}" 创建成功！`);
         
@@ -954,16 +983,19 @@
             if (originalImg && originalImg.src && originalImg.naturalWidth > 0) {
                  const canvas = document.createElement('canvas');
                  const ctx = canvas.getContext('2d');
-                 const maxDim = 3072; 
+                 // Optimized: Reduced maxDim from 3072 to 1024 to save space
+                 const maxDim = 1024; 
                  let w = originalImg.naturalWidth;
                  let h = originalImg.naturalHeight;
                  if (w > h) { if (w > maxDim) { h *= maxDim / w; w = maxDim; } } 
                  else { if (h > maxDim) { w *= maxDim / h; h = maxDim; } }
                  canvas.width = w; canvas.height = h;
                  ctx.drawImage(originalImg, 0, 0, w, h);
-                 thumbnail = canvas.toDataURL('image/jpeg', 0.92);
+                 // Optimized: Reduced quality from 0.92 to 0.8
+                 thumbnail = canvas.toDataURL('image/jpeg', 0.8);
             } else if (typeof cropper !== 'undefined' && cropper) {
-                thumbnail = cropper.getCroppedCanvas({ maxWidth: 3072, maxHeight: 3072 }).toDataURL('image/jpeg', 0.92);
+                // Optimized: Reduced max dimensions
+                thumbnail = cropper.getCroppedCanvas({ maxWidth: 1024, maxHeight: 1024 }).toDataURL('image/jpeg', 0.8);
             }
         } catch(e) { console.error("Thumbnail error", e); }
 
@@ -978,7 +1010,32 @@
 
         let plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
         plans.unshift(newPlan);
-        localStorage.setItem('bead_plans', JSON.stringify(plans));
+        
+        // --- Modified: Add Error Handling for Storage Full ---
+        try {
+            localStorage.setItem('bead_plans', JSON.stringify(plans));
+        } catch (e) {
+            // Strategy: Retry without thumbnail
+            if (e.name === 'QuotaExceededError' || e.code === 22 || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                if (newPlan.thumbnail) {
+                    newPlan.thumbnail = null;
+                    try {
+                        localStorage.setItem('bead_plans', JSON.stringify(plans));
+                        alert('存储空间预警：计划已创建（无缩略图）。');
+                    } catch (retryErr) {
+                         alert('存储空间已满，无法创建计划！请清理数据。');
+                         return; // Critical: Stop deduction if plan cannot be saved
+                    }
+                } else {
+                    alert('存储空间已满，无法创建计划！请清理数据。');
+                    return;
+                }
+            } else {
+                alert('保存失败: ' + e.message);
+                return;
+            }
+        }
+        // --- End Modification ---
 
         // 2. Execute Deduction (inline logic without confirm)
         
@@ -1014,7 +1071,14 @@
         // Mark as completed
         newPlan.status = 'completed';
         newPlan.completedAt = Date.now();
-        localStorage.setItem('bead_plans', JSON.stringify(plans)); // Save updated status
+        
+        try {
+            localStorage.setItem('bead_plans', JSON.stringify(plans)); // Save updated status
+        } catch(e) {
+            console.warn("Failed to update plan status to completed in storage", e);
+            // Non-critical: Plan is created and inventory is deducted. 
+            // The plan will just show as 'active' instead of 'completed' if reload happens before next save.
+        }
         
         showToast(`已自动创建计划并扣减 ${count} 个色号库存。`);
         resetScan(); // Auto clear scan page

@@ -66,8 +66,8 @@
                 localStorage.setItem('bead_plans', JSON.stringify(plans));
                 
                 // Update UI if we are viewing this plan
-                const titleEl = document.getElementById('planDetailTitle');
-                if (titleEl) titleEl.innerText = plan.name;
+                const nameEl = document.getElementById('planDetailName');
+                if (nameEl) nameEl.innerText = plan.name;
                 
                 renderPlans();
                 showToast(`计划重命名为 "${newName}"`);
@@ -997,9 +997,9 @@
         if (!plan) return;
 
         // Update Sort Button Text
-        const sortBtn = document.getElementById('planDetailSortBtn');
-        if (sortBtn) {
-            sortBtn.innerText = currentPlanDetailSort === 'qty' ? '按用量 ↓' : '按色号 ↑';
+        const sortText = document.getElementById('planDetailSortText');
+        if (sortText) {
+            sortText.innerText = currentPlanDetailSort === 'qty' ? '按用量' : '按色号';
         }
 
         const listContainer = document.getElementById('planDetailList');
@@ -1250,8 +1250,8 @@
 
         currentPlanId = id;
 
-        const titleEl = document.getElementById('planDetailTitle');
-        titleEl.innerText = plan.name;
+        const nameEl = document.getElementById('planDetailName');
+        if (nameEl) nameEl.innerText = plan.name;
 
         // Render Tags (Hook)
         if (typeof updatePlanDetailTagsUI === 'function') {
@@ -1273,8 +1273,8 @@
         const parentPlan = findParent(id, plans, null);
         
         // Update Status Banner
-        const statusBanner = document.getElementById('planDetailStatus');
-        const actionButtons = document.getElementById('planDetailActions');
+        const statusBanner = document.getElementById('planDetailStatusContainer');
+        const actionButtons = document.getElementById('planActiveActions');
         
         // Clear previous buttons
         const revertBtnId = 'btn-revert-active';
@@ -1290,28 +1290,41 @@
             statusBanner.innerHTML = '';
             statusBanner.style.background = '#f6ffed';
             statusBanner.style.color = '#52c41a';
+            statusBanner.style.padding = '12px 16px';
+            statusBanner.style.borderRadius = '12px';
 
-            // 1. Status Text
-            const statusText = document.createElement('div');
-            statusText.style.fontWeight = 'bold';
-            statusText.style.fontSize = '16px';
-            statusText.innerText = '✅ 已完成 - 库存已扣减';
-            statusBanner.appendChild(statusText);
+            // Container for layout
+            const row = document.createElement('div');
+            row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px;';
 
-            // 2. Completed Time
-            if (plan.completedAt) {
-                const timeDiv = document.createElement('div');
-                timeDiv.style.fontSize = '13px';
-                timeDiv.style.marginTop = '6px';
-                timeDiv.style.opacity = '0.8';
-                timeDiv.innerText = '完成于: ' + formatTime(new Date(plan.completedAt));
-                statusBanner.appendChild(timeDiv);
-            }
+            // 1. Completed Time (Left)
+            const timeDiv = document.createElement('div');
+            // Use flex-start to align left
+            timeDiv.style.cssText = 'display: flex; flex-direction: column; justify-content: center; align-items: flex-start;';
             
-            // 3. Edit Time Button (Created via DOM to ensure events work)
+            if (plan.completedAt) {
+                const dateObj = new Date(plan.completedAt);
+                const y = dateObj.getFullYear();
+                const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const d = String(dateObj.getDate()).padStart(2, '0');
+                const h = String(dateObj.getHours()).padStart(2, '0');
+                const min = String(dateObj.getMinutes()).padStart(2, '0');
+                // Removed seconds for cleaner display
+                const timeStr = `${y}/${m}/${d} ${h}:${min}`;
+                
+                timeDiv.innerHTML = `
+                    <div style="font-size: 11px; opacity: 0.8; line-height: 1.2;">完成于</div>
+                    <div style="font-size: 15px; font-weight: 600; line-height: 1.3; font-family: monospace, sans-serif; white-space: nowrap;">${timeStr}</div>
+                `;
+            } else {
+                timeDiv.innerHTML = `<div style="font-size: 15px; font-weight: bold;">已完成</div>`;
+            }
+            row.appendChild(timeDiv);
+            
+            // 2. Edit Time Button (Right)
             const editBtn = document.createElement('button');
-            // High z-index to ensure it's on top
-            editBtn.style.cssText = "display:flex; align-items:center; gap:5px; margin-top:8px; padding:6px 10px; border:none; border-radius:6px; width:fit-content; cursor:pointer; user-select:none; position: relative; z-index: 2000; pointer-events: auto; font-family: inherit;";
+            // High z-index to ensure it's on top. Added white-space: nowrap to prevent text breaking
+            editBtn.style.cssText = "display:flex; align-items:center; gap:5px; padding:8px 12px; border:none; border-radius:8px; width:fit-content; cursor:pointer; user-select:none; position: relative; z-index: 2000; pointer-events: auto; font-family: inherit; margin: 0; white-space: nowrap; flex-shrink: 0;";
             
             // Calculate aggregated time spent for display if not set directly
             // If plan has no timeSpent but has subPlans, sum them up
@@ -1403,7 +1416,8 @@
                 }, { passive: false });
             }
 
-            statusBanner.appendChild(editBtn);
+            row.appendChild(editBtn);
+            statusBanner.appendChild(row);
 
             if(actionButtons) actionButtons.style.display = 'none';
             
