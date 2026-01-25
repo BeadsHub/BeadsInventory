@@ -1,0 +1,60 @@
+<div id="page-more" style="display:none; padding-bottom: 80px; background: #f7f8fa; min-height: 100vh;">
+        <div class="container" style="padding: 20px;">
+            <h3 style="font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #333;">更多</h3>
+            
+            <div style="background: white; border-radius: 16px; padding: 0 20px; margin-bottom: 20px;">
+                 <!-- Threshold -->
+                <div onclick="openThresholdModal()" style="display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #fff2e8; color: #fa541c; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 20px;">📏</div>
+                    <div style="flex: 1;">
+                         <div style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px;">阈值管理</div>
+                         <div style="font-size: 12px; color: #999;">设置低库存预警阈值</div>
+                     </div>
+                     <div style="color: #ccc;">›</div>
+                 </div>
+
+                 <!-- Cost Settings -->
+                 <div onclick="openCostModal()" style="display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #f6ffed; color: #52c41a; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 20px;">💰</div>
+                    <div style="flex: 1;">
+                         <div style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px;">成本设置</div>
+                         <div style="font-size: 12px; color: #999;">设置豆子单价，自动计算成本</div>
+                     </div>
+                     <div style="color: #ccc;">›</div>
+                 </div>
+                 
+                 <!-- Ignored List -->
+                 <div onclick="openIgnoredModal(true)" style="display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer;">
+                     <div style="width: 40px; height: 40px; border-radius: 50%; background: #fff0f6; color: #eb2f96; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 20px;">🚫</div>
+                     <div style="flex: 1;">
+                         <div style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px;">忽略清单</div>
+                         <div style="font-size: 12px; color: #999;">管理色号忽略清单</div>
+                     </div>
+                     <div style="color: #ccc;">›</div>
+                 </div>
+
+                 <!-- Data Import/Export -->
+                 <div onclick="openDataModal('backup')" style="display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer;">
+                     <div style="width: 40px; height: 40px; border-radius: 50%; background: #f9f0ff; color: #722ed1; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 20px;">⚙️</div>
+                     <div style="flex: 1;">
+                         <div style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px;">数据导入导出</div>
+                         <div style="font-size: 12px; color: #999;">备份与恢复数据</div>
+                     </div>
+                     <div style="color: #ccc;">›</div>
+                 </div>
+
+                 <!-- AI Usage -->
+                 <div onclick="openAIUsageModal()" style="display: flex; align-items: center; padding: 20px 0; cursor: pointer;">
+                     <div style="width: 40px; height: 40px; border-radius: 50%; background: #f0f5ff; color: #2f54eb; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 20px;">🤖</div>
+                     <div style="flex: 1;">
+                         <div style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 4px;">AI 使用统计</div>
+                         <div style="font-size: 12px; color: #999;">查看与管理 AI 模型额度</div>
+                     </div>
+                     <div style="color: #ccc;">›</div>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+
+

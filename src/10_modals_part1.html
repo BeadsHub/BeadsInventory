@@ -1,0 +1,642 @@
+<div id="consumeModal" class="modal" style="width: 85%; max-width: 340px; padding: 20px;">
+    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #333;">消耗录入 (粒数)</h3>
+    <div id="modalList" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #f0f0f0; border-radius: 12px; padding: 5px;"></div>
+    <div class="modal-btn-group" style="gap: 10px;">
+        <button class="m-btn m-btn-primary" onclick="submitConsume()" style="padding: 10px; font-size: 14px; border-radius: 10px;">确认扣除</button>
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()" style="padding: 10px; font-size: 14px; border-radius: 10px;">取消</button>
+    </div>
+</div>
+
+<div id="thresholdModal" class="modal" style="width: 80%; max-width: 300px; padding: 25px; border-radius: 20px;">
+    <h3 style="font-size: 18px; color: #333; margin-bottom: 10px; text-align: center;">设置预警阈值</h3>
+    <div style="font-size: 13px; color: #999; margin-bottom: 25px; text-align: center;">当库存重量低于此值时，<br>色号将标记为红色预警状态。</div>
+    
+    <div class="input-group" style="margin-bottom: 25px;">
+        <input type="number" id="thresholdInput" placeholder="0.00" step="0.01" 
+               style="font-size: 32px; padding: 15px; border-radius: 12px; background: #f7f8fa; border: 2px solid transparent; width: 100%; box-sizing: border-box; text-align: center; color: #333; font-weight: bold; transition: all 0.2s;">
+    </div>
+    
+    <div class="modal-btn-group" style="gap: 12px; display: flex; flex-direction: row;">
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()" style="padding: 12px; font-size: 15px; border-radius: 12px; flex: 1; white-space: nowrap;">取消</button>
+        <button class="m-btn m-btn-primary" onclick="saveThreshold()" style="padding: 12px; font-size: 15px; border-radius: 12px; flex: 1; box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2); white-space: nowrap;">保存设置</button>
+    </div>
+</div>
+
+<div id="editWeightModal" class="modal" style="width: 80%; max-width: 300px; padding: 25px; border-radius: 20px;">
+    <h3 id="editWeightModalTitle" style="font-size: 18px; color: #333; margin-bottom: 25px;">修改库存重量</h3>
+    
+    <div class="input-group" style="margin-bottom: 25px;">
+        <input type="number" id="editWeightInput" placeholder="0.00" step="0.01" 
+               style="font-size: 32px; padding: 15px; border-radius: 12px; background: #f7f8fa; border: 2px solid transparent; width: 100%; box-sizing: border-box; text-align: center; color: #333; font-weight: bold; transition: all 0.2s;">
+        <span class="input-suffix" style="right: 30px; font-size: 16px; color: #999;">g</span>
+    </div>
+    
+    <div class="modal-btn-group" style="gap: 12px;">
+        <button class="m-btn m-btn-primary" onclick="submitEditWeight()" style="padding: 12px; font-size: 16px; border-radius: 12px; background: linear-gradient(135deg, #4a90e2, #357abd); box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);">确认修改</button>
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()" style="padding: 12px; font-size: 15px; border-radius: 12px; color: #666;">取消</button>
+    </div>
+</div>
+
+<div id="restockModal" class="modal">
+    <h3>新增补货</h3>
+    <div class="modal-desc" id="restockTitle"></div>
+    <div class="input-group">
+        <input type="number" id="restockInput" placeholder="0" step="0.01">
+        <span class="input-suffix">g</span>
+    </div>
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" onclick="submitRestock()">确认补货</button>
+        <button class="m-btn m-btn-ghost" onclick="showModal('editWeightModal')">返回</button>
+    </div>
+</div>
+
+<!-- Plan Detail Edit Quantity Modal -->
+<div id="planDetailQtyModal" class="modal" style="width: 80%; max-width: 300px; padding: 25px; border-radius: 20px;">
+    <h3 style="font-size: 18px; color: #333; margin-bottom: 25px; text-align: center;">修改计划用量</h3>
+    <div style="text-align: center; margin-bottom: 15px; font-weight: bold; color: #4a90e2; font-size: 16px;" id="planDetailQtyCode"></div>
+    <div class="input-group" style="display:flex; gap:10px; align-items:center; justify-content:center; margin-bottom:25px;">
+        <button onclick="adjustPlanItemQty(-10)" style="width:40px; height:40px; border-radius:12px; border:1px solid #ddd; background:#fff; font-size:18px; color:#666;">-10</button>
+        <button onclick="adjustPlanItemQty(-1)" style="width:40px; height:40px; border-radius:12px; border:1px solid #ddd; background:#fff; font-size:18px; color:#666;">-1</button>
+        <input type="number" id="planDetailQtyInput" style="width: 80px; height: 40px; text-align: center; border: 2px solid #ddd; border-radius: 12px; font-size: 18px; font-weight: bold; color: #333; outline: none; -moz-appearance: textfield;">
+        <button onclick="adjustPlanItemQty(1)" style="width:40px; height:40px; border-radius:12px; border:1px solid #ddd; background:#fff; font-size:18px; color:#666;">+1</button>
+        <button onclick="adjustPlanItemQty(10)" style="width:40px; height:40px; border-radius:12px; border:1px solid #ddd; background:#fff; font-size:18px; color:#666;">+10</button>
+    </div>
+    <div class="modal-btn-group" style="gap: 12px; display: flex;">
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()" style="flex:1; border-radius:12px;">取消</button>
+        <button class="m-btn m-btn-primary" onclick="submitPlanItemQty()" style="flex:1; border-radius:12px;">确认修改</button>
+    </div>
+</div>
+
+<!-- Plan Detail Select Color Modal -->
+<div id="planDetailColorModal" class="modal" style="width: 90%; max-width: 400px; height: 80vh; max-height: 600px; display: none; flex-direction: column; padding: 0; overflow: hidden;">
+    <div style="padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff;">
+        <h3 style="font-size: 16px; margin: 0; font-weight: bold;">更换色号</h3>
+        <button onclick="closeAllModals()" style="background: none; border: none; font-size: 24px; color: #999; padding: 0 10px; cursor: pointer;">×</button>
+    </div>
+    <div style="padding: 10px; border-bottom: 1px solid #f5f5f5; background: #fff;">
+        <input type="text" id="planDetailColorSearch" placeholder="搜索色号..." style="width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: #f9f9f9;" oninput="filterPlanDetailColorList()">
+    </div>
+    <div id="planDetailColorList" style="flex: 1; overflow-y: auto; padding: 10px; background: #f9f9f9; -webkit-overflow-scrolling: touch;">
+        <!-- List Items -->
+    </div>
+</div>
+
+
+
+<div id="historyModal" class="modal" style="width:95%; max-width:600px;">
+    <h3 id="historyTitle" style="font-size:16px; font-weight:bold; margin-bottom:12px;">库存明细</h3>
+    
+    <div style="display:flex; justify-content:space-between; margin-bottom:15px; background:#f5f7fa; padding:10px; border-radius:10px;">
+        <div style="text-align:center; flex:1;">
+            <div style="font-size:11px; color:#999; margin-bottom:3px;">当前余量</div>
+            <div id="hist-stock" style="font-size:16px; font-weight:bold; color:#4a90e2;">0g</div>
+        </div>
+        <div style="text-align:center; border-left:1px solid #e0e0e0; border-right:1px solid #e0e0e0; flex:1;">
+            <div style="font-size:11px; color:#999; margin-bottom:3px;">总消耗</div>
+            <div id="hist-used" style="font-size:16px; font-weight:bold; color:#ff4d4f;">0g</div>
+        </div>
+        <div style="text-align:center; flex:1;">
+            <div style="font-size:11px; color:#999; margin-bottom:3px;">总补充</div>
+            <div id="hist-added" style="font-size:16px; font-weight:bold; color:#52c41a;">0g</div>
+        </div>
+    </div>
+
+    <div style="max-height:240px; overflow:auto; border:1px solid #eee; border-radius:10px;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead style="background:#fafafa; position:sticky; top:0;">
+                <tr>
+                    <th style="padding:6px 2px; text-align:left; color:#999; font-weight:normal; border-bottom:1px solid #eee;">时间</th>
+                    <th style="padding:6px 2px; text-align:left; color:#999; font-weight:normal; border-bottom:1px solid #eee;">图纸名称</th>
+                    <th style="padding:6px 2px; text-align:center; color:#999; font-weight:normal; border-bottom:1px solid #eee;">操作</th>
+                    <th style="padding:6px 2px; text-align:left; color:#999; font-weight:normal; border-bottom:1px solid #eee;">重量/粒数</th>
+                </tr>
+            </thead>
+            <tbody id="historyList"></tbody>
+        </table>
+    </div>
+    <div style="text-align:center; color:#ccc; font-size:10px; margin-top:5px;">
+        注：总计数据包含已归档的历史记录，可能大于上方列表显示的最近20条记录之和。
+    </div>
+
+    <div class="modal-btn-group" style="margin-top:15px;">
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()" style="padding:8px; font-size:13px;">关闭</button>
+    </div>
+</div>
+
+<div id="stockCheckSheet" class="modal" style="width: 100%; max-width: 100%; bottom: 0; top: auto; border-radius: 20px 20px 0 0; padding: 0; margin: 0; left: 0; transform: none; max-height: 80vh; display: none; flex-direction: column; animation: slideUpModal 0.3s ease-out; z-index: 99999;">
+    <div style="padding: 20px; border-bottom: 1px solid #f0f0f0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0; font-size: 18px; font-weight: bold;">库存确认</h3>
+            <button onclick="closeAllModals()" style="background: none; border: none; font-size: 24px; color: #999;">&times;</button>
+        </div>
+        <div id="stockCheckSummary" style="background: #f6ffed; border: 1px solid #b7eb8f; color: #389e0d; padding: 10px; border-radius: 8px; font-size: 13px;">
+            🎉 库存充足，可以开始制作！
+        </div>
+        
+        <!-- Sort Actions -->
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+             <button onclick="toggleStockCheckMissingPriority()" id="btn-check-missing" style="font-size: 12px; padding: 2px 8px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">缺货</button>
+             <button onclick="toggleStockCheckSort('code')" id="btn-check-code" style="font-size: 12px; padding: 2px 8px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">色号</button>
+             <button onclick="toggleStockCheckSort('qty')" id="btn-check-qty" style="font-size: 12px; padding: 2px 8px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">用量</button>
+        </div>
+    </div>
+    
+    <div id="stockCheckList" style="overflow-y: auto; padding: 10px 20px; flex: 1;">
+        <!-- Check Items -->
+    </div>
+
+    <div style="padding: 15px 20px; border-top: 1px solid #f0f0f0;">
+        <button class="m-btn m-btn-primary" onclick="closeAllModals()" style="width: 100%; padding: 12px; font-size: 16px;">我知道了</button>
+    </div>
+</div>
+
+<div id="dataModal" class="modal" style="width:85%; max-width:340px;">
+    <h3 style="font-size:16px; font-weight:bold; margin-bottom:12px;">数据备份</h3>
+    <div class="data-tabs" style="display:flex; border-bottom:1px solid #eee; margin-bottom:15px;">
+        <div id="tabBackup" class="data-tab active" onclick="switchDataTab('backup')" style="flex:1; text-align:center; padding:10px; cursor:pointer; font-weight:bold; color:#4a90e2; border-bottom:2px solid #4a90e2;">备份导出</div>
+        <div id="tabRestore" class="data-tab" onclick="switchDataTab('restore')" style="flex:1; text-align:center; padding:10px; cursor:pointer; color:#666; border-bottom:2px solid transparent;">恢复导入</div>
+    </div>
+    
+    <div id="viewBackup">
+        <div style="padding: 20px 0; text-align: center;">
+            <div style="margin-bottom: 20px; color: #666; font-size: 13px; line-height: 1.6;">
+                <p>将当前所有库存及记录导出为文件。</p>
+                <p style="margin-top:8px; font-weight:bold; color:#333;">📂 导出位置说明</p>
+                <p style="font-size:12px; color:#888;">
+                    电脑端：下载到浏览器的默认下载目录<br>
+                    手机端：保存到Android/data/plus.H5F9023D <span style="color:#4a90e2; font-weight:bold;">Download</span> 文件夹
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewRestore" style="display:none;">
+        <div style="padding: 20px 0; text-align: center;">
+            <div style="margin-bottom: 20px; color: #666; font-size: 13px; line-height: 1.6;">
+                <p>选择备份文件以恢复数据。</p>
+                <p style="font-size:12px; color:#888; margin-top:5px;">
+                    支持从 手机文件管理 / WPS 等途径选择<br>
+                    (请选择 .txt 格式的备份文件)
+                </p>
+            </div>
+            <input type="file" id="restoreFile" style="display:none" accept=".txt,text/plain" onchange="loadBackupFile(this)">
+            <textarea id="restoreInput" style="display:none;"></textarea>
+            <input type="number" id="threshold" style="display:none;" value="0">
+        </div>
+    </div>
+    
+    <div class="modal-btn-group" style="margin-top:10px; display:flex; flex-direction:row; flex-wrap:nowrap; gap:10px;">
+        <button class="m-btn m-btn-ghost" style="flex:1; width:auto; padding: 12px; font-size: 15px; white-space:nowrap;" onclick="closeAllModals()">关闭</button>
+        <button id="btnBackupAction" class="m-btn m-btn-primary" style="flex:1; width:auto; padding: 12px; font-size: 15px; background: #52c41a; border-color: #52c41a; display: flex; align-items: center; justify-content: center; gap: 8px; white-space:nowrap;" onclick="downloadBackupFile()">
+            <span>📤</span> 导出备份 (TXT)
+        </button>
+        <button id="btnRestoreAction" class="m-btn m-btn-primary" style="display:none; flex:1; width:auto; padding: 12px; font-size: 15px; background: #1890ff; border-color: #1890ff; align-items: center; justify-content: center; gap: 8px; white-space:nowrap;" onclick="document.getElementById('restoreFile').click()">
+            <span>📂</span> 选择备份文件 (TXT)
+        </button>
+    </div>
+</div>
+
+<div id="batchInputModal" class="modal" style="width:85%; max-width:340px;">
+    <h3 style="font-size:16px; font-weight:bold; margin-bottom:12px;">初始数据批量录入</h3>
+    <div class="modal-desc" style="margin-bottom:8px; text-align:left;">格式：色号+重量 (如 A1 50)</div>
+    <textarea id="batchInputText" style="width:100%; height:150px; padding:10px; border:1px solid #eee; border-radius:10px; resize:none; font-family:monospace; font-size:13px; box-sizing:border-box; background:#fafafa; outline:none; color:#333;" placeholder="支持多种格式，例如：&#10;A1 50&#10;B2: 20.5&#10;C3=100"></textarea>
+    <div class="modal-btn-group" style="margin-top:15px;">
+        <button class="m-btn m-btn-primary" style="padding:10px; font-size:14px;" onclick="submitBatchInput()">开始识别并导入</button>
+        <button class="m-btn m-btn-ghost" style="padding:8px; font-size:13px;" onclick="closeAllModals()">取消</button>
+    </div>
+</div>
+
+<div id="lowStockModal" class="modal" style="width:85%; max-width:340px; padding:20px; border-radius:24px;">
+    <h3 style="font-size:18px; font-weight:bold; margin-bottom:20px; text-align:center; color:#333;">补货清单</h3>
+    <div id="lowStockHeader" style="margin-bottom:15px; background:#fffbe6; padding:10px; border-radius:8px; border:1px solid #ffe58f; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:16px;">⚠️</span>
+        <div class="modal-desc" style="font-size:12px; color:#d48806; margin:0; text-align:left;">
+            <div>以下色号库存低于设定阈值，建议及时补货。</div>
+            <div style="margin-top:4px; opacity:0.8; font-size:11px; color:inherit;">(已根据首页“色号”下拉框筛选显示范围)</div>
+        </div>
+    </div>
+    
+    <div id="lowStockList" style="max-height:260px; overflow-y:auto; border:1px solid #f0f0f0; border-radius:12px; margin-bottom:20px; padding:5px;"></div>
+    
+    <!-- 隐藏的文本域用于复制功能 -->
+    <textarea id="lowStockText" style="position:absolute; left:-9999px;"></textarea>
+
+    <div class="modal-btn-group" style="gap:10px;">
+        <button class="m-btn m-btn-primary" style="padding:12px; font-size:15px; border-radius:12px;" onclick="copyLowStockText()">一键复制清单</button>
+        <button class="m-btn m-btn-ghost" style="padding:12px; font-size:15px; border-radius:12px;" onclick="closeAllModals()">关闭</button>
+    </div>
+</div>
+
+<!-- Crop Edit Modal (Figure 1) -->
+<div id="cropEditModal" class="modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border-radius: 0; background: black; display: none; flex-direction: column; z-index: 2000; transform: none; box-shadow: none;">
+    <!-- Top Bar -->
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 20px; background:rgba(0,0,0,0.5); color:white; position:absolute; top:0; left:0; right:0; z-index:10;">
+        <button onclick="closeCropEditor()" style="background:none; border:none; color:white; font-size:16px;">取消</button>
+        <span style="font-size:18px; font-weight:bold;">裁切图片</span>
+        <button onclick="showCropPreview()" style="background:#4a90e2; border:none; color:white; font-size:14px; padding:6px 12px; border-radius:4px;">预览</button>
+    </div>
+    
+    <!-- Main Crop Area -->
+    <div style="flex:1; position:relative; overflow:hidden; background:black; display:flex; align-items:center; justify-content:center;">
+        <img id="cropEditImage" style="max-width:100%; max-height:100%; display:block;">
+    </div>
+</div>
+
+<!-- Crop Preview Modal (Figure 2) -->
+<div id="cropPreviewModal" class="modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border-radius: 0; background: black; display: none; flex-direction: column; justify-content: space-between; z-index: 2100; transform: none; box-shadow: none;">
+    <!-- Main Preview Area -->
+    <div style="flex:1; width: 100%; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;">
+        <img id="cropPreviewImage" style="max-width:100%; max-height:100%; object-fit: contain; transform-origin: center center;">
+        
+        <!-- Zoom Controls Overlay (Inside Preview Area to float over image) -->
+        <div style="position:absolute; bottom:20px; left:0; width:100%; display:flex; justify-content:center; gap:20px; pointer-events:none; z-index: 10;">
+             <button onclick="zoomPreview(0.2)" style="pointer-events:auto; background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5); border-radius:50%; width:40px; height:40px; font-size:20px; display:flex; align-items:center; justify-content:center;">+</button>
+             <button onclick="zoomPreview(-0.2)" style="pointer-events:auto; background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.5); border-radius:50%; width:40px; height:40px; font-size:20px; display:flex; align-items:center; justify-content:center;">-</button>
+        </div>
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div style="padding:20px; background:rgba(0,0,0,0.8); display:flex; gap:15px; flex-shrink:0; z-index: 20;">
+        <button class="m-btn m-btn-ghost" onclick="closeCropPreview()" style="flex:1; color:white; border-color:rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M17 15h2V7c0-1.1-.9-2-2-2H9v2h8v8zM7 17V1H5v4H1v2h4v10c0 1.1.9 2 2 2h10v4h2v-4h4v-2H7z"/>
+            </svg>
+            重新裁切
+        </button>
+        <button class="m-btn m-btn-primary" onclick="confirmScanFromPreview()" style="flex:1; background:#6c5ce7; border-color:#6c5ce7; white-space: nowrap;">确认并识别</button>
+    </div>
+</div>
+
+<!-- Scan Add Item Modal -->
+<div id="scanAddModal" class="modal" style="width: 85%; max-width: 320px;">
+    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center;">添加色号</h3>
+    <div style="margin-bottom: 20px;">
+        <label style="display:block; font-size:14px; color:#666; margin-bottom:6px;">色号</label>
+        <input type="text" id="scanAddCodeInput" placeholder="例如A1" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; box-sizing: border-box; text-transform: uppercase;">
+    </div>
+    <div style="margin-bottom: 25px;">
+        <label style="display:block; font-size:14px; color:#666; margin-bottom:6px;">数量 (粒)</label>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button class="m-btn m-btn-ghost" style="width: 40px; padding: 8px 0;" onclick="adjustAddScanQty(-10)">-10</button>
+            <input type="number" id="scanAddQtyInput" value="0" style="flex: 1; text-align: center; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 18px; font-weight: bold;">
+            <button class="m-btn m-btn-ghost" style="width: 40px; padding: 8px 0;" onclick="adjustAddScanQty(10)">+10</button>
+        </div>
+    </div>
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" onclick="submitAddScanItem()">添加</button>
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()">取消</button>
+    </div>
+</div>
+
+<!-- Scan Delete Confirm Modal -->
+<div id="scanDeleteConfirmModal" class="modal" style="width: 85%; max-width: 320px;">
+    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 15px; text-align: center; color: #ff4d4f;">删除色号</h3>
+    <div style="text-align: center; margin-bottom: 25px; color: #666; font-size: 15px;">
+        确定要从扫描结果中删除 <span id="scanDeleteCode" style="font-weight: bold; color: #333;"></span> 吗？
+    </div>
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" style="background: #ff4d4f; border-color: #ff4d4f;" onclick="confirmDeleteScanItem()">删除</button>
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()">取消</button>
+    </div>
+</div>
+
+<!-- Scan Qty Modify Modal -->
+<div id="scanQtyModal" class="modal" style="width: 85%; max-width: 320px;">
+    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center;">修改数量</h3>
+    <div style="margin-bottom: 25px;">
+        <div style="font-size: 14px; color: #666; margin-bottom: 12px; text-align: center;">色号: <span id="scanQtyCode" style="font-weight: bold; color: #333; font-size: 16px;"></span></div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <button class="m-btn m-btn-ghost" style="width: 36px; padding: 8px 0;" onclick="adjustScanQty(-10)">-10</button>
+            <button class="m-btn m-btn-ghost" style="width: 36px; padding: 8px 0;" onclick="adjustScanQty(-1)">-1</button>
+            <input type="number" id="scanQtyInput" style="width: 70px; text-align: center; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 18px; font-weight: bold;">
+            <button class="m-btn m-btn-ghost" style="width: 36px; padding: 8px 0;" onclick="adjustScanQty(1)">+1</button>
+            <button class="m-btn m-btn-ghost" style="width: 36px; padding: 8px 0;" onclick="adjustScanQty(10)">+10</button>
+        </div>
+    </div>
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" onclick="submitScanQty()">确定</button>
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()">取消</button>
+    </div>
+</div>
+
+<!-- Custom Confirm Modal -->
+<div id="customConfirmModal" class="modal" style="width: 85%; max-width: 320px; border-radius: 12px; padding: 20px;">
+    <h3 id="customConfirmTitle" style="font-size: 18px; font-weight: bold; margin-bottom: 12px; text-align: center; color: #333;">提示</h3>
+    <div id="customConfirmMessage" style="font-size: 15px; color: #666; margin-bottom: 24px; text-align: center; line-height: 1.5;"></div>
+    <div class="modal-btn-group" style="gap: 12px;">
+        <button id="customConfirmCancelBtn" class="m-btn m-btn-ghost" onclick="closeAllModals()" style="flex: 1; border-radius: 8px;">取消</button>
+        <button id="customConfirmOkBtn" class="m-btn m-btn-primary" style="flex: 1; border-radius: 8px; background: #ff4d4f; border-color: #ff4d4f;">确定</button>
+    </div>
+</div>
+
+<!-- Scan Color Select Modal -->
+<div id="scanColorModal" class="modal" style="width: 90%; max-width: 400px; height: 80vh; max-height: 600px; display: none; flex-direction: column; padding: 0; overflow: hidden;">
+    <div style="padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff;">
+        <h3 style="font-size: 16px; margin: 0; font-weight: bold;">更换色号</h3>
+        <button onclick="closeAllModals()" style="background: none; border: none; font-size: 24px; color: #999; padding: 0 10px; cursor: pointer;">×</button>
+    </div>
+    <div style="padding: 10px; border-bottom: 1px solid #f5f5f5; background: #fff;">
+        <input type="text" id="scanColorSearch" placeholder="搜索色号..." style="width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: #f9f9f9;" oninput="filterScanColorList()">
+    </div>
+    <div id="scanColorList" style="flex: 1; overflow-y: auto; padding: 10px; background: #f9f9f9;">
+        <!-- List Items Generated via JS -->
+    </div>
+</div>
+
+<div id="welcomeModal" class="modal">
+    <h3>📢 欢迎使用 MARD 豆库</h3>
+    <div style="text-align:left; color:#555; line-height:1.6; font-size:14px; padding:0 10px;">
+        <p style="margin-bottom:12px;"><b>1. 数据安全提醒：</b><br>
+        本工具数据<span style="color:#ff4d4f; font-weight:bold;">仅存储在当前浏览器的本地缓存中</span>。清理浏览器缓存将导致数据永久丢失！<br>
+        请务必定期备份数据（操作入口：页面上方“数据备份”），作者不承担数据丢失的任何后果。</p>
+        
+        <p style="margin-bottom:12px;"><b>2. 设备同步：</b><br>
+        本工具为离线网页应用，<span style="color:#ff4d4f; font-weight:bold;">不支持多设备实时同步</span>。如需在其他设备使用，请使用备份/恢复功能手动迁移数据。</p>
+        
+        <p style="margin-bottom:12px;"><b>3. 功能说明：</b><br>
+        详细操作指南请点击页面上方的“📖 使用说明”查看。</p>
+    </div>
+    <div class="modal-btn-group" style="margin-top:20px;">
+        <button class="m-btn m-btn-primary" onclick="closeWelcomeModal()">我已知晓</button>
+    </div>
+</div>
+
+<div id="ignoredModal" class="modal" style="width:90%; max-width:360px; height:80vh; flex-direction:column; overflow:hidden;">
+    <h3 style="margin-bottom:5px;">色号阈值提醒管理</h3>
+    <div class="modal-desc" style="margin-bottom:10px;">设置是否开启低库存预警</div>
+    
+    <!-- Tabs -->
+    <div class="ai-tabs" style="display:flex; border-bottom:1px solid #eee; margin-bottom:10px; flex-shrink:0;">
+        <div id="tab-ignored-disabled" class="ai-tab active" onclick="switchIgnoredTab('disabled')" style="flex:1; text-align:center; padding:10px; cursor:pointer; font-weight:bold; color:#e24a4a; border-bottom:2px solid #e24a4a;">关闭清单</div>
+        <div id="tab-ignored-enabled" class="ai-tab" onclick="switchIgnoredTab('enabled')" style="flex:1; text-align:center; padding:10px; cursor:pointer; color:#666; border-bottom:2px solid transparent;">开启清单</div>
+    </div>
+
+    <!-- Filter Control -->
+    <div style="flex-shrink:0; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:0 5px;">
+            <span id="ignoredListCount" style="font-size:12px; color:#999;"></span>
+            <button id="btn-toggle-ignored-filter" onclick="toggleIgnoredFilterVisibility()" style="border:1px solid #ddd; background:#fff; color:#666; padding:4px 8px; border-radius:6px; font-size:12px; cursor:pointer; display:none; align-items:center; gap:4px;">
+                🎨 色系筛选
+            </button>
+        </div>
+        <div id="ignoredSeriesFilter" style="display:none; flex-wrap:wrap; gap:6px; max-height:100px; overflow-y:auto; padding:8px; background:#f9f9f9; border-radius:8px; margin-top:8px;"></div>
+    </div>
+    
+    <!-- List -->
+    <div id="ignoredList" style="flex:1; overflow-y:auto; border:1px solid #eee; border-radius:10px; padding:5px; background:#fff;"></div>
+    
+    <!-- Footer / Batch Actions -->
+    <div style="flex-shrink:0; margin-top:10px; padding-top:10px; border-top:1px solid #eee;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+             <div style="display:flex; align-items:center; gap:5px;">
+                 <input type="checkbox" id="ignoredSelectAll" onchange="toggleAllIgnoredBatchSelection()" style="width:18px; height:18px;">
+                 <label for="ignoredSelectAll" style="font-size:14px; color:#666;">全选</label>
+             </div>
+             <div style="display:flex; gap:10px;">
+                 <button class="m-btn m-btn-ghost" onclick="closeAllModals()" style="padding:6px 12px; white-space:nowrap;">取消</button>
+                 <button id="btn-ignored-batch-action" class="m-btn m-btn-primary" onclick="executeIgnoredBatchAction()" style="padding:6px 12px; white-space:nowrap;" disabled>批量开启</button>
+             </div>
+        </div>
+    </div>
+</div>
+
+<div id="devInfoModal" class="modal" style="width:70%; max-width:260px; padding:15px;">
+    <h3 style="font-size:16px;">开发者信息</h3>
+    <div style="text-align:center; padding:10px; color:#555; font-size:13px; line-height:1.6;">
+        <p><b>开发者:</b> 小红书用户āōē</p>
+        <p><b>ID:</b> 11535779483</p>
+        <p>使用 AI 工具开发</p>
+    </div>
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" style="padding:10px; font-size:14px;" onclick="closeAllModals()">关闭</button>
+    </div>
+</div>
+
+<div id="aiUsageModal" class="modal" style="width:90%; max-width:400px; max-height: 85vh; overflow-y: auto;">
+    <div class="modal-header" style="text-align:center; margin-bottom:15px;">
+        <h3 style="margin:0;">AI模型配置</h3>
+        <div id="aiUsageDate" style="font-size: 12px; color: #999; margin-top:4px;"></div>
+    </div>
+
+    <div class="ai-tabs" style="display:flex; border-bottom:1px solid #eee; margin-bottom:15px;">
+        <div id="tab-btn-quota" class="ai-tab active" onclick="switchAITab('quota')" style="flex:1; text-align:center; padding:10px; cursor:pointer; font-weight:bold; color:#4a90e2; border-bottom:2px solid #4a90e2;">额度管理</div>
+        <div id="tab-btn-keys" class="ai-tab" onclick="switchAITab('keys')" style="flex:1; text-align:center; padding:10px; cursor:pointer; color:#666; border-bottom:2px solid transparent;">API Keys</div>
+        <div id="tab-btn-models" class="ai-tab" onclick="switchAITab('models')" style="flex:1; text-align:center; padding:10px; cursor:pointer; color:#666; border-bottom:2px solid transparent;">模型列表</div>
+    </div>
+
+    <!-- Quota Tab -->
+    <div id="tab-content-quota" style="display:block;">
+        <div class="modal-desc" style="margin-bottom: 15px; text-align: center; color:#666; font-size:13px;">
+            每日额度 = 20 × Key数量 (当前: <span id="totalDailyLimit" style="font-weight:bold;">0</span>)
+        </div>
+        <div id="quotaList" style="display:flex; flex-direction:column; gap:12px; background: #f5f7fa; border-radius: 12px; padding: 15px;">
+            <!-- Quota Items injected via JS -->
+        </div>
+    </div>
+
+    <!-- Keys Tab -->
+    <div id="tab-content-keys" style="display:none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px;">
+            <span style="font-weight: bold; color: #333; font-size: 14px;">我的API Keys</span>
+            <button onclick="toggleAddKeyForm()" style="border: none; background: none; color: #4a90e2; font-size: 24px; font-weight: bold; cursor: pointer; padding: 0 8px; line-height: 1;">+</button>
+        </div>
+
+        <!-- Add Key Form (Hidden) -->
+        <div id="addKeyForm" style="display: none; background: #f9f9f9; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed #4a90e2;">
+            <div style="font-size: 13px; font-weight: bold; color: #555; margin-bottom: 8px;">添加新Key</div>
+            <input type="text" id="newKeyName" placeholder="名称 (例如: 公司Key)" style="width: 100%; margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
+            <input type="text" id="newKeyVal" placeholder="sk-..." style="width: 100%; margin-bottom: 15px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="toggleAddKeyForm()" style="padding: 6px 16px; border: 1px solid #ddd; background: white; border-radius: 6px; font-size: 13px; color: #666;">取消</button>
+                <button onclick="saveNewKey()" style="padding: 6px 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: bold;">保存</button>
+            </div>
+        </div>
+
+        <!-- Key List Container -->
+        <div id="aiKeyList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+            <!-- Keys injected via JS -->
+        </div>
+    </div>
+
+    <!-- Models Tab -->
+    <div id="tab-content-models" style="display:none;">
+        <div style="margin-bottom: 10px; color: #666; font-size: 13px; text-align: center;">
+            自定义模型调用顺序 (从上到下优先调用)
+        </div>
+        <div id="modelListContainer" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+            <!-- Models injected via JS -->
+        </div>
+        <button onclick="addModelFromUI()" style="width:100%; padding:10px; border:1px dashed #4a90e2; background:#f0f7ff; color:#4a90e2; border-radius:8px; font-weight:bold; cursor:pointer;">+ 添加模型</button>
+    </div>
+
+    <div class="modal-btn-group" style="margin-top:20px; display: flex; gap: 10px; flex-direction: row;">
+        <button class="m-btn m-btn-ghost" onclick="resetAllAIUsage()" style="color: #ff4d4f; border-color: #ff4d4f; flex: 1; width: auto; white-space: nowrap;">重置所有额度</button>
+        <button class="m-btn m-btn-primary" onclick="closeAllModals()" style="flex: 1; width: auto; white-space: nowrap;">完成</button>
+    </div>
+</div>
+
+<!-- Rename Plan Modal -->
+<div id="renamePlanModal" class="modal" style="width: 85%; max-width: 320px; border-radius: 16px; padding: 24px;">
+    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center;">重命名</h3>
+    <div style="margin-bottom: 25px;">
+        <input type="text" id="renamePlanInput" placeholder="请输入新的计划名称" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; text-align: center;" onkeypress="if(event.key === 'Enter') submitRenamePlan()">
+    </div>
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" onclick="submitRenamePlan()">确定</button>
+        <button class="m-btn m-btn-ghost" onclick="closeAllModals()">取消</button>
+    </div>
+</div>
+
+<div id="revertConfirmModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">撤销确认</h3>
+    <div style="text-align: center; color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">
+        确定要撤销“已完成”状态吗？<br>这将自动回滚库存扣减操作。
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeAllModals()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button onclick="confirmRevertPlan()" style="flex: 1; padding: 10px; border: none; background: #ff4d4f; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">确认撤销</button>
+    </div>
+</div>
+
+<div id="deleteConfirmModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">删除确认</h3>
+    <div id="deleteConfirmMsg" style="text-align: center; color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">
+        确定要删除这个计划吗？
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeAllModals()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button onclick="confirmDeletePlan()" style="flex: 1; padding: 10px; border: none; background: #ff4d4f; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">确认删除</button>
+    </div>
+</div>
+
+    <div id="deductModal" class="modal" onclick="if(event.target===this) closeAllModals()">
+        <h3 style="margin-bottom: 24px;">确认扣除库存</h3>
+        
+        <div style="background: #f9fafb; padding: 16px; border-radius: 12px; margin-bottom: 24px;">
+            <div style="font-size: 13px; color: #6b7280; margin-bottom: 4px;">计划名称</div>
+            <div id="deductPlanName" style="font-weight: 600; color: #1f2937; font-size: 16px;"></div>
+        </div>
+
+        <div style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="font-size: 14px; font-weight: 600; color: #374151;">耗时记录</label>
+                <span style="font-size: 12px; color: #9ca3af;">(选填)</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="flex: 1; position: relative;">
+                    <input type="number" id="deductTimeHours" min="0" placeholder="0" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        style="width: 100%; padding: 12px; padding-right: 30px; background: #f3f4f6; border: 1px solid transparent; border-radius: 12px; font-size: 15px; outline: none; box-sizing: border-box; transition: all 0.2s; text-align: center;"
+                        onfocus="this.style.background='white'; this.style.borderColor='var(--primary)';"
+                        onblur="this.style.background='#f3f4f6'; this.style.borderColor='transparent';"
+                    >
+                    <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 12px; pointer-events: none;">小时</span>
+                </div>
+                <div style="flex: 1; position: relative;">
+                    <input type="number" id="deductTimeMinutes" min="0" max="59" placeholder="0" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        style="width: 100%; padding: 12px; padding-right: 30px; background: #f3f4f6; border: 1px solid transparent; border-radius: 12px; font-size: 15px; outline: none; box-sizing: border-box; transition: all 0.2s; text-align: center;"
+                        onfocus="this.style.background='white'; this.style.borderColor='var(--primary)';"
+                        onblur="this.style.background='#f3f4f6'; this.style.borderColor='transparent';"
+                    >
+                    <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 12px; pointer-events: none;">分钟</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px;">
+            <button class="m-btn m-btn-ghost" onclick="closeAllModals()" style="flex: 1;">取消</button>
+            <button class="m-btn m-btn-primary" onclick="confirmDeduct()" style="flex: 1;">确认扣除</button>
+        </div>
+    </div>
+
+    <div id="importConfirmModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">恢复确认</h3>
+    <div style="text-align: center; color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">
+        警告：恢复操作将重置当前所有库存数据，然后导入新数据。<br>确认继续吗？
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeAllModals()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button onclick="confirmImport()" style="flex: 1; padding: 10px; border: none; background: #1890ff; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">确认恢复</button>
+    </div>
+</div>
+
+<div id="moveOutConfirmModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">移出确认</h3>
+    <div style="text-align: center; color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">
+        确定要将此计划移出当前文件夹吗？<br>移出后它将变回独立计划。
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeAllModals()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button onclick="confirmMoveOutPlan()" style="flex: 1; padding: 10px; border: none; background: #1890ff; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">确认移出</button>
+    </div>
+</div>
+
+<div id="createCollectionModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">创建合集</h3>
+    <div style="margin-bottom: 20px;">
+        <label style="font-size: 14px; color: #666; display: block; margin-bottom: 8px;">请输入合集名称：</label>
+        <input type="text" id="collectionNameInput" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;" placeholder="例如：我的合集">
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeAllModals()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button onclick="confirmCreateCollection()" style="flex: 1; padding: 10px; border: none; background: #1890ff; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">创建</button>
+    </div>
+</div>
+
+<div id="resetQuotaConfirmModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">重置确认</h3>
+    <div style="text-align: center; color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">
+        确定要重置所有模型的今日已用额度吗？<br>重置后将重新计算使用量。
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeResetConfirmModal()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button onclick="executeResetAllAIUsage()" style="flex: 1; padding: 10px; border: none; background: #ff4d4f; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">确认重置</button>
+    </div>
+</div>
+
+<div id="deleteKeyConfirmModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">删除 Key</h3>
+    <div style="text-align: center; color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">
+        确定要删除这个 API Key 吗？<br>删除后不可恢复。
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeAllModals()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button onclick="confirmDeleteKey()" style="flex: 1; padding: 10px; border: none; background: #ff4d4f; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">删除</button>
+    </div>
+</div>
+
+<div id="resetUsageConfirmModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">重置额度</h3>
+    <div style="text-align: center; color: #666; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">
+        确定重置当前 Key 的今日额度吗？<br>这只会清除本地记录的已用量。
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeAllModals()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button onclick="confirmResetUsage()" style="flex: 1; padding: 10px; border: none; background: #4a90e2; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">重置</button>
+    </div>
+</div>
+
+<div id="modelEditModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 id="modelEditTitle" style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">添加模型</h3>
+    <div style="margin-bottom: 20px;">
+        <label style="font-size: 14px; color: #666; display: block; margin-bottom: 8px;">模型名称：</label>
+        <input type="text" id="modelNameInput" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;" placeholder="例如: gemini-1.5-pro" onkeypress="if(event.key === 'Enter') submitModelEdit()">
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeModelEditModal()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button onclick="submitModelEdit()" style="flex: 1; padding: 10px; border: none; background: #4a90e2; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">确定</button>
+    </div>
+</div>
+
+<div id="modelDeleteModal" class="modal" style="width: 80%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: #333; text-align: center;">删除确认</h3>
+    <p id="modelDeleteMsg" style="text-align: center; color: #666; font-size: 14px; margin-bottom: 24px; line-height: 1.5;"></p>
+    <div style="display: flex; gap: 12px;">
+        <button onclick="closeModelDeleteModal()" style="flex: 1; padding: 10px; border: 1px solid #ddd; background: white; color: #666; border-radius: 8px; font-size: 14px;">取消</button>
+        <button id="btnConfirmDeleteModel" onclick="confirmDeleteModel()" style="flex: 1; padding: 10px; border: none; background: #ff4d4f; color: white; border-radius: 8px; font-size: 14px; font-weight: bold;">删除</button>
+    </div>
+</div>
+
+
+
+
+<!-- Fabric Tool Page -->

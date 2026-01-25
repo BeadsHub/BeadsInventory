@@ -1,0 +1,133 @@
+<div id="page-scan" style="display:none; padding-bottom: 80px;">
+    <div class="container" style="padding: 20px;">
+        <h3 style="font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #333;">图纸扫描分析</h3>
+        
+        <div id="scan-uploader" class="scan-uploader" style="border: 2px dashed #4a90e2; border-radius: 12px; padding: 10px; text-align: center; background: #f0f5ff; margin-bottom: 20px; transition: all 0.2s; overflow: hidden;">
+            <div id="scanPreview" onclick="document.getElementById('scanInput').click()" style="padding: 20px; cursor: pointer; color: #4a90e2;">
+                <div style="font-size: 40px; margin-bottom: 10px;">📷</div>
+                <div style="font-weight: bold; font-size: 16px;">点击上传图纸色号区域</div>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">支持手机拍照或从相册选择</div>
+            </div>
+            
+            <div id="cropContainer" style="display:none; height: 400px; background: #333; position: relative;">
+                <img id="scanPreviewImg" style="max-width: 100%; max-height: 100%; display: block;">
+            </div>
+            
+            <div id="scanProcessPreviews" style="display:none; padding: 10px;">
+                <div style="font-size: 12px; color: #999; margin-bottom: 10px;">扫描分析中...</div>
+                <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
+                     <div style="flex: 1; text-align: center; max-width: 45%;">
+                         <div style="font-size: 10px; color: #ccc; margin-bottom: 5px;">原图</div>
+                         <img id="scanProcessOriginal" style="max-width: 100%; max-height: 150px; border-radius: 4px; border: 1px solid #eee; display:inline-block;">
+                     </div>
+                     <div style="color: #ccc; font-size: 20px;">➜</div>
+                     <div style="flex: 1; text-align: center; max-width: 45%;">
+                         <div style="font-size: 10px; color: #ccc; margin-bottom: 5px;">识别区域</div>
+                         <img id="scanProcessCropped" style="max-width: 100%; max-height: 150px; border-radius: 4px; border: 1px solid #eee; display:inline-block;">
+                     </div>
+                </div>
+            </div>
+
+            <input type="file" id="scanInput" accept="image/*" style="display:none" onchange="handleScanImage(this)">
+        </div>
+
+        <div id="cropControls" style="display:none; gap: 10px; margin-bottom: 20px;">
+             <button class="m-btn m-btn-ghost" onclick="resetScan()" style="flex: 1;">重新上传</button>
+             <button class="m-btn m-btn-primary" onclick="openCropEditor()" style="flex: 2;">
+             <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+            <path d="M17 15h2V7c0-1.1-.9-2-2-2H9v2h8v8zM7 17V1H5v4H1v2h4v10c0 1.1.9 2 2 2h10v4h2v-4h4v-2H7z"/>
+            </svg>
+            开始裁切
+        </button>
+        </div>
+
+        <div id="scanLoading" style="display:none; flex-direction: column; align-items: center; justify-content: center; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #4a90e2; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <p id="scanStatusText" style="margin-top: 15px; color: #666; font-size: 14px;">正在识别色号数据...</p>
+            <p style="font-size: 12px; color: #999; margin-bottom: 15px;">(初次加载可能需要几秒钟)</p>
+            <button class="m-btn m-btn-ghost" onclick="cancelScan()" style="width: auto; padding: 8px 20px; font-size: 13px; border: 1px solid #ddd;">取消扫描</button>
+        </div>
+
+        <div id="scanResult" style="display:none; padding-top: 10px;">
+            <!-- 1. Original Full Image (Collapsed/Small Preview) -->
+            <div style="margin-bottom: 15px;">
+                 <div style="font-size: 13px; color: #999; margin-bottom: 5px;">原始图纸</div>
+                 <div style="background: #f0f0f0; border-radius: 8px; overflow: hidden; max-height: 100px; display: flex; align-items: center; justify-content: center; border: 1px dashed #ccc;">
+                      <img id="scanResultFullImage" style="max-width: 100%; max-height: 100px; display: block; opacity: 0.8;" onclick="this.style.maxHeight = this.style.maxHeight === '100px' ? 'none' : '100px'; this.parentElement.style.maxHeight = this.parentElement.style.maxHeight === '100px' ? 'none' : '100px';">
+                 </div>
+                 <div style="text-align: center; font-size: 10px; color: #ccc; margin-top: 2px;">(点击展开/收起)</div>
+            </div>
+
+            <!-- 2. Cropped Image Preview -->
+            <div style="margin-bottom: 5px; font-size: 13px; color: #999;">识别区域</div>
+            <div style="background: #333; border-radius: 12px; overflow: hidden; margin-bottom: 15px; text-align: center; max-height: 200px; display: flex; align-items: center; justify-content: center;">
+                 <img id="scanResultImage" style="max-width: 100%; max-height: 200px; display: block;">
+            </div>
+
+            <!-- 3. Action Buttons -->
+            <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+                <button class="m-btn m-btn-ghost" onclick="reCropImage()" style="flex: 1; border: 1px solid #eee; color: #666; font-size: 13px; border-radius: 20px;">
+                 <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                <path d="M17 15h2V7c0-1.1-.9-2-2-2H9v2h8v8zM7 17V1H5v4H1v2h4v10c0 1.1.9 2 2 2h10v4h2v-4h4v-2H7z"/>
+                </svg>
+                调整裁切
+                </button>
+                <button class="m-btn m-btn-ghost" onclick="resetScan()" style="flex: 1; border: 1px solid #eee; color: #666; font-size: 13px; border-radius: 20px;">
+                    🔄 重新选择
+                </button>
+            </div>
+
+            <!-- 4. Result Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 2px; white-space: nowrap;">
+                <div style="display:flex; align-items:center; gap:5px; flex-shrink: 1; overflow: hidden;">
+                    <h4 style="margin: 0; font-size: 12px; font-weight: bold; color: #333;">识别结果</h4>
+                    <span id="scanTotalCount" style="font-size: 12px; color: #999;">...</span>
+                </div>
+                <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                     <button onclick="toggleScanMissingPriority()" id="btn-scan-missing" style="font-size: 12px; padding: 2px 6px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">缺货</button>
+                     <button onclick="toggleScanSort('code')" id="btn-sort-code" style="font-size: 12px; padding: 2px 6px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">色号</button>
+                     <button onclick="toggleScanSort('qty')" id="btn-sort-qty" style="font-size: 12px; padding: 2px 6px; border: 1px solid #ddd; background: #fff; border-radius: 4px;">用量</button>
+                </div>
+            </div>
+            
+            <!-- 5. Status / Loading Bar -->
+            <div id="scanInlineStatus" style="display:none; background: #e6f7ff; border: 1px solid #91d5ff; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; color: #0050b3; display: flex; align-items: center; gap: 8px;">
+                 <div class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>
+                 <span id="scanInlineStatusText">正在识别中...</span>
+            </div>
+
+            <!-- 6. List Container -->
+            <div id="scanList" style="display: flex; flex-direction: column; gap: 12px; min-height: 100px;"></div>
+            
+            <!-- 7. Plan Actions -->
+            <div id="planActions" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #eee;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 13px; color: #666; margin-bottom: 5px;">图纸命名 (可选)</label>
+                    <input type="text" id="planNameInput" placeholder="输入图纸名称，如: 库洛米" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="m-btn m-btn-primary" onclick="createPlan()" style="flex: 1; background: #722ed1; border-color: #722ed1;">
+                        📅 创建计划
+                    </button>
+                    <button class="m-btn m-btn-primary" onclick="deductInventory()" style="flex: 1; background: #ff4d4f; border-color: #ff4d4f;">
+                        📉 扣减库存
+                    </button>
+                </div>
+            </div>
+
+            <!-- 8. Bottom Tip -->
+             <div style="margin-top: 30px; padding: 15px; text-align: center; color: #ccc; font-size: 12px; border-top: 1px solid #f0f0f0;">
+                识别结果仅供参考 · 请核对实物
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+
+
+    <!-- 弹窗部分 -->
+
+<div class="overlay" id="mask" onclick="closeAllModals()"></div>
+<div class="overlay" id="mask2" onclick="closeAllModals()" style="z-index: 1015; display: none;"></div>

@@ -1,0 +1,129 @@
+<div id="page-beads" style="display:none; padding-bottom: 80px;">
+    <div class="container">
+        <h3 style="font-size: 20px; font-weight: bold; margin: 0 0 20px 0; padding-top: 40px; text-align: center; color: #333;">库存</h3>
+        <div class="header-sticky">
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; margin-top: 6px;">
+            <input type="text" id="search" placeholder="输入色号搜索..." oninput="render()" style="flex:1; margin-bottom:0;">
+            <button id="btn-toggle-filter" onclick="toggleFilterVisibility()" style="
+                border: 1px solid #ddd;
+                background: #fff;
+                color: #666;
+                padding: 8px 12px;
+                border-radius: 8px;
+                font-size: 14px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 42px; /* Match input height roughly */
+            ">
+                🎨
+            </button>
+
+        </div>
+        
+        <div id="series-filter-container" class="series-filter-container" style="display:none;">
+            <div class="series-chip" onclick="toggleSeries('A')">A</div>
+            <div class="series-chip" onclick="toggleSeries('B')">B</div>
+            <div class="series-chip" onclick="toggleSeries('C')">C</div>
+            <div class="series-chip" onclick="toggleSeries('D')">D</div>
+            <div class="series-chip" onclick="toggleSeries('E')">E</div>
+            <div class="series-chip" onclick="toggleSeries('F')">F</div>
+            <div class="series-chip" onclick="toggleSeries('G')">G</div>
+            <div class="series-chip" onclick="toggleSeries('H')">H</div>
+            <div class="series-chip" onclick="toggleSeries('M')">M</div>
+            <div class="series-chip" onclick="toggleSeries('P')">P</div>
+            <div class="series-chip" onclick="toggleSeries('Q')">Q</div>
+            <div class="series-chip" onclick="toggleSeries('R')">R</div>
+            <div class="series-chip" onclick="toggleSeries('T')">T</div>
+            <div class="series-chip" onclick="toggleSeries('Y')">Y</div>
+            <div class="series-chip" onclick="toggleSeries('ZG')">ZG</div>
+        </div>
+        
+
+    
+
+    <style>
+        .sort-btn {
+            flex: 1;
+            border: 1px solid #f0f0f0;
+            background: white;
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            white-space: nowrap;
+        }
+        .sort-btn.active {
+            background: #e6f7ff;
+            color: #1890ff;
+            border-color: #91d5ff;
+            font-weight: bold;
+        }
+        .header-sticky {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: white;
+        }
+        .stats-dropdown {
+            border: 1px solid #ddd;
+            background: #fff;
+            color: #333;
+            padding: 0 24px 0 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            height: 32px;
+            outline: none;
+            appearance: none;
+            cursor: pointer;
+            font-weight: 500;
+            min-width: 90px;
+            text-align: center;
+            text-align-last: center;
+        }
+    </style>
+
+    <!-- Summary & Sort Bar -->
+    <div id="bead-summary-bar" class="header-sticky" style="padding: 0 5px 10px 5px; display: none;">
+        <!-- Sort Controls & Filter -->
+        <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px; align-items: center;">
+             <!-- Filter Dropdown -->
+             <div style="position: relative; min-width: 90px; text-align: center;">
+                 <select id="seriesFilter" onchange="render()" style="width: 100%; font-size: 13px; font-weight: 700; color: #333; border: 1px solid #eee; border-radius: 6px; background: #fff; outline: none; padding: 6px 20px 6px 12px; appearance: none; text-align: center; cursor: pointer; text-align-last: center; height: 32px;">
+                        <option value="221">Mard 221</option>
+                        <option value="all">全系列</option>
+                 </select>
+                 <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #ccc; pointer-events: none;">▼</div>
+             </div>
+
+            <button id="btn-sort-id" onclick="setBeadSort('id')" class="sort-btn active" data-sort="id">
+                色号 <span class="sort-arrow">↓</span>
+            </button>
+            <button id="btn-sort-stock" onclick="setBeadSort('stock')" class="sort-btn" data-sort="stock">
+                库存 <span class="sort-arrow"></span>
+            </button>
+            <button id="btn-sort-used" onclick="setBeadSort('used')" class="sort-btn" data-sort="used">
+                已用 <span class="sort-arrow"></span>
+            </button>
+        </div>
+    </div>
+    </div>
+
+    <div id="grid" class="grid-container"></div>
+    <div style="text-align:center; padding:10px; color:#999; font-size:10px;">
+        开发者: 小红书用户āōē，ID 11535779483，使用AI工具开发
+    </div>
+</div>
+
+
+
+
+</div> <!-- End page-beads -->
+
+    
