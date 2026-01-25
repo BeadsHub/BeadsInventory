@@ -1,4 +1,4 @@
-﻿    let currentPlanId = null;
+    let currentPlanId = null;
     let isPlanSelectionMode = false;
     let selectedPlanIds = new Set();
     let expandedPlanIds = new Set();
@@ -93,6 +93,11 @@
         const BEAD_WEIGHT_PER_100 = 1; // 1g per 100 beads
 
         function processPlan(plan) {
+            // Ignore if tagged as '待定'
+            if (plan.tags && plan.tags.includes('待定')) {
+                return;
+            }
+
             // If it's a folder, process its sub-plans
             if (plan.subPlans && plan.subPlans.length > 0) {
                 // For collections, we check each sub-plan's status independently
@@ -225,23 +230,39 @@
                  let missingHtml = '';
                  if (summary.shortages.length > 0) {
                      summary.shortages.sort((a, b) => b.missingQty - a.missingQty);
-                     const missingItems = summary.shortages.map(item => `
-                        <div onclick="searchPlanByColor('${item.code}')" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 6px; border: 1px solid #ffccc7; margin-bottom: 4px; transition: transform 0.1s, background 0.1s;" onmousedown="this.style.transform='scale(0.98)'; this.style.background='rgba(255,242,240,0.8)'" onmouseup="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.8)'" onmouseleave="this.style.transform='scale(1)'; this.style.background='rgba(255,255,255,0.8)'">
-                            <span style="font-weight: bold; color: #cf1322;">${item.code}</span>
-                            <span style="font-size: 12px; color: #666;">缺 ${item.missingQty}g</span>
+                     const missingItems = summary.shortages.map(item => {
+                        const bead = data.find(d => d.id === item.code);
+                        const bags = Math.ceil(item.missingQty / 10);
+                        // Consistent with shopping list: consider pending only if we bought enough or more
+                        const isPending = bead && bead.pendingBags > 0 && bead.pendingBags >= bags;
+                        
+                        const bg = isPending ? '#f6ffed' : 'rgba(255,255,255,0.8)';
+                        const border = isPending ? '#b7eb8f' : '#ffccc7';
+                        const textColor = isPending ? '#333' : '#cf1322';
+                        const infoText = isPending ? '<span style="color:#52c41a">已购</span>' : `缺 ${item.missingQty}g`;
+
+                        return `
+                        <div onclick="searchPlanByColor('${item.code}')" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: ${bg}; padding: 4px 8px; border-radius: 6px; border: 1px solid ${border}; margin-bottom: 4px; transition: transform 0.1s, background 0.1s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
+                            <span style="font-weight: bold; color: ${textColor};">${item.code} ${isPending ? '<span style="font-size:10px; color:#52c41a; font-weight:normal; margin-left:2px;">(在途)</span>' : ''}</span>
+                            <span style="font-size: 12px; color: #666;">${infoText}</span>
                         </div>
-                    `).join('');
+                    `}).join('');
                      
                      missingHtml = `
                          <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ffa39e;">
-                             <div style="font-size: 13px; font-weight: bold; color: #cf1322; margin-bottom: 8px; display: flex; align-items: center;">
-                                <span style="margin-right: 4px;">⚠️</span> 缺货预警 (${summary.shortages.length} 色)
-                                <span onclick="copyMissingSummary()" style="cursor: pointer; color: #cf1322; font-size: 16px; display: flex; align-items: center; padding: 4px; margin-left: 8px;" title="复制缺货清单">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                </span>
-                            </div>
+                             <div style="font-size: 13px; font-weight: bold; color: #cf1322; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                               <div style="display:flex; align-items:center;">
+                                   <span style="margin-right: 4px;">⚠️</span> 缺货预警 (${summary.shortages.length} 色)
+                               </div>
+                               <button id="generateShoppingListBtn" style="background: white; border: 1px solid #ffadd2; color: #eb2f96; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                   <span>🛒</span> 补货单
+                               </button>
+                           </div>
                              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px;">
                                  ${missingItems}
+                             </div>
+                             <div style="font-size:10px; color:#999; margin-top:8px; text-align:right;">
+                                * 已自动忽略标签为“待定”的计划
                              </div>
                          </div>
                      `;
@@ -249,6 +270,9 @@
                      missingHtml = `
                          <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #bae7ff; color: #52c41a; font-size: 13px; font-weight: bold;">
                              ✅ 库存充足，无缺货色号
+                         </div>
+                         <div style="font-size:10px; color:#999; margin-top:4px; text-align:right;">
+                            * 已自动忽略标签为“待定”的计划
                          </div>
                      `;
                  }
@@ -261,6 +285,12 @@
                      ${missingHtml}
                  `;
                  container.appendChild(summaryCard);
+                 
+                 // Bind click event listener after adding to DOM to avoid quote escaping issues
+                 const btn = document.getElementById('generateShoppingListBtn');
+                 if (btn) {
+                     btn.onclick = () => generateShoppingList(summary.shortages);
+                 }
              }
         }
         renderPlanList(filtered, container, isSearchMode);
@@ -271,6 +301,12 @@
         list.forEach(p => {
             // Match Name
             const matchName = p.name && p.name.toLowerCase().includes(query);
+            
+            // Match Tags
+            let matchTags = false;
+            if (p.tags && p.tags.length > 0) {
+                matchTags = p.tags.some(tag => tag.toLowerCase().includes(query));
+            }
             
             // Match Color Code (in items)
             let matchColor = false;
@@ -292,7 +328,7 @@
                  const newPlan = {...p};
                  newPlan.subPlans = filteredSubPlans;
                  result.push(newPlan);
-            } else if (matchName || matchColor) {
+            } else if (matchName || matchColor || matchTags) {
                  const newPlan = {...p};
                  newPlan.subPlans = p.subPlans; // Keep original structure if parent matches
                  result.push(newPlan);
@@ -577,18 +613,28 @@
             </div>
         `;
 
+        let tagsHtml = '';
+        if (plan.tags && plan.tags.length > 0) {
+            tagsHtml = `
+                <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:6px;">
+                    ${plan.tags.map(tag => `<span style="font-size:10px; background:#f0f5ff; color:#4a90e2; padding:1px 6px; border-radius:8px; border:1px solid #d6e4ff;">${tag}</span>`).join('')}
+                </div>
+            `;
+        }
+
         innerEl.innerHTML = `
             <div style="display: flex; align-items: stretch; width: 100%;">
                 ${folderExpandHtml}
                 ${checkboxHtml}
                 
                 <div style="flex: 1; overflow: hidden; padding-right: 8px;">
-                    <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 4px;">
                         ${iconContainerHtml}
                         <div style="font-weight: bold; font-size: 16px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             ${plan.name}
                         </div>
                     </div>
+                    ${tagsHtml}
 
                     <div style="margin-bottom: ${!isFolder && visibleItems.length > 0 ? '8px' : '0'};">
                         ${statsHtml}
@@ -1198,6 +1244,11 @@
 
         const titleEl = document.getElementById('planDetailTitle');
         titleEl.innerText = plan.name;
+
+        // Render Tags (Hook)
+        if (typeof updatePlanDetailTagsUI === 'function') {
+            updatePlanDetailTagsUI(plan);
+        }
         
         // Setup Image Preview
         const imgContainer = document.getElementById('planDetailImageContainer');
@@ -1406,10 +1457,7 @@
              costEl.innerText = totalCost.toFixed(2);
         }
 
-
-        // Render List using the current sort mode (reset to default or keep?)
-        // Let's reset to default 'qty' when opening a plan, or keep previous if we want.
-        // User didn't specify, but resetting is safer for "default is by usage".
+        // Render List using the current sort mode
         currentPlanDetailSort = 'qty'; 
         renderPlanDetailList();
 

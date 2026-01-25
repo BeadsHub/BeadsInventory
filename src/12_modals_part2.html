@@ -38,3 +38,17 @@
         </div>
     </div>
 </div>
+
+<!-- Tag Management Modal -->
+<div id="tagManageModal" class="modal" style="width: 85%; max-width: 320px; padding: 24px; border-radius: 16px;">
+    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #333;">管理标签</h3>
+    
+    <div class="tag-input-container">
+        <div id="currentTagsList" style="display:flex; flex-wrap:wrap; gap:5px; width:100%;"></div>
+        <input type="text" id="newTagInput" placeholder="输入标签按回车添加" style="flex:1; min-width:80px; border:none; outline:none; font-size:13px; background:transparent; padding:4px 0;" onkeypress="if(event.key === 'Enter') addNewTag()">
+    </div>
+
+    <div class="modal-btn-group">
+        <button class="m-btn m-btn-primary" onclick="finishTagEditing()">完成</button>
+    </div>
+</div>

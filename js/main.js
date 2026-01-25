@@ -754,7 +754,10 @@
         };
         
         showModal('customConfirmModal');
-    }
+    
+    // Ensure it is on top of other modals (must set after showModal which resets z-index)
+    document.getElementById('customConfirmModal').style.zIndex = '1100';
+}
 
     function showModal(id) {
         // Check if any other modal is already open
