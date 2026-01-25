@@ -78,6 +78,30 @@
         // Low stock: monitor is true (or undefined/default) AND stock < threshold
         const lowCount = statsData.filter(item => item.monitor !== false && (item.w || 0) < threshold).length;
         
+        // New Stats
+        const zeroCount = statsData.filter(item => (item.w || 0) <= 0).length;
+        const pendingBags = statsData.reduce((sum, item) => sum + (item.pendingBags || 0), 0);
+        
+        // Plan Rate Calculation
+        let planRate = 0;
+        try {
+            const plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
+            let totalP = 0;
+            let completedP = 0;
+            const traverse = (list) => {
+                list.forEach(p => {
+                    if (p.subPlans && p.subPlans.length > 0) {
+                        traverse(p.subPlans);
+                    } else {
+                        totalP++;
+                        if (p.status === 'completed') completedP++;
+                    }
+                });
+            };
+            traverse(plans);
+            if (totalP > 0) planRate = Math.round((completedP / totalP) * 100);
+        } catch(e) {}
+
         // Calculate Usage Rate: Total Used / Total Stock * 100%
         let usageRate = 0;
         if (totalStock > 0) {
@@ -98,6 +122,16 @@
             elLowCount.textContent = lowCount;
             elLowCount.style.color = lowCount > 0 ? '#ff4d4f' : '#333';
         }
+
+        // New Stats Update
+        const elZeroCount = document.getElementById('stats-zero-count');
+        if(elZeroCount) elZeroCount.textContent = zeroCount;
+        
+        const elPendingBags = document.getElementById('stats-pending-bags');
+        if(elPendingBags) elPendingBags.textContent = pendingBags;
+        
+        const elPlanRate = document.getElementById('stats-plan-rate');
+        if(elPlanRate) elPlanRate.textContent = planRate + '%';
 
         // 3. 更新甜甜圈图 (已消耗)
         const donut = document.getElementById('stats-donut');

@@ -281,7 +281,7 @@ function confirmRestock(code, bags) {
             saveData();
             
             // Feedback with weight change to verify
-            showToast(`${code} 入库成功 (+${addWeight}g)\n库存: ${oldWeight}g ➜ ${bead.w}g`);
+            showToast(`${code} 入库成功 (+${addWeight}g)\n库存: ${oldWeight}g ➜ ${bead.w}g`.replace(/\n/g, ' '));
             
             // Refresh Main UI
             if (typeof render === 'function') {

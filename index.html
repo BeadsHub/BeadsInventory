@@ -49,7 +49,7 @@
 
 <div id="page-beads" style="display:none; padding-bottom: 80px;">
     <div class="container">
-        <h3 style="font-size: 20px; font-weight: bold; margin: 0 0 20px 0; padding-top: 40px; text-align: center; color: #333;">库存</h3>
+        <h2 class="page-title">库存</h2>
         <div class="header-sticky">
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; margin-top: 6px;">
             <input type="text" id="search" placeholder="输入色号搜索..." oninput="render()" style="flex:1; margin-bottom:0;">
@@ -212,7 +212,7 @@
     
 <div id="page-more" style="display:none; padding-bottom: 80px; background: #f7f8fa; min-height: 100vh;">
         <div class="container" style="padding: 20px;">
-            <h3 style="font-size: 20px; font-weight: bold; margin-bottom: 20px; color: #333;">更多</h3>
+            <h2 class="page-title" style="margin-bottom: 20px;">更多</h2>
             
             <div style="background: white; border-radius: 16px; padding: 0 20px; margin-bottom: 20px;">
                  <!-- Threshold -->
@@ -276,7 +276,7 @@
     <div class="header-sticky" style="background: #f8f9fa; z-index: 101; border-bottom: 1px solid #eee; padding: 0;">
         <div style="max-width: 600px; margin: 0 auto; padding: 15px 15px 10px 15px;">
             <div style="display:flex; align-items:center; justify-content: space-between;">
-                <h2 class="stats-title" style="margin: 0;">统计</h2>
+                <h2 class="page-title" style="margin: 0; text-align: left;">统计</h2>
                 <div style="display:flex; align-items:center; gap: 10px;">
                     <button id="btn-toggle-stats-filter" onclick="toggleStatsFilterVisibility()" style="
                         border: 1px solid #ddd;
@@ -326,9 +326,24 @@
                     </div>
                 </div>
 
+                <div class="metric-item" style="flex:1;">
+                    <div id="stats-plan-rate" class="metric-val" style="color: #52c41a; font-size:20px;">0%</div>
+                    <div class="metric-label">计划完成</div>
+                </div>
+            </div>
+
+            <div class="stats-summary-card stats-card-horizontal" style="margin-top: 10px;">
                 <div class="metric-item" onclick="enableStatsLowStock()" style="cursor: pointer; flex:1;">
                     <div id="stats-low-count" class="metric-val" style="color: #ff4d4f; font-size:20px;">0</div>
                     <div class="metric-label">缺货</div>
+                </div>
+                <div class="metric-item" style="flex:1;">
+                    <div id="stats-zero-count" class="metric-val" style="color: #cf1322; font-size:20px;">0</div>
+                    <div class="metric-label">断货 (0g)</div>
+                </div>
+                <div class="metric-item" style="flex:1;">
+                    <div id="stats-pending-bags" class="metric-val" style="color: #1890ff; font-size:20px;">0</div>
+                    <div class="metric-label">在途 (包)</div>
                 </div>
             </div>
 
@@ -360,12 +375,12 @@
 <div id="page-plan" style="display:none; padding-bottom: 80px;">
     <div class="container" style="padding: 20px;">
         <div style="position: sticky; top: 0; z-index: 99; background: #fff; margin: -20px -20px 15px -20px; padding: 20px 20px 10px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-            <h3 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; text-align: center; color: #333; margin-top: 0;">
+            <h2 class="page-title" style="margin-top: 0; margin-bottom: 15px;">
                 拼豆计划
                 <span onclick="togglePlanOverviewContainer()" style="cursor: pointer; color: #4a90e2; font-size: 18px; margin-left: 8px; vertical-align: middle; display: inline-flex; align-items: center;" title="显示计划概览">
                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                 </span>
-            </h3>
+            </h2>
             
             <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
                 <div style="position: relative; flex: 1;">
@@ -451,6 +466,10 @@
                  <div id="planDetailBeadCount" style="font-size: 24px; font-weight: bold; color: #fa8c16;">0</div>
                  <div style="font-size: 13px; color: #999;">总粒数</div>
              </div>
+             <div style="text-align: center;">
+                 <div id="planDetailCost" style="font-size: 24px; font-weight: bold; color: #ff4d4f;">¥0</div>
+                 <div style="font-size: 13px; color: #999;">预计成本</div>
+             </div>
         </div>
     </div>
 
@@ -489,7 +508,7 @@
 
 <div id="page-scan" style="display:none; padding-bottom: 80px;">
     <div class="container" style="padding: 20px;">
-        <h3 style="font-size: 20px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #333;">图纸扫描分析</h3>
+        <h2 class="page-title" style="margin-bottom: 20px;">图纸扫描分析</h2>
         
         <div id="scan-uploader" class="scan-uploader" style="border: 2px dashed #4a90e2; border-radius: 12px; padding: 10px; text-align: center; background: #f0f5ff; margin-bottom: 20px; transition: all 0.2s; overflow: hidden;">
             <div id="scanPreview" onclick="document.getElementById('scanInput').click()" style="padding: 20px; cursor: pointer; color: #4a90e2;">
@@ -1270,7 +1289,7 @@
         <button onclick="navTo('home')" class="btn-back">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <h2 style="margin:0; font-size:16px; flex:1;">烘焙布裁剪组合工具</h2>
+        <h2 class="page-title-sm" style="flex:1;">烘焙布裁剪组合工具</h2>
     </div>
 
     <div class="fabric-container">

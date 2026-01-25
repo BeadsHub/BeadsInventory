@@ -1135,6 +1135,14 @@
                 // Update stats
                 const totalQty = plan.items.reduce((sum, item) => sum + item.qty, 0);
                 document.getElementById('planDetailBeadCount').innerText = totalQty.toLocaleString();
+                
+                // Update Cost
+                const totalWeight = totalQty / 100;
+                const totalCost = totalWeight * 0.1;
+                const costEl = document.getElementById('planDetailCost');
+                if (costEl) {
+                    costEl.innerText = '¥' + totalCost.toFixed(2);
+                }
             } else {
                 showToast("请输入有效的数量");
             }
@@ -1415,46 +1423,12 @@
         // Calculate and display cost
         const storedCost = localStorage.getItem('bead_unit_cost');
         const unitCost = storedCost ? parseFloat(storedCost) : 0.1;
-        const totalWeight = totalQty / 100; // 100 beads approx 1g (based on BEAD_WEIGHT_PER_100 logic usually 1g=100)
-        // Actually code uses BEAD_WEIGHT_PER_100 = 1 (1g per 100 beads).
-        // So total weight is totalQty / 100.
+        const totalWeight = totalQty / 100; // 100 beads approx 1g
         const totalCost = totalWeight * unitCost;
         
-        // Create or update cost element
-        // FIX: Remove duplicates first to prevent multiple cost cards stacking up
-        const existingCostContainers = document.querySelectorAll('[id^="planDetailCostContainer"]');
-        existingCostContainers.forEach(el => el.remove());
-        
-        let costEl = document.getElementById('planDetailCost');
-        // Always recreate or re-find after cleanup
-        if (true) { // Logic simplified: cleanup and recreate is safer than "if (!costEl)" which failed
-            // Insert after the counts row
-            const countsRow = document.querySelector('.detail-stats'); 
-            
-            const statsContainer = document.getElementById('planDetailBeadCount').parentNode.parentNode;
-            
-            const costContainer = document.createElement('div');
-            costContainer.id = 'planDetailCostContainer';
-            costContainer.style.cssText = "background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;";
-            
-            costContainer.innerHTML = `
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width: 32px; height: 32px; border-radius: 50%; background: #fff7e6; color: #fa8c16; display: flex; align-items: center; justify-content: center; font-size: 16px;">💰</div>
-                    <div>
-                        <div style="font-size: 11px; color: #999;">预计成本</div>
-                        <div style="font-size: 15px; font-weight: bold; color: #333;">¥ <span id="planDetailCostValue">0.00</span></div>
-                    </div>
-                </div>
-                <div style="font-size: 11px; color: #ccc;">(基于 ${unitCost}元/g)</div>
-            `;
-            
-            statsContainer.parentNode.insertBefore(costContainer, statsContainer.nextSibling);
-            costEl = document.getElementById('planDetailCostValue');
-        }
-        
-        // Update value
-        if(costEl) {
-             costEl.innerText = totalCost.toFixed(2);
+        const costEl = document.getElementById('planDetailCost');
+        if (costEl) {
+            costEl.innerText = '¥' + totalCost.toFixed(2);
         }
 
         // Render List using the current sort mode
