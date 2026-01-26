@@ -239,7 +239,7 @@
                 const bg = active ? '#e6f7ff' : '#f0f5ff';
                 const color = active ? '#1890ff' : '#4a90e2';
                 const border = active ? '#91d5ff' : '#d6e4ff';
-                return `<button onclick="togglePlanTagFilter('${t.replace(/'/g, "\\'")}')" style="padding:4px 10px; border-radius:12px; border:1px solid ${border}; background:${bg}; color:${color}; font-size:12px; cursor:pointer;">${t}</button>`;
+                return `<button onclick="togglePlanTagFilter('${t.replace(/'/g, "\\'")}')" style="padding:4px 10px; border-radius:12px; border:1px solid ${border}; background:${bg}; color:${color}; font-size:12px; cursor:pointer; white-space: nowrap;">${t}</button>`;
             }).join('');
         }
 
@@ -2691,5 +2691,24 @@
                 if(list) list.scrollIntoView({behavior: 'smooth', block: 'start'});
                 showToast('\u5df2\u7b5b\u9009\u4f7f\u7528\u8272\u53f7 ' + code + ' \u7684\u8ba1\u5212');
             }, 100);
+        }
+    }
+
+    function togglePlanTagsVisibility() {
+        const bar = document.getElementById('planTagFilterBar');
+        const btn = document.getElementById('toggleTagsBtn');
+        if (!bar || !btn) return;
+        
+        const isHidden = bar.style.display === 'none';
+        if (isHidden) {
+            bar.style.display = 'flex';
+            btn.style.background = '#e6f7ff';
+            btn.style.color = '#1890ff';
+            btn.style.borderColor = '#91d5ff';
+        } else {
+            bar.style.display = 'none';
+            btn.style.background = 'white';
+            btn.style.color = '#666';
+            btn.style.borderColor = '#ddd';
         }
     }
