@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f2937"/>
+      <stop offset="100%" stop-color="#4a90e2"/>
+    </linearGradient>
+    <pattern id="pixels" width="32" height="32" patternUnits="userSpaceOnUse">
+      <rect width="32" height="32" fill="none"/>
+      <rect x="0" y="0" width="28" height="28" rx="4" ry="4" fill="#ffffff" opacity="0.9"/>
+    </pattern>
+    <clipPath id="cat">
+      <path d="M256 360 L340 280 Q360 260 380 280 L420 340 Q520 300 640 340 L684 280 Q704 260 724 280 L800 360 Q860 440 860 550 Q860 760 512 760 Q164 760 164 550 Q164 440 256 360 Z"/>
+    </clipPath>
+  </defs>
+  <rect x="64" y="64" rx="220" ry="220" width="896" height="896" fill="url(#bg)"/>
+  <g clip-path="url(#cat)">
+    <rect x="128" y="240" width="768" height="640" fill="url(#pixels)"/>
+  </g>
+  <rect x="64" y="64" rx="220" ry="220" width="896" height="896" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="8"/>
+  <g>
+    <rect x="430" y="520" width="40" height="40" fill="#0f172a" rx="6"/>
+    <rect x="554" y="520" width="40" height="40" fill="#0f172a" rx="6"/>
+    <rect x="490" y="580" width="44" height="24" fill="#0f172a" rx="6"/>
+  </g>
+  <g transform="translate(700,720)">
+    <rect x="-12" y="-12" width="172" height="172" rx="20" fill="rgba(255,255,255,0.15)" />
+    <circle cx="0" cy="0" r="26" fill="#ff9a00"/>
+    <circle cx="60" cy="0" r="26" fill="#ff4d4f"/>
+    <circle cx="120" cy="0" r="26" fill="#52c41a"/>
+    <circle cx="0" cy="60" r="26" fill="#7c4dff"/>
+    <circle cx="60" cy="60" r="26" fill="#1890ff"/>
+    <circle cx="120" cy="60" r="26" fill="#ffd666"/>
+  </g>
+  <g transform="translate(0,0)">
+    <rect x="352" y="170" width="340" height="92" rx="46" fill="rgba(255,255,255,0.18)"/>
+    <text x="522" y="230" font-size="58" font-weight="700" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" text-anchor="middle" fill="#ffffff">豆猫</text>
+  </g>
+</svg>

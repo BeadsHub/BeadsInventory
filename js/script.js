@@ -3093,6 +3093,14 @@
         statusEl.innerText = "计算中...";
         listEl.innerHTML = ''; 
 
+        // Prepare validated specs (ignore blanks)
+        const usedSpecs = specs.filter(s => (s.w > 0 && s.h > 0));
+        if (usedSpecs.length === 0) {
+            statusEl.innerText = "请填写有效的成品规格";
+            listEl.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">请至少填写一个规格的长宽</div>';
+            return;
+        }
+
         // 1. Generate Combinations (Recursion)
         const targetArea = 0.9 * W * H;
         const totalArea = W * H;
@@ -3107,14 +3115,14 @@
         function search(index, currentCounts, currentArea) {
             if (currentArea > totalArea) return;
             
-            if (index === specs.length) {
+            if (index === usedSpecs.length) {
                 if (currentArea >= targetArea) {
                     solutions.push({ counts: [...currentCounts], area: currentArea, utilization: currentArea / totalArea });
                 }
                 return;
             }
 
-            const s = specs[index];
+            const s = usedSpecs[index];
             const sArea = s.w * s.h;
             // Limit max count to avoid infinite loops if size is small
             const maxCnt = Math.min(200, Math.floor((totalArea - currentArea) / sArea));
@@ -3145,12 +3153,28 @@
             }
         }
         
-        search(0, new Array(specs.length).fill(0), 0);
+        search(0, new Array(usedSpecs.length).fill(0), 0);
 
         if (solutions.length === 0) {
-            statusEl.innerText = "无满足 >=90% 利用率的方案";
-            listEl.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">未找到高利用率方案，建议添加填充件</div>';
-            return;
+            // Fallback: try greedy grid fit for each single spec (normal/rotated)
+            const fallbackSolutions = [];
+            usedSpecs.forEach((s, i) => {
+                const cntNormal = Math.floor(W / s.w) * Math.floor(H / s.h);
+                const cntRot = Math.floor(W / s.h) * Math.floor(H / s.w);
+                const cnt = Math.max(cntNormal, cntRot);
+                if (cnt > 0) {
+                    const counts = new Array(usedSpecs.length).fill(0);
+                    counts[i] = cnt;
+                    const area = cnt * (s.w * s.h);
+                    fallbackSolutions.push({ counts, area, utilization: area / totalArea });
+                }
+            });
+            solutions = fallbackSolutions;
+            if (solutions.length === 0) {
+                statusEl.innerText = "无可用方案";
+                listEl.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">尺寸太小或规格无效，无法生成方案</div>';
+                return;
+            }
         }
 
         // 2. Validate Packing
@@ -3168,7 +3192,7 @@
         for (let sol of toCheck) {
             let items = [];
             sol.counts.forEach((cnt, i) => {
-                for(let k=0; k<cnt; k++) items.push({ ...specs[i], id: i });
+                for(let k=0; k<cnt; k++) items.push({ ...usedSpecs[i], id: i });
             });
             
             let bestResult = null;
@@ -3295,7 +3319,7 @@
             let dims = [];
             sol.counts.forEach((cnt, i) => {
                 for(let k=0; k<cnt; k++) {
-                    dims.push(`${specs[i].w}x${specs[i].h}`);
+                    dims.push(`${usedSpecs[i].w}x${usedSpecs[i].h}`);
                 }
             });
             dims.sort();
