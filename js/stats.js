@@ -1185,10 +1185,51 @@
         }
     }
 
+    async function ensureJsPDFLoaded() {
+        if (window.jspdf && window.jspdf.jsPDF) return true;
+        const tryLoad = (src) => new Promise((resolve) => {
+            const existing = document.querySelector(`script[src="${src}"]`);
+            if (existing) {
+                existing.addEventListener('load', () => resolve(true));
+                existing.addEventListener('error', () => resolve(false));
+                return;
+            }
+            const s = document.createElement('script');
+            s.src = src;
+            s.async = true;
+            s.onload = () => resolve(true);
+            s.onerror = () => resolve(false);
+            document.head.appendChild(s);
+        });
+        const cdnList = [
+            'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+            'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js'
+        ];
+        for (let url of cdnList) {
+            const ok = await tryLoad(url);
+            if (ok && window.jspdf && window.jspdf.jsPDF) return true;
+        }
+        return !!(window.jspdf && window.jspdf.jsPDF);
+    }
+
     async function exportAllSolutionsToPDF() {
-        if (!window.jspdf) {
-            alert("PDF 库加载失败，请检查网络连接");
-            return;
+        if (!(window.jspdf && window.jspdf.jsPDF)) {
+            const btnPre = document.querySelector('.btn-export-pdf');
+            if (btnPre) {
+                btnPre.innerHTML = '<span style="font-size:16px;">⏳</span> 正在加载PDF库...';
+                btnPre.disabled = true;
+                btnPre.style.opacity = "0.7";
+            }
+            const loaded = await ensureJsPDFLoaded();
+            if (!loaded) {
+                if (btnPre) {
+                    btnPre.innerHTML = '导出所有方案 (PDF)';
+                    btnPre.disabled = false;
+                    btnPre.style.opacity = "1";
+                }
+                alert("PDF 库加载失败，请检查网络连接");
+                return;
+            }
         }
         
         if (!currentRenderedSolutions || currentRenderedSolutions.length === 0) {

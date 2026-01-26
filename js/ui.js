@@ -97,19 +97,9 @@
                      const sortEl = document.getElementById('sortPref');
                      if(sortEl) sortEl.value = savedSort;
                 }
-                
-                // Auto-calculate if data exists (User request: show last operation info)
-                if (savedW && savedH && specs.length > 0) {
-                    // Check if inputs are valid numbers
-                    if (parseFloat(savedW) > 0 && parseFloat(savedH) > 0) {
-                        // Check if all specs have valid dimensions
-                        const allSpecsValid = specs.every(s => s.w > 0 && s.h > 0);
-                        if (allSpecsValid) {
-                             // Small delay to ensure UI is ready
-                             calculateLayout();
-                        }
-                    }
-                }
+                // Do not auto-calculate on page entry; wait for explicit click
+                const statusEl = document.getElementById('calcStatus');
+                if (statusEl) statusEl.innerText = '';
             }, 50);
         }
     }
@@ -147,7 +137,6 @@
             alert("请输入有效的数字");
         }
     }
-
 
 
 
