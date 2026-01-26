@@ -22,15 +22,19 @@
         // Update Pull-to-Refresh behavior
         updatePullToRefresh(page);
 
-        document.getElementById('page-home').style.display = 'none';
-        document.getElementById('page-beads').style.display = 'none';
-        document.getElementById('page-fabric').style.display = 'none';
-        document.getElementById('page-stats').style.display = 'none';
-        document.getElementById('page-scan').style.display = 'none';
-
+        // Hide ALL pages explicitly to prevent overlap
+        const pages = [
+            'page-home', 'page-beads', 'page-fabric', 'page-stats', 
+            'page-scan', 'page-cat', 'page-plan', 'page-more'
+        ];
+        pages.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
         
         // Hide dock by default, show only for main pages
-        document.getElementById('footer-dock').style.display = 'none';
+        const dock = document.getElementById('footer-dock');
+        if (dock) dock.style.display = 'none';
         
         // Handle FAB visibility
         const fab = document.getElementById('floatingBatchAddBtn');
