@@ -17,6 +17,11 @@
                 </div>
             </div>
 
+            <!-- Tag Filter Bar -->
+            <div id="planTagFilterBar" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                <!-- Tags will be injected here by JS -->
+            </div>
+
             <div style="display: flex; background: #f0f2f5; padding: 4px; border-radius: 8px;">
                 <div id="filter-active" onclick="setPlanFilter('active')" style="flex: 1; text-align: center; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; background: white; color: #4a90e2; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.2s;">计划中</div>
                 <div id="filter-completed" onclick="setPlanFilter('completed')" style="flex: 1; text-align: center; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; color: #999; transition: all 0.2s;">已完成</div>

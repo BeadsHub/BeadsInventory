@@ -122,7 +122,8 @@ function renderCatInventory() {
 
     let filtered = catInventory.filter(item => {
         const matchText = item.name.toLowerCase().includes(searchTerm) || 
-               item.category.toLowerCase().includes(searchTerm);
+                          (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
+                          item.category.toLowerCase().includes(searchTerm);
         const matchCat = (selectedCatCategories.size === 0) || selectedCatCategories.has(item.category);
         return matchText && matchCat;
     });
@@ -362,9 +363,31 @@ function renderCatInventory() {
         }, {passive:true});
         inner.addEventListener('touchend', (e) => {
             const deltaX = e.changedTouches[0].clientX - startX;
-            if (!isOpened && deltaX < -30) { inner.style.transform = `translateX(-${totalActionWidth}px)`; isOpened = true; actionsContainer.style.visibility = 'visible'; }
-            else if (isOpened) { inner.style.transform = `translateX(-${totalActionWidth}px)`; actionsContainer.style.visibility = 'visible'; }
-            else { inner.style.transform = 'translateX(0)'; isOpened = false; actionsContainer.style.visibility = 'hidden'; }
+            // Logic fixed to allow closing when swiping right
+            if (isOpened) {
+                if (deltaX > 30) {
+                    // Close
+                    inner.style.transform = 'translateX(0)'; 
+                    isOpened = false; 
+                    actionsContainer.style.visibility = 'hidden'; 
+                } else {
+                    // Stay open
+                    inner.style.transform = `translateX(-${totalActionWidth}px)`; 
+                    actionsContainer.style.visibility = 'visible'; 
+                }
+            } else {
+                if (deltaX < -30) {
+                    // Open
+                    inner.style.transform = `translateX(-${totalActionWidth}px)`; 
+                    isOpened = true; 
+                    actionsContainer.style.visibility = 'visible'; 
+                } else {
+                    // Stay closed
+                    inner.style.transform = 'translateX(0)'; 
+                    isOpened = false; 
+                    actionsContainer.style.visibility = 'hidden'; 
+                }
+            }
         });
         inner.addEventListener('mousedown', (e) => {
             startX = e.clientX;

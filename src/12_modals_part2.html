@@ -48,7 +48,36 @@
         <input type="text" id="newTagInput" placeholder="输入标签按回车添加" style="flex:1; min-width:80px; border:none; outline:none; font-size:13px; background:transparent; padding:4px 0;" onkeypress="if(event.key === 'Enter') addNewTag()">
     </div>
 
+    <div style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px;">
+        <div style="font-size: 12px; color: #999; margin-bottom: 8px;">历史标签</div>
+        <div id="tagHistoryList" style="display: flex; flex-wrap: wrap; gap: 6px; max-height: 100px; overflow-y: auto;">
+            <!-- History tags injected here -->
+        </div>
+    </div>
+
     <div class="modal-btn-group">
         <button class="m-btn m-btn-primary" onclick="finishTagEditing()">完成</button>
+    </div>
+</div>
+
+<!-- Storage Usage Modal -->
+<div id="storageModal" class="modal" style="width: 85%; max-width: 340px; padding: 20px; border-radius: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0; font-size: 18px; font-weight: bold; color: #333;">存储占用与清理</h3>
+        <div onclick="closeAllModals()" style="padding: 5px; cursor: pointer; color: #999;">✕</div>
+    </div>
+    
+    <div id="storageUsageSummary" style="margin-bottom: 20px;">
+        <!-- Content injected by JS -->
+    </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="m-btn" style="background: #fffbe6; color: #faad14; border: 1px solid #ffe58f;" onclick="clearCompletedPlanThumbnails()">
+            🧹 清理已完成计划缩略图
+        </button>
+        <button class="m-btn" style="background: #fff1f0; color: #ff4d4f; border: 1px solid #ffa39e;" onclick="if(confirm('确定要清理所有缩略图吗？这将移除所有计划列表中的预览图，但不影响计划本身。')) clearAllPlanThumbnails()">
+            🗑️ 清理所有缩略图
+        </button>
+        <button class="m-btn m-btn-primary" onclick="closeAllModals()" style="margin-top: 5px;">关闭</button>
     </div>
 </div>

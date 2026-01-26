@@ -407,6 +407,11 @@
                 </div>
             </div>
 
+            <!-- Tag Filter Bar -->
+            <div id="planTagFilterBar" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                <!-- Tags will be injected here by JS -->
+            </div>
+
             <div style="display: flex; background: #f0f2f5; padding: 4px; border-radius: 8px;">
                 <div id="filter-active" onclick="setPlanFilter('active')" style="flex: 1; text-align: center; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; background: white; color: #4a90e2; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.2s;">计划中</div>
                 <div id="filter-completed" onclick="setPlanFilter('completed')" style="flex: 1; text-align: center; padding: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; color: #999; transition: all 0.2s;">已完成</div>
@@ -2575,11 +2580,39 @@ function confirmBatchAdd() {
         <input type="text" id="newTagInput" placeholder="输入标签按回车添加" style="flex:1; min-width:80px; border:none; outline:none; font-size:13px; background:transparent; padding:4px 0;" onkeypress="if(event.key === 'Enter') addNewTag()">
     </div>
 
+    <div style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px;">
+        <div style="font-size: 12px; color: #999; margin-bottom: 8px;">历史标签</div>
+        <div id="tagHistoryList" style="display: flex; flex-wrap: wrap; gap: 6px; max-height: 100px; overflow-y: auto;">
+            <!-- History tags injected here -->
+        </div>
+    </div>
+
     <div class="modal-btn-group">
         <button class="m-btn m-btn-primary" onclick="finishTagEditing()">完成</button>
     </div>
 </div>
 
+<!-- Storage Usage Modal -->
+<div id="storageModal" class="modal" style="width: 85%; max-width: 340px; padding: 20px; border-radius: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0; font-size: 18px; font-weight: bold; color: #333;">存储占用与清理</h3>
+        <div onclick="closeAllModals()" style="padding: 5px; cursor: pointer; color: #999;">✕</div>
+    </div>
+    
+    <div id="storageUsageSummary" style="margin-bottom: 20px;">
+        <!-- Content injected by JS -->
+    </div>
+    
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="m-btn" style="background: #fffbe6; color: #faad14; border: 1px solid #ffe58f;" onclick="clearCompletedPlanThumbnails()">
+            🧹 清理已完成计划缩略图
+        </button>
+        <button class="m-btn" style="background: #fff1f0; color: #ff4d4f; border: 1px solid #ffa39e;" onclick="if(confirm('确定要清理所有缩略图吗？这将移除所有计划列表中的预览图，但不影响计划本身。')) clearAllPlanThumbnails()">
+            🗑️ 清理所有缩略图
+        </button>
+        <button class="m-btn m-btn-primary" onclick="closeAllModals()" style="margin-top: 5px;">关闭</button>
+    </div>
+</div>
 <!-- Find Color Modal -->
 <div id="findColorModal" class="modal" style="width: 90%; max-width: 360px; height: 80vh; max-height: 600px; display: none; flex-direction: column; padding: 0; overflow: hidden; border-radius: 20px;">
     <div style="padding: 20px; background: white; border-bottom: 1px solid #f0f0f0;">
@@ -2634,7 +2667,7 @@ function confirmBatchAdd() {
         <div id="cat-tab-inventory" class="cat-tab-content" style="padding: 16px;">
             <!-- Filter Bar -->
             <div id="catFilterBar" style="display:flex; gap:10px; margin-bottom:8px; align-items:center; position: sticky; top: 0; z-index: 9999; background:#fff; padding:8px 0;">
-                <input type="text" id="catSearch" placeholder="搜索名称或类别..." oninput="renderCatInventory()" style="flex:1; border:1px solid #ddd; padding:8px 12px; border-radius:8px; outline:none; position: relative; z-index: 1001;">
+                <input type="text" id="catSearch" placeholder="搜索名称、品牌或类别..." oninput="renderCatInventory()" style="flex:1; border:1px solid #ddd; padding:8px 12px; border-radius:8px; outline:none; position: relative; z-index: 1001;">
                 <button id="catCategoryToggleBtn" onclick="toggleCatCategoryPanel()" style="padding:8px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border:1px solid #ddd; border-radius:8px; background:white; cursor:pointer; position: relative; z-index: 1002;" aria-label="筛选类别">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#4a90e2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="3 4 21 4 14 12 14 19 10 21 10 12 3 4"></polygon>
