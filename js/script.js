@@ -1,5 +1,5 @@
 
-<script>
+ 
     const ModelUsageManager = {
         baseLimitPerKey: 20,
         storageKey: 'ai_usage_data',
@@ -7668,8 +7668,7 @@
     }
 
 
-</script>
-<script>
+ 
 let batchAddSelection = {}; // { id: qty }
 let batchCurrentSeries = 'A';
 let batchMode = 'add'; // 'add' | 'deduct'
@@ -8268,4 +8267,4 @@ function confirmBatchAdd() {
         renderPlanChart(plans);
     }
 
-</script>
+ 
