@@ -1,0 +1,433 @@
+
+<!-- Page: Cat Inventory -->
+<div id="page-cat" style="display:none; padding-bottom: 80px; background: #f7f8fa; min-height: 100vh;">
+    <div class="container" style="padding: 0;">
+        <!-- Header -->
+        <div style="background: white; padding: 12px 16px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100;">
+            <button onclick="navTo('home')" class="btn-back">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <h2 class="page-title-sm" style="flex:1; margin-left: 8px;">猫咪用品统计</h2>
+        </div>
+
+        <!-- Tabs (hidden, replaced by floating buttons) -->
+        <div style="display:none; background: white; padding: 0 16px; border-bottom: 1px solid #f0f0f0;">
+            <div id="cat-btn-inventory" class="cat-tab-btn active" onclick="switchCatTab('inventory')" style="flex:1; text-align:center; padding: 12px; font-size:14px; font-weight:500; color:#666; cursor:pointer; border-bottom: 2px solid transparent;">
+                当前库存
+            </div>
+            <div id="cat-btn-logs" class="cat-tab-btn" onclick="switchCatTab('logs')" style="flex:1; text-align:center; padding: 12px; font-size:14px; font-weight:500; color:#666; cursor:pointer; border-bottom: 2px solid transparent;">
+                出入库记录
+            </div>
+        </div>
+
+        <!-- Content: Inventory -->
+        <div id="cat-tab-inventory" class="cat-tab-content" style="padding: 16px;">
+            <!-- Filter Bar -->
+            <div id="catFilterBar" style="display:flex; gap:10px; margin-bottom:8px; align-items:center; position: sticky; top: 0; z-index: 9999; background:#fff; padding:8px 0;">
+                <input type="text" id="catSearch" placeholder="搜索名称或类别..." oninput="renderCatInventory()" style="flex:1; border:1px solid #ddd; padding:8px 12px; border-radius:8px; outline:none; position: relative; z-index: 1001;">
+                <button id="catCategoryToggleBtn" onclick="toggleCatCategoryPanel()" style="padding:8px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border:1px solid #ddd; border-radius:8px; background:white; cursor:pointer; position: relative; z-index: 1002;" aria-label="筛选类别">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#4a90e2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="3 4 21 4 14 12 14 19 10 21 10 12 3 4"></polygon>
+                    </svg>
+                </button>
+            </div>
+            <div id="catCategoryPanel" style="display:none; margin-bottom:16px; padding:8px; background:#f7f8fa; border:1px solid #eee; border-radius:12px; position: relative; z-index: 999;">
+                <div style="margin-bottom:8px; display:flex; gap:8px; align-items:center;">
+                    <span style="font-size:12px; color:#666;">排序:</span>
+                    <button id="catSortExpiryBtn" onclick="setCatSort('expiry_asc')" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#e6f7ff; color:#1890ff;">按过期时间</button>
+                    <button id="catSortDateBtn" onclick="setCatSort('date_desc')" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">按购入时间</button>
+                </div>
+                <div style="margin:6px 0 4px; font-size:12px; color:#666;">类别:</div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    <button onclick="toggleCatCategory('all')" data-cat="all" class="cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:white; cursor:pointer;">全部</button>
+                    <button onclick="toggleCatCategory('主粮')" data-cat="主粮" class="cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:white; cursor:pointer;">主粮</button>
+                    <button onclick="toggleCatCategory('罐头')" data-cat="罐头" class="cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:white; cursor:pointer;">罐头</button>
+                    <button onclick="toggleCatCategory('冻干')" data-cat="冻干" class="cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:white; cursor:pointer;">冻干</button>
+                    <button onclick="toggleCatCategory('保健品')" data-cat="保健品" class="cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:white; cursor:pointer;">保健品</button>
+                    <button onclick="toggleCatCategory('药品')" data-cat="药品" class="cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:white; cursor:pointer;">药品</button>
+                    <button onclick="toggleCatCategory('猫砂')" data-cat="猫砂" class="cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:white; cursor:pointer;">猫砂</button>
+                    <button onclick="toggleCatCategory('玩具')" data-cat="玩具" class="cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:white; cursor:pointer;">玩具</button>
+                    <button onclick="toggleCatCategory('其他')" data-cat="其他" class="cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:white; cursor:pointer;">其他</button>
+                </div>
+            </div>
+
+            <div id="catSummaryBar" style="display:none; margin-bottom:10px; background:#f0f5ff; border:1px solid #d6e4ff; border-radius:12px; padding:8px 12px; color:#1d39c4; font-size:13px;">
+                <span id="catSummaryCount"></span>
+                <span style="margin-left:10px;" id="catSummaryQty"></span>
+                <span style="margin-left:10px;" id="catSummaryNear"></span>
+            </div>
+            <div id="catCategoryStats" style="display:none; margin-bottom:12px; background:#ffffff; border:1px solid #f0f0f0; border-radius:12px; padding:10px 12px; color:#333; font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                <!-- Filled by JS -->
+            </div>
+
+            <!-- List -->
+            <div id="catInventoryList">
+                <!-- Items will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Content: Logs -->
+        <div id="cat-tab-logs" class="cat-tab-content" style="display:none;">
+            <div style="display:flex; justify-content:flex-start; padding:12px 16px 8px 16px;">
+                <button onclick="toggleCatLogsFilterPanel()" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#fff; color:#666; display:flex; align-items:center; gap:6px;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#4a90e2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="3 4 21 4 14 12 14 19 10 21 10 12 3 4"></polygon>
+                    </svg>
+                    <span style="font-size:12px;">筛选</span>
+                </button>
+            </div>
+            <div id="catLogsFilterPanel" style="display:none;">
+                <div style="display:flex; gap:8px; align-items:center; padding:0 16px 8px 16px;">
+                    <button id="catLogFilterAll" onclick="setCatLogFilter('all')" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#e6f7ff; color:#1890ff;">全部</button>
+                    <button id="catLogFilterOutbound" onclick="setCatLogFilter('outbound')" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">出库</button>
+                    <button id="catLogFilterInbound" onclick="setCatLogFilter('inbound')" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">入库</button>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center; padding:0 16px 8px 16px;">
+                    <button id="catLogDateAll" onclick="setCatLogDateRange('all')" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#e6f7ff; color:#1890ff;">全部</button>
+                    <button id="catLogDateToday" onclick="setCatLogDateRange('today')" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">今天</button>
+                    <button id="catLogDate7" onclick="setCatLogDateRange('last7')" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">近7天</button>
+                    <button id="catLogDateMonth" onclick="setCatLogDateRange('month')" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">本月</button>
+                </div>
+                <div style="padding:0 16px 8px 16px;">
+                    <div style="margin:6px 0 4px; font-size:12px; color:#666;">类别:</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                        <button onclick="toggleLogCategory('all')" data-log-cat="all" class="log-cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#e6f7ff; color:#1890ff;">全部</button>
+                        <button onclick="toggleLogCategory('主粮')" data-log-cat="主粮" class="log-cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">主粮</button>
+                    <button onclick="toggleLogCategory('罐头')" data-log-cat="罐头" class="log-cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">罐头</button>
+                        <button onclick="toggleLogCategory('冻干')" data-log-cat="冻干" class="log-cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">冻干</button>
+                        <button onclick="toggleLogCategory('保健品')" data-log-cat="保健品" class="log-cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">保健品</button>
+                        <button onclick="toggleLogCategory('药品')" data-log-cat="药品" class="log-cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">药品</button>
+                        <button onclick="toggleLogCategory('猫砂')" data-log-cat="猫砂" class="log-cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">猫砂</button>
+                        <button onclick="toggleLogCategory('玩具')" data-log-cat="玩具" class="log-cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">玩具</button>
+                        <button onclick="toggleLogCategory('其他')" data-log-cat="其他" class="log-cat-chip" style="padding:6px 10px; border-radius:16px; border:1px solid #ddd; background:#f5f5f5; color:#666;">其他</button>
+                    </div>
+                </div>
+            </div>
+            <div id="catLogList">
+                <!-- Logs will be rendered here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Item (uses common modal system) -->
+<div id="catAddModal" class="modal" style="width: 95%; max-width: 360px; padding: 20px; border-radius: 20px;">
+    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 12px; text-align: center; color: #111;">入库登记</h3>
+    
+    <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="cat-form-row cols-3" style="grid-template-columns: 0.8fr 1.6fr 1fr;">
+            <div class="cat-form-item">
+                <label class="cat-form-label">品牌</label>
+                <input type="text" id="catAddBrand" class="cat-input">
+            </div>
+            <div class="cat-form-item">
+                <label class="cat-form-label">名称</label>
+                <input type="text" id="catAddName" class="cat-input">
+            </div>
+            <div class="cat-form-item">
+                <label class="cat-form-label">分类</label>
+                <select id="catAddCategory" class="cat-input">
+                    <option value="主粮">主粮</option>
+                    <option value="罐头">罐头</option>
+                    <option value="冻干">冻干</option>
+                    <option value="保健品">保健品</option>
+                    <option value="药品">药品</option>
+                    <option value="猫砂">猫砂</option>
+                    <option value="玩具">玩具</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="cat-form-row cols-3" style="grid-template-columns: 0.9fr 0.8fr 0.8fr;">
+            <div class="cat-form-item">
+                <label class="cat-form-label">规格数值</label>
+                <input type="number" id="catAddSpecValue" class="cat-input" placeholder="例如 500">
+            </div>
+            <div class="cat-form-item">
+                <label class="cat-form-label">规格</label>
+                <select id="catAddSpecUnit" class="cat-input">
+                    <option value="kg">kg</option>
+                    <option value="g">g</option>
+                    <option value="">无</option>
+                </select>
+            </div>
+            <div class="cat-form-item">
+                <label class="cat-form-label">单位</label>
+                <select id="catAddPackageUnit" class="cat-input">
+                    <option value="个">个</option>
+                    <option value="包">包</option>
+                    <option value="盒">盒</option>
+                    <option value="罐">罐</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="cat-form-row cols-2">
+            <div class="cat-form-item">
+                <label class="cat-form-label">购买数量</label>
+                <input type="number" id="catAddQuantity" class="cat-input" value="1" min="1">
+            </div>
+            <div class="cat-form-item">
+                <label class="cat-form-label">购买单价 (元)</label>
+                <input type="number" id="catAddValue" class="cat-input" placeholder="0.00">
+            </div>
+        </div>
+
+        <div class="cat-form-row cols-2">
+            <div class="cat-form-item">
+                <label class="cat-form-label">生产日期</label>
+                <div class="date-input">
+                    <input type="date" id="catAddProdDate" class="cat-input" style="border:none; background:transparent; padding:8px 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa4b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; right:12px;">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </div>
+            </div>
+            <div class="cat-form-item">
+                <label class="cat-form-label">保质期至</label>
+                <div class="date-input">
+                    <input type="date" id="catAddExpiryDate" class="cat-input" style="border:none; background:transparent; padding:8px 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa4b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; right:12px;">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-btn-group" style="gap: 12px; display: flex; flex-direction: row;">
+            <button class="m-btn m-btn-ghost" onclick="closeCatAddModal()" style="padding: 12px; font-size: 15px; border-radius: 12px; flex: 1;">取消</button>
+            <button class="m-btn m-btn-primary" onclick="submitCatAdd()" style="padding: 12px; font-size: 15px; border-radius: 12px; flex: 1; box-shadow: 0 8px 18px rgba(74,144,226,0.25);">确认入库</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Cat Item Detail -->
+<div id="catDetailModal" class="modal" style="width: 95%; max-width: 360px; padding: 20px; border-radius: 20px;">
+    <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 12px; text-align: center; color: #111;">修改库存</h3>
+    <div id="catDetailTitle" style="text-align:center; color:#4b5563; font-size:13px; margin-bottom:8px;"></div>
+
+    <div class="cat-form-row cols-3" style="grid-template-columns: 0.8fr 1.6fr 1fr;">
+        <div class="cat-form-item">
+            <label class="cat-form-label">品牌</label>
+            <input type="text" id="catDetailBrand" class="cat-input">
+        </div>
+        <div class="cat-form-item">
+            <label class="cat-form-label">名称</label>
+            <input type="text" id="catDetailName" class="cat-input">
+        </div>
+        <div class="cat-form-item">
+            <label class="cat-form-label">分类</label>
+            <select id="catDetailCategory" class="cat-input">
+                <option value="主粮">主粮</option>
+                <option value="罐头">罐头</option>
+                <option value="冻干">冻干</option>
+                <option value="保健品">保健品</option>
+                <option value="药品">药品</option>
+                <option value="猫砂">猫砂</option>
+                <option value="玩具">玩具</option>
+                <option value="其他">其他</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="cat-form-row cols-3" style="grid-template-columns: 0.9fr 0.8fr 0.8fr;">
+        <div class="cat-form-item">
+            <label class="cat-form-label">规格数值</label>
+            <input type="number" id="catDetailSpecValue" class="cat-input" placeholder="例如 500">
+        </div>
+        <div class="cat-form-item">
+            <label class="cat-form-label">规格</label>
+            <select id="catDetailSpecUnit" class="cat-input">
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+                <option value="">无</option>
+            </select>
+        </div>
+        <div class="cat-form-item">
+            <label class="cat-form-label">单位</label>
+            <select id="catDetailPackageUnit" class="cat-input">
+                <option value="个">个</option>
+                <option value="包">包</option>
+                <option value="盒">盒</option>
+                <option value="罐">罐</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="cat-form-row cols-2">
+        <div class="cat-form-item">
+            <label class="cat-form-label">购买数量</label>
+            <input type="number" id="catDetailQty" class="cat-input" min="1">
+        </div>
+        <div class="cat-form-item">
+            <label class="cat-form-label">购买单价 (元)</label>
+            <input type="number" id="catDetailValue" class="cat-input">
+        </div>
+    </div>
+
+    <div class="cat-form-row cols-2">
+        <div class="cat-form-item">
+            <label class="cat-form-label">生产日期</label>
+                <div class="date-input">
+                    <input type="date" id="catDetailProdDate" class="cat-input" style="border:none; background:transparent; padding:8px 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa4b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; right:12px;">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </div>
+        </div>
+        <div class="cat-form-item">
+            <label class="cat-form-label">保质期至</label>
+                <div class="date-input">
+                    <input type="date" id="catDetailExpiry" class="cat-input" style="border:none; background:transparent; padding:8px 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa4b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; right:12px;">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </div>
+        </div>
+    </div>
+
+    <div class="modal-btn-group" style="gap: 12px; display: flex; flex-direction: row; margin-top:14px;">
+        <button class="m-btn m-btn-ghost" onclick="closeCatDetailModal()" style="padding: 12px; font-size: 15px; border-radius: 12px; flex: 1;">取消</button>
+        <button class="m-btn m-btn-primary" onclick="saveCatDetail()" style="padding: 12px; font-size: 15px; border-radius: 12px; flex: 1;">保存</button>
+    </div>
+</div>
+
+<!-- Modal: Confirm Delete -->
+<div id="catConfirmModal" class="modal" style="width: 95%; max-width: 340px; padding: 18px; border-radius: 16px;">
+    <h3 id="catConfirmTitle" style="font-size: 16px; font-weight: 800; margin-bottom: 8px; text-align: center; color: #111;">确认操作</h3>
+    <div id="catConfirmMsg" style="font-size: 14px; color: #4b5563; text-align:center; margin-bottom: 12px;"></div>
+    <div class="modal-btn-group" style="gap: 10px; display: flex; flex-direction: row;">
+        <button id="catConfirmCancel" class="m-btn m-btn-ghost" onclick="closeAllModals()" style="padding: 10px; font-size: 14px; border-radius: 10px; flex: 1;">取消</button>
+        <button id="catConfirmOk" class="m-btn m-btn-primary" onclick="runCatConfirmOk()" style="padding: 10px; font-size: 14px; border-radius: 10px; flex: 1;">确认</button>
+    </div>
+</div>
+
+<!-- Floating Switch Bar -->
+<div id="catFloatingBar" style="
+    position: fixed; left: 16px; right: 16px; transform: none;
+    bottom: 24px; z-index: 9999; display:none;
+    background: rgba(255,255,255,0.9); border: 1px solid #eee; 
+    border-radius: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    padding: 8px 12px; display:flex; align-items:center; gap:10px; justify-content: space-between;">
+    <div id="cat-float-inventory-item" onclick="switchCatTab('inventory')" style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 12px; min-width:96px; border-radius:16px; cursor:pointer; background:#e6f7ff; color:#1890ff; border:1px solid #91d5ff;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1890ff" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span style="font-size:11px;">当前库存</span>
+    </div>
+    <div id="cat-float-logs-item" onclick="switchCatTab('logs')" style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 12px; min-width:96px; border-radius:16px; cursor:pointer; background:#f5f5f5; color:#666; border:1px solid #ddd;">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#666" stroke-width="2"><path d="M4 4h16v4H4z"/><path d="M4 10h16v4H4z"/><path d="M4 16h16v4H4z"/></svg>
+        <span style="font-size:11px;">出入库记录</span>
+    </div>
+    <button onclick="openCatAddModal()" style="display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:18px; background:#4a90e2; color:#fff; border:none; box-shadow:0 6px 16px rgba(74,144,226,0.25);">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+</div>
+
+<style>
+    .cat-tab-btn.active {
+        color: #4a90e2 !important;
+        border-bottom-color: #4a90e2 !important;
+    }
+    #catAddModal {
+        background: #fff;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+        border-radius: 20px;
+    }
+    .cat-form-row { display: grid; gap: 12px; }
+    .cat-form-row.cols-3 { grid-template-columns: 1fr 1.4fr 1fr; }
+    .cat-form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+    .cat-form-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+    .cat-form-label {
+        font-size: 12px;
+        color: #4b5563;
+    }
+    .cat-input {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #f9fafb;
+        font-size: 14px;
+        color: #111827;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .cat-input:focus {
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 3px rgba(147,197,253,0.35);
+        background: #ffffff;
+    }
+    .cat-input[type="date"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: #fff;
+        padding: 10px 40px 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 18px 18px;
+    }
+    .cat-input[type="date"]::-webkit-calendar-picker-indicator {
+        opacity: 0;
+        cursor: pointer;
+    }
+    .date-input {
+        position: relative;
+        display: flex;
+        align-items: center;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 0 36px 0 12px;
+        background: #f9fafb;
+        height: 42px;
+    }
+    .date-input:focus-within {
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 3px rgba(147,197,253,0.35);
+        background: #ffffff;
+    }
+    .date-input .cat-input:disabled {
+        background: transparent;
+    }
+    .cat-input:disabled {
+        background: #f3f4f6;
+        color: #9ca3af;
+        border-color: #e5e7eb;
+        cursor: not-allowed;
+        opacity: 0.9;
+    }
+    @media (max-width: 480px) {
+        .cat-form-row.cols-3 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 360px) {
+        .cat-form-row.cols-3, .cat-form-row.cols-2 { grid-template-columns: 1fr; }
+    }
+    .cat-floating-btn.active {
+        background:#4a90e2 !important;
+        color:#fff !important;
+        border:none !important;
+        box-shadow:0 6px 16px rgba(74,144,226,0.25);
+    }
+</style>

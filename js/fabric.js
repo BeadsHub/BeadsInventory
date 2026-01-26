@@ -305,6 +305,8 @@
         document.getElementById('page-fabric').style.display = 'none';
         document.getElementById('page-home').style.display = 'none';
         document.getElementById('page-scan').style.display = 'none';
+        const pageCat = document.getElementById('page-cat');
+        if (pageCat) pageCat.style.display = 'none';
         const pagePlan = document.getElementById('page-plan');
         if (pagePlan) pagePlan.style.display = 'none';
         const pagePlanDetail = document.getElementById('page-plan-detail');

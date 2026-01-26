@@ -33,17 +33,28 @@
 
         if (page === 'home') {
             document.getElementById('page-home').style.display = 'flex';
+            const catBar = document.getElementById('catFloatingBar'); if (catBar) catBar.style.display = 'none';
         } else if (page === 'beads') {
             document.getElementById('page-beads').style.display = 'block';
             document.getElementById('footer-dock').style.display = 'flex'; // Show dock
             checkWelcome();
+            const catBar = document.getElementById('catFloatingBar'); if (catBar) catBar.style.display = 'none';
+        } else if (page === 'cat') {
+             const pageCat = document.getElementById('page-cat');
+             if (pageCat) pageCat.style.display = 'block';
+             if (typeof renderCatInventory === 'function') {
+                 renderCatInventory();
+             }
+             const catBar = document.getElementById('catFloatingBar'); if (catBar) catBar.style.display = 'flex';
         } else if (page === 'scan') {
             document.getElementById('page-scan').style.display = 'block';
             document.getElementById('footer-dock').style.display = 'flex';
+            const catBar = document.getElementById('catFloatingBar'); if (catBar) catBar.style.display = 'none';
 
         } else if (page === 'fabric') {
             document.getElementById('page-fabric').style.display = 'block';
             // Dock remains hidden for fabric page
+            const catBar = document.getElementById('catFloatingBar'); if (catBar) catBar.style.display = 'none';
             
             // Restore Fabric State
             const savedSpecs = localStorage.getItem('fabric_specs');
