@@ -560,6 +560,7 @@ function openCatAddModal() {
         modal.style.transform = 'translate(-50%, -50%)'; 
     }
     applyAddCategoryDefaults();
+    attachDatePickerHelpers();
 }
 
 function closeCatAddModal() {
@@ -784,6 +785,7 @@ function openCatDetail(id) {
         dCat.addEventListener('change', applyDetailCategoryDefaults);
         applyDetailCategoryDefaults();
     }
+    attachDatePickerHelpers();
 }
 
 function saveCatDetail() {
@@ -814,6 +816,40 @@ function closeCatDetailModal() {
     if (typeof setCatBarVisible === 'function') setCatBarVisible(true);
 }
 
+function attachDatePickerHelpers() {
+    const enhance = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const openPicker = () => {
+            try {
+                if (typeof el.showPicker === 'function') {
+                    el.showPicker();
+                } else {
+                    el.click();
+                }
+            } catch(e) {
+                el.click();
+            }
+        };
+        const wrap = el.parentElement;
+        if (wrap) {
+            wrap.style.position = 'relative';
+            wrap.style.cursor = 'pointer';
+            wrap.onclick = () => {
+                el.focus();
+                openPicker();
+            };
+            // Ensure icon never blocks click
+            const svg = wrap.querySelector('svg');
+            if (svg) svg.style.pointerEvents = 'none';
+        }
+        // Make clicking the input itself always open picker
+        el.addEventListener('click', openPicker);
+        el.addEventListener('focus', () => setTimeout(openPicker, 10));
+        el.addEventListener('touchstart', () => { el.focus(); setTimeout(openPicker, 10); }, {passive: true});
+    };
+    ['catAddProdDate','catAddExpiryDate','catDetailProdDate','catDetailExpiry'].forEach(enhance);
+}
 function applyDetailCategoryDefaults() {
     const catSel = document.getElementById('catDetailCategory');
     const pkgSel = document.getElementById('catDetailPackageUnit');
