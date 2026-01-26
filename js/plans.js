@@ -5,6 +5,7 @@
     let expandedPlanColorIds = new Set();
     let longPressTimer = null;
     let currentPlanFilter = 'active';
+    let selectedPlanTagsFilter = new Set();
 
     function setPlanFilter(status) {
         currentPlanFilter = status;
@@ -196,11 +197,50 @@
 
         // Filter plans based on status (top level only)
         let filtered = plans.filter(p => (p.status || 'active') === currentPlanFilter);
+        
+        // Tag filter (OR across selected tags, match in plan or any sub-plan)
+        const hasAnyTag = (plan, tagsSet) => {
+            if (!tagsSet || tagsSet.size === 0) return true;
+            const tagsArr = plan.tags || [];
+            if (tagsArr.some(t => tagsSet.has(t))) return true;
+            if (plan.subPlans && plan.subPlans.length > 0) {
+                return plan.subPlans.some(sp => hasAnyTag(sp, tagsSet));
+            }
+            return false;
+        };
+        if (selectedPlanTagsFilter.size > 0) {
+            filtered = filtered.filter(p => hasAnyTag(p, selectedPlanTagsFilter));
+        }
 
         let isSearchMode = false;
         if (query) {
             isSearchMode = true;
             filtered = filterPlansByQuery(filtered, query);
+        }
+
+        // Render Tag Filter Bar below search
+        const tagBar = document.getElementById('planTagFilterBar');
+        if (tagBar) {
+            const tagFreq = new Map();
+            const collectTags = (p) => {
+                if (p.tags && Array.isArray(p.tags)) {
+                    p.tags.forEach(t => {
+                        const k = String(t).trim();
+                        if (!k) return;
+                        tagFreq.set(k, (tagFreq.get(k) || 0) + 1);
+                    });
+                }
+                if (p.subPlans && p.subPlans.length > 0) p.subPlans.forEach(collectTags);
+            };
+            plans.forEach(collectTags);
+            const tags = Array.from(tagFreq.entries()).sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
+            tagBar.innerHTML = tags.map(([t,c]) => {
+                const active = selectedPlanTagsFilter.has(t);
+                const bg = active ? '#e6f7ff' : '#f0f5ff';
+                const color = active ? '#1890ff' : '#4a90e2';
+                const border = active ? '#91d5ff' : '#d6e4ff';
+                return `<button onclick="togglePlanTagFilter('${t.replace(/'/g, "\\'")}')" style="padding:4px 10px; border-radius:12px; border:1px solid ${border}; background:${bg}; color:${color}; font-size:12px; cursor:pointer;">${t}</button>`;
+            }).join('');
         }
 
         if (filtered.length === 0) {
@@ -294,6 +334,15 @@
              }
         }
         renderPlanList(filtered, container, isSearchMode);
+    }
+
+    function togglePlanTagFilter(tag) {
+        if (selectedPlanTagsFilter.has(tag)) {
+            selectedPlanTagsFilter.delete(tag);
+        } else {
+            selectedPlanTagsFilter.add(tag);
+        }
+        renderPlans();
     }
 
     function filterPlansByQuery(list, query) {
@@ -400,16 +449,7 @@
             });
         }
         
-        // 3. Copy (Only if NOT completed)
-        if (plan.status !== 'completed') {
-            actions.push({
-                text: '复制',
-                bg: '#1890ff',
-                click: (e) => { e.stopPropagation(); duplicatePlan(plan.id); resetSwipe(); }
-            });
-        }
-        
-        // 4. Delete (Only if NOT completed)
+        // 3. Delete (Only if NOT completed)
         if (plan.status !== 'completed') {
             actions.push({
                 text: '删除',
@@ -450,6 +490,13 @@
         const actionBtns = actionsContainer.querySelectorAll('.swipe-action-btn');
         actionBtns.forEach((btn, index) => {
             btn.onclick = actions[index].click;
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                actions[index].click(e);
+            }, { passive: false });
+            btn.addEventListener('pointerup', (e) => {
+                actions[index].click(e);
+            });
         });
         card.appendChild(actionsContainer);
 
@@ -1324,7 +1371,7 @@
             // 2. Edit Time Button (Right)
             const editBtn = document.createElement('button');
             // High z-index to ensure it's on top. Added white-space: nowrap to prevent text breaking
-            editBtn.style.cssText = "display:flex; align-items:center; gap:5px; padding:8px 12px; border:none; border-radius:8px; width:fit-content; cursor:pointer; user-select:none; position: relative; z-index: 2000; pointer-events: auto; font-family: inherit; margin: 0; white-space: nowrap; flex-shrink: 0;";
+            editBtn.style.cssText = "display:flex; align-items:center; gap:5px; padding:8px 12px; border:none; border-radius:8px; width:fit-content; cursor:pointer; user-select:none; position: relative; z-index: 2; pointer-events: auto; font-family: inherit; margin: 0; white-space: nowrap; flex-shrink: 0;";
             
             // Calculate aggregated time spent for display if not set directly
             // If plan has no timeSpent but has subPlans, sum them up
@@ -1451,12 +1498,14 @@
 
         document.getElementById('page-plan').style.display = 'none';
         document.getElementById('page-plan-detail').style.display = 'block';
+        if (typeof setCatBarVisible === 'function') setCatBarVisible(false);
         window.scrollTo(0, 0);
     }
 
     function closePlanDetail() {
         document.getElementById('page-plan-detail').style.display = 'none';
         document.getElementById('page-plan').style.display = 'block';
+        if (typeof setCatBarVisible === 'function') setCatBarVisible(false);
         currentPlanId = null;
     }
 

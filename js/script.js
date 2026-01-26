@@ -1,4 +1,4 @@
-﻿
+
 <script>
     const ModelUsageManager = {
         baseLimitPerKey: 20,
@@ -3936,6 +3936,8 @@
         // Update Pull-to-Refresh behavior
         updatePullToRefresh(tab);
 
+        if (typeof setCatBarVisible === 'function') setCatBarVisible(false);
+
         // Reset all active states
         document.querySelectorAll('.dock-item').forEach(el => el.classList.remove('active'));
         
@@ -3988,6 +3990,7 @@
                  pagePlan.style.display = 'block';
                  renderPlans();
              }
+             if (typeof setCatBarVisible === 'function') setCatBarVisible(false);
              const fab = document.getElementById('floatingBatchAddBtn');
              if(fab) fab.style.display = 'none';
              const homeBtn = document.getElementById('floatingHomeBtn');

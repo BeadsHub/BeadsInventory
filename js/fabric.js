@@ -281,6 +281,7 @@
         // Update Pull-to-Refresh behavior
         updatePullToRefresh(tab);
 
+        if (typeof setCatBarVisible === 'function') setCatBarVisible(false);
         // Reset all active states
         document.querySelectorAll('.dock-item').forEach(el => el.classList.remove('active'));
         
@@ -305,6 +306,8 @@
         document.getElementById('page-fabric').style.display = 'none';
         document.getElementById('page-home').style.display = 'none';
         document.getElementById('page-scan').style.display = 'none';
+        const pageCat = document.getElementById('page-cat');
+        if (pageCat) pageCat.style.display = 'none';
         const pagePlan = document.getElementById('page-plan');
         if (pagePlan) pagePlan.style.display = 'none';
         const pagePlanDetail = document.getElementById('page-plan-detail');
@@ -333,6 +336,7 @@
                  pagePlan.style.display = 'block';
                  renderPlans();
              }
+             if (typeof setCatBarVisible === 'function') setCatBarVisible(false);
              const fab = document.getElementById('floatingBatchAddBtn');
              if(fab) fab.style.display = 'none';
              const homeBtn = document.getElementById('floatingHomeBtn');

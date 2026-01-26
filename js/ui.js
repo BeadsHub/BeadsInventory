@@ -7,6 +7,14 @@
         }
     }
 
+    function setCatBarVisible(visible) {
+        const bar = document.getElementById('catFloatingBar');
+        const pageCat = document.getElementById('page-cat');
+        if (!bar || !pageCat) return;
+        const onCat = pageCat.style.display !== 'none';
+        bar.style.display = (visible && onCat) ? 'flex' : 'none';
+    }
+
     function navTo(page) {
         // Save state for refresh
         localStorage.setItem('mard_last_nav', JSON.stringify({ method: 'navTo', arg: page }));
@@ -33,17 +41,28 @@
 
         if (page === 'home') {
             document.getElementById('page-home').style.display = 'flex';
+            setCatBarVisible(false);
         } else if (page === 'beads') {
             document.getElementById('page-beads').style.display = 'block';
             document.getElementById('footer-dock').style.display = 'flex'; // Show dock
             checkWelcome();
+            setCatBarVisible(false);
+        } else if (page === 'cat') {
+             const pageCat = document.getElementById('page-cat');
+             if (pageCat) pageCat.style.display = 'block';
+             if (typeof renderCatInventory === 'function') {
+                 renderCatInventory();
+             }
+             setCatBarVisible(true);
         } else if (page === 'scan') {
             document.getElementById('page-scan').style.display = 'block';
             document.getElementById('footer-dock').style.display = 'flex';
+            setCatBarVisible(false);
 
         } else if (page === 'fabric') {
             document.getElementById('page-fabric').style.display = 'block';
             // Dock remains hidden for fabric page
+            setCatBarVisible(false);
             
             // Restore Fabric State
             const savedSpecs = localStorage.getItem('fabric_specs');
