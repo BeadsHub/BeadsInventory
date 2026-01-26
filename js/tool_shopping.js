@@ -29,7 +29,7 @@ function generateShoppingList(providedShortages = null) {
                 hex: bead ? bead.hex : '#eee',
                 name: bead ? bead.n : '',
                 pendingBags: pendingBags,
-                isPending: pendingBags > 0 && pendingBags >= bags
+                isPending: pendingBags > 0
             };
         });
     } else {
@@ -124,39 +124,40 @@ function renderShoppingItem(item) {
     return `
         <div class="shopping-item ${isPending ? 'is-pending' : ''}" data-code="${item.code}" style="display:flex; align-items:center; padding:16px; background:${isPending ? '#f6ffed' : 'white'}; margin-bottom:12px; border-radius:16px; border:1px solid ${isPending ? '#b7eb8f' : '#eaeff5'}; box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: all 0.2s; opacity: ${isPending ? '0.8' : '1'};">
             <!-- Checkbox Area -->
-            <div style="margin-right:15px; display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <div style="margin-right:12px; display:flex; flex-direction:column; align-items:center; gap:3px;">
                 <div onclick="toggleShoppingItemStatus('${item.code}', ${item.bags}, this)" 
-                     style="width:28px; height:28px; border:2px solid ${isPending ? '#52c41a' : '#ddd'}; background:${isPending ? '#52c41a' : 'white'}; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:white; font-size:18px; transition:all 0.2s;">
+                     style="width:22px; height:22px; border:2px solid ${isPending ? '#52c41a' : '#ddd'}; background:${isPending ? '#52c41a' : 'white'}; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:white; font-size:16px; transition:all 0.2s;">
                     ${isPending ? '✓' : ''}
                 </div>
                 <div style="font-size:10px; color:${isPending ? '#52c41a' : '#999'};">${isPending ? '在途' : '缺货'}</div>
             </div>
             
-            <!-- Color Info -->
+            <!-- Color Info with Code Label -->
             <div style="position:relative; width:44px; height:44px; border-radius:50%; background:${item.hex}; border:2px solid #fff; box-shadow:0 0 0 1px #ddd; margin-right:15px; flex-shrink:0;">
+                <div style="position:absolute; top:-18px; left:50%; transform:translateX(-50%); font-size:12px; font-weight:bold; color:#333; white-space:nowrap;">${item.code}</div>
                 ${item.isPending ? `
-                <div onclick="confirmRestock('${item.code}', ${item.bags})" style="position:absolute; bottom:-4px; right:-4px; background:#1890ff; color:white; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; border:2px solid white; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2);">
+                <div onclick="confirmRestock('${item.code}', ${item.pendingBags})" style="position:absolute; bottom:-4px; right:-4px; background:#1890ff; color:white; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; border:2px solid white; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2);">
                     📥
                 </div>
                 ` : ''}
             </div>
             
             <div style="flex:1;">
-                <div style="font-weight:bold; font-size:17px; color:#333; margin-bottom:2px;">
-                    ${item.code} 
-                    <span style="font-weight:normal; font-size:13px; color:#999; margin-left:4px;">${item.name || ''}</span>
-                </div>
-                <div style="font-size:12px; color:${isPending ? '#999' : '#cf1322'};">
-                    ${isPending ? `已购 ${item.bags} 包` : `缺 ${item.missing}`}
-                </div>
+                ${item.name ? `<div style="font-size:12px; color:#999; margin-bottom:2px;">${item.name}</div>` : ''}
+                ${isPending ? '' : `<div style="font-size:12px; color:#cf1322;">缺 ${item.missing}</div>`}
             </div>
             
             <!-- Bag Count -->
             <div style="text-align:right;">
                 ${isPending ? `
-                    <button onclick="confirmRestock('${item.code}', ${item.bags})" style="background:#1890ff; color:white; border:none; padding:4px 10px; border-radius:12px; font-size:12px; cursor:pointer;">
-                        到货
-                    </button>
+                    <div style="display:flex; align-items:center; gap:6px; justify-content:flex-end;">
+                        <span style="font-size:12px; color:#666;">已购</span>
+                        <input id="pendingBagsInput_${item.code}" type="number" value="${item.pendingBags}" min="0" step="1" oninput="setPendingBags('${item.code}', this.value)" style="width:36px; text-align:center; border:1px solid #ddd; border-radius:8px; padding:3px; font-weight:bold;">
+                        <div style="font-size:10px; color:#999;">包</div>
+                        <button onclick="confirmRestock('${item.code}', ${item.pendingBags})" style="background:#1890ff; color:white; border:none; padding:4px 10px; border-radius:12px; font-size:12px; cursor:pointer; white-space:nowrap;">
+                            到货
+                        </button>
+                    </div>
                 ` : `
                     <div style="font-weight:bold; font-size:20px; color:#eb2f96;">x${item.bags}</div>
                     <div style="font-size:10px; color:#999;">包</div>
@@ -223,8 +224,8 @@ function toggleShoppingItemStatus(code, bags, checkboxEl) {
         let deficits = JSON.parse(modal.dataset.deficits);
         const item = deficits.find(d => d.code === code);
         if (item) {
-            item.isPending = (bead.pendingBags > 0);
             item.pendingBags = bead.pendingBags;
+            item.isPending = (bead.pendingBags > 0);
         }
         modal.dataset.deficits = JSON.stringify(deficits); // Update stored data
         openShoppingListModal(deficits); // Re-render
@@ -360,5 +361,44 @@ function copyShoppingList() {
         document.execCommand('copy');
         document.body.removeChild(textarea);
         showToast('已复制待购清单');
+    }
+}
+
+function adjustPendingBags(code, delta) {
+    const bead = data.find(d => d.id === code);
+    if (!bead) return;
+    const next = Math.max(0, parseInt(bead.pendingBags || 0) + parseInt(delta));
+    bead.pendingBags = next;
+    saveData();
+    const modal = document.getElementById('shoppingListModal');
+    if (modal && modal.dataset.deficits) {
+        let deficits = JSON.parse(modal.dataset.deficits);
+        const item = deficits.find(d => d.code === code);
+        if (item) {
+            item.pendingBags = next;
+            item.isPending = (next > 0);
+        }
+        modal.dataset.deficits = JSON.stringify(deficits);
+        openShoppingListModal(deficits);
+    }
+}
+
+function setPendingBags(code, val) {
+    let v = parseInt(val);
+    if (isNaN(v) || v < 0) v = 0;
+    const bead = data.find(d => d.id === code);
+    if (!bead) return;
+    bead.pendingBags = v;
+    saveData();
+    const modal = document.getElementById('shoppingListModal');
+    if (modal && modal.dataset.deficits) {
+        let deficits = JSON.parse(modal.dataset.deficits);
+        const item = deficits.find(d => d.code === code);
+        if (item) {
+            item.pendingBags = v;
+            item.isPending = (v > 0);
+        }
+        modal.dataset.deficits = JSON.stringify(deficits);
+        openShoppingListModal(deficits);
     }
 }

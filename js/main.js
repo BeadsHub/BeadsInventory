@@ -151,6 +151,7 @@
 
     function render() {
         const q = document.getElementById('search').value.toUpperCase();
+        const lowBtn = document.getElementById('btn-low-stock');
         
         // 获取当前系列筛选状态
         let seriesMode = document.getElementById('seriesFilter').value;
@@ -203,6 +204,14 @@
             // Mard 221 模式下排除 P, Q, R, T, Y, ZG 系列
             return !extraSeries.includes(series);
         });
+
+        // Low stock filter
+        if (window.__filterLowStock === true) {
+            displayData = displayData.filter(item => item.monitor !== false && item.w < threshold);
+            if (lowBtn) lowBtn.classList.add('active');
+        } else {
+            if (lowBtn) lowBtn.classList.remove('active');
+        }
 
         // 2. Pre-calculate Stats & Contextual Summary
         let sumStock = 0;
@@ -309,6 +318,10 @@
         save();
     }
 
+    function toggleLowStockFilter() {
+        window.__filterLowStock = !window.__filterLowStock;
+        render();
+    }
 
 
     function toggleSelect(id) {
@@ -771,12 +784,14 @@
                 // Enforce blur style
                 mask2.style.backdropFilter = 'blur(8px)';
                 mask2.style.webkitBackdropFilter = 'blur(8px)';
+                mask2.style.zIndex = '1015';
             }
-            document.getElementById(id).style.zIndex = '1020';
+            document.getElementById(id).style.zIndex = '1025';
         } else {
             // First modal
             const mask = document.getElementById('mask');
             mask.style.display = 'block';
+            mask.style.zIndex = '1000';
             // Enforce blur style
             mask.style.backdropFilter = 'blur(8px)';
             mask.style.webkitBackdropFilter = 'blur(8px)';
@@ -792,8 +807,12 @@
             el.style.zIndex = ''; 
         });
         document.getElementById('mask').style.display = 'none';
+        document.getElementById('mask').style.zIndex = '1000';
         const mask2 = document.getElementById('mask2');
-        if (mask2) mask2.style.display = 'none';
+        if (mask2) {
+            mask2.style.display = 'none';
+            mask2.style.zIndex = '1015';
+        }
     }
 
     // 兼容旧函数调用，防止遗漏
@@ -818,6 +837,105 @@
         if(tab !== 'backup') {
             document.getElementById('restoreInput').value = '';
         }
+    }
+
+    function openStorageModal() {
+        updateStorageUsageUI();
+        showModal('storageModal');
+    }
+
+    function getLocalStorageUsageBytes() {
+        let total = 0;
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const val = localStorage.getItem(key) || '';
+            total += new Blob([key]).size + new Blob([val]).size;
+        }
+        return total;
+    }
+
+    function bytesToMB(b) { return (b / (1024 * 1024)).toFixed(2); }
+
+    function summarizePlanThumbnails(plans) {
+        let count = 0;
+        let bytes = 0;
+        const walk = (p) => {
+            if (p.thumbnail) {
+                count++;
+                bytes += new Blob([p.thumbnail]).size;
+            }
+            if (p.subPlans && p.subPlans.length > 0) p.subPlans.forEach(walk);
+        };
+        plans.forEach(walk);
+        return { count, bytes };
+    }
+
+    function updateStorageUsageUI() {
+        const el = document.getElementById('storageUsageSummary');
+        if (!el) return;
+        let plans = [];
+        try {
+            plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
+        } catch (e) {
+            plans = [];
+        }
+        const lsBytes = getLocalStorageUsageBytes();
+        const plansStr = localStorage.getItem('bead_plans') || '';
+        const plansBytes = new Blob([plansStr]).size;
+        const thumbs = summarizePlanThumbnails(plans);
+        el.innerHTML = `
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:10px;">
+                    <div style="font-size:12px; color:#999;">本地缓存总占用</div>
+                    <div style="font-weight:bold; font-size:16px; color:#333;">${bytesToMB(lsBytes)} MB</div>
+                </div>
+                <div style="background:#fff; border:1px solid #eee; border-radius:8px; padding:10px;">
+                    <div style="font-size:12px; color:#999;">计划数据占用</div>
+                    <div style="font-weight:bold; font-size:16px; color:#333;">${bytesToMB(plansBytes)} MB</div>
+                </div>
+            </div>
+            <div style="margin-top:10px; background:#fff; border:1px dashed #eee; border-radius:8px; padding:10px;">
+                <div style="font-size:12px; color:#999;">缩略图数量 / 估算大小</div>
+                <div style="font-weight:bold; font-size:16px; color:#333;">${thumbs.count} 个 / ${bytesToMB(thumbs.bytes)} MB</div>
+                <div style="font-size:11px; color:#999; margin-top:6px;">提示：缩略图占用较多时可清理以释放空间，清理不影响计划内容。</div>
+            </div>
+        `;
+    }
+
+    function savePlans(plans) {
+        localStorage.setItem('bead_plans', JSON.stringify(plans));
+    }
+
+    function clearCompletedPlanThumbnails() {
+        let plans = [];
+        try { plans = JSON.parse(localStorage.getItem('bead_plans') || '[]'); } catch(e) { plans = []; }
+        const walk = (p) => {
+            if (p.status === 'completed' && p.thumbnail) {
+                delete p.thumbnail;
+            }
+            if (p.subPlans && p.subPlans.length > 0) p.subPlans.forEach(walk);
+        };
+        plans.forEach(walk);
+        savePlans(plans);
+        updateStorageUsageUI();
+        showToast('已清理已完成计划的缩略图');
+        if (typeof renderPlans === 'function') renderPlans();
+    }
+
+    function clearAllPlanThumbnails() {
+        let plans = [];
+        try { plans = JSON.parse(localStorage.getItem('bead_plans') || '[]'); } catch(e) { plans = []; }
+        const walk = (p) => {
+            if (p.thumbnail) {
+                delete p.thumbnail;
+            }
+            if (p.subPlans && p.subPlans.length > 0) p.subPlans.forEach(walk);
+        };
+        plans.forEach(walk);
+        savePlans(plans);
+        updateStorageUsageUI();
+        showToast('已清理全部计划缩略图');
+        if (typeof renderPlans === 'function') renderPlans();
     }
 
     function switchDataTab(tab) {
@@ -879,6 +997,8 @@
             let newThreshold = null;
             let newPlans = null;
             let newAiData = null;
+            let newCatInventory = null;
+            let newCatLogs = null;
 
             // 兼容直接的数组格式 (旧版 JSON) 或新的对象格式
             if (Array.isArray(backupData)) {
@@ -888,6 +1008,10 @@
                 if (backupData.threshold !== undefined) newThreshold = backupData.threshold;
                 if (backupData.plans) newPlans = backupData.plans;
                 if (backupData.aiData) newAiData = backupData.aiData;
+                if (backupData.catData) {
+                    if (Array.isArray(backupData.catData.inventory)) newCatInventory = backupData.catData.inventory;
+                    if (Array.isArray(backupData.catData.logs)) newCatLogs = backupData.catData.logs;
+                }
             } else if (backupData.data && Array.isArray(backupData.data)) {
                  // 兼容之前尝试过的 JSON 结构 { data: [...] }
                  restoreItems = backupData.data;
@@ -937,6 +1061,14 @@
             if (newAiData) {
                 localStorage.setItem('ai_usage_data', JSON.stringify(newAiData));
             }
+            
+            // 恢复猫咪用品数据
+            if (newCatInventory) {
+                localStorage.setItem('cat_inventory', JSON.stringify(newCatInventory));
+            }
+            if (newCatLogs) {
+                localStorage.setItem('cat_logs', JSON.stringify(newCatLogs));
+            }
 
             save();
             render();
@@ -945,6 +1077,7 @@
             
             let msg = `数据导入成功 (恢复 ${restoreCount} 个色号`;
             if(newPlans) msg += `，${newPlans.length} 个计划`;
+            if(newCatInventory || newCatLogs) msg += `，猫咪用品数据`;
             msg += ')';
             showToast(msg);
 
@@ -976,6 +1109,13 @@
                     });
                 }
                 return d;
+            })(),
+            catData: (() => {
+                let inv = [];
+                let logs = [];
+                try { inv = JSON.parse(localStorage.getItem('cat_inventory') || '[]'); } catch(e) { inv = []; }
+                try { logs = JSON.parse(localStorage.getItem('cat_logs') || '[]'); } catch(e) { logs = []; }
+                return { inventory: inv, logs };
             })()
         };
 

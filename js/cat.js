@@ -187,11 +187,11 @@ function renderCatInventory() {
         filtered.forEach(it => {
             const cat = normalizeCategory(it.category);
             if (!statsMap.has(cat)) {
-                statsMap.set(cat, { units: { '包':0, '盒':0, '罐':0, '个':0 }, weightKg:0, items:0 });
+                statsMap.set(cat, { units: { '包':0, '盒':0, '罐':0, '个':0 }, weightKg:0, entries:0 });
             }
             const st = statsMap.get(cat);
             const qty = parseInt(it.quantity) || 0;
-            st.items += qty;
+            st.entries += 1;
             if (it.packageUnit && st.units[it.packageUnit] !== undefined) {
                 st.units[it.packageUnit] += qty;
             }
@@ -208,7 +208,7 @@ function renderCatInventory() {
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px dashed #eee;">
                         <div style="display:flex; align-items:center; gap:8px;">
                             <span style="font-weight:bold; font-size:13px; color:#1d39c4;">${cat}</span>
-                            <span style="font-size:12px; color:#999;">条目×${st.items}</span>
+                            <span style="font-size:12px; color:#999;">条目×${st.entries}</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
                             ${unitBadges || '<span style="font-size:12px; color:#bbb;">无单位统计</span>'}
@@ -811,8 +811,7 @@ function saveCatDetail() {
 
 function closeCatDetailModal() {
     closeAllModals();
-    const bar = document.getElementById('catFloatingBar');
-    if (bar) bar.style.display = 'flex';
+    if (typeof setCatBarVisible === 'function') setCatBarVisible(true);
 }
 
 function applyDetailCategoryDefaults() {

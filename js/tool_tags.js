@@ -8,6 +8,7 @@ function openTagManageModal() {
 
     // Render Current Tags
     renderCurrentTags(plan);
+    renderHistoryTags(plan);
 
     // Clear input
     const input = document.getElementById('newTagInput');
@@ -35,6 +36,44 @@ function renderCurrentTags(plan) {
             ${tag}
             <span class="plan-tag-remove" onclick="removeTag('${tag}')">&times;</span>
         </div>
+    `).join('');
+}
+
+function renderHistoryTags(plan) {
+    const container = document.getElementById('tagHistoryList');
+    if (!container) return;
+    let plans = [];
+    try {
+        plans = JSON.parse(localStorage.getItem('bead_plans') || '[]');
+    } catch(e) {
+        plans = [];
+    }
+    const freq = new Map();
+    const collect = (p) => {
+        if (p.tags && Array.isArray(p.tags)) {
+            p.tags.forEach(t => {
+                const k = String(t).trim();
+                if (!k) return;
+                freq.set(k, (freq.get(k) || 0) + 1);
+            });
+        }
+        if (p.subPlans && p.subPlans.length > 0) p.subPlans.forEach(collect);
+    };
+    plans.forEach(collect);
+    // Exclude current plan's existing tags
+    const existing = new Set((plan.tags || []).map(t => String(t)));
+    const list = Array.from(freq.entries())
+        .filter(([t]) => !existing.has(t))
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    if (list.length === 0) {
+        container.innerHTML = '<span style="font-size:12px; color:#ccc;">暂无历史标签</span>';
+        return;
+    }
+    container.innerHTML = list.slice(0, 30).map(([t, c]) => `
+        <button onclick="addTag('${t.replace(/'/g, "\\'")}')" 
+            style="padding:6px 10px; border-radius:12px; border:1px solid #d6e4ff; background:#f0f5ff; color:#4a90e2; font-size:12px; cursor:pointer;">
+            ${t}
+        </button>
     `).join('');
 }
 
@@ -69,6 +108,7 @@ function addTag(tag) {
             
             // Re-render modal
             renderCurrentTags(plan);
+            renderHistoryTags(plan);
             
             // Update Plan Detail UI immediately
             updatePlanDetailTagsUI(plan);
@@ -94,6 +134,7 @@ function removeTag(tag) {
             
             // Re-render modal
             renderCurrentTags(plan);
+            renderHistoryTags(plan);
             
             // Update Plan Detail UI immediately
             updatePlanDetailTagsUI(plan);
